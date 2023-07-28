@@ -2,17 +2,22 @@ package org.tinycloud.jdbc.support;
 
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.exception.JdbcException;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
+import org.tinycloud.jdbc.sql.SqlGenerator;
+import org.tinycloud.jdbc.sql.SqlProvider;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -20,7 +25,7 @@ import java.util.Map;
  * @date 2022-03-11-16:49
  * @description jdbc抽象类，给出默认的支持
  **/
-public abstract class AbstractJdbcSupport implements IJdbcSupport {
+public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport {
 
     protected abstract JdbcTemplate getJdbcTemplate();
 
@@ -276,6 +281,201 @@ public abstract class AbstractJdbcSupport implements IJdbcSupport {
         Map<String, Object> param = new HashMap<>();
         param.put("idList", idList);
         return namedJdbcTemplate.update(sql, param);
+    }
+    // ---------------------------------ISqlSupport结束---------------------------------
+
+
+    // ---------------------------------IObjectSupport开始---------------------------------
+    @Override
+    public <T> T selectById(Object id, Class<T> clazz) {
+        if (id == null) {
+            throw new JdbcException("selectById id cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.selectByIdSql(id, clazz);
+        List<T> list = getJdbcTemplate().query(sqlProvider.getSql(), sqlProvider.getParameters().toArray(),
+                new BeanPropertyRowMapper<T>((Class<T>) clazz));
+        if (list != null && !list.isEmpty()) {
+            return list.get(0);
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T selectOne(T entity) {
+        if (entity == null) {
+            throw new JdbcException("selectOne entity cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
+        List<T> list = getJdbcTemplate().query(sqlProvider.getSql(), sqlProvider.getParameters().toArray(),
+                new BeanPropertyRowMapper<T>((Class<T>) entity.getClass()));
+        if (list != null && !list.isEmpty()) {
+            return list.get(0);
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> List<T> select(T entity) {
+        if (entity == null) {
+            throw new JdbcException("select entity cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
+        return getJdbcTemplate().query(sqlProvider.getSql(), sqlProvider.getParameters().toArray(),
+                new BeanPropertyRowMapper<T>((Class<T>) entity.getClass()));
+    }
+
+
+    @Override
+    public <T> int insert(T entity) {
+        if (entity == null) {
+            throw new JdbcException("insert entity cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, true);
+        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+            throw new JdbcException("insert parameters cannot be null");
+        }
+        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+    }
+
+    @Override
+    public <T> Long insertReturnAutoIncrement(T entity) {
+        if (entity == null) {
+            throw new JdbcException("insert entity cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, true);
+        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+            throw new JdbcException("insert parameters cannot be null");
+        }
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        final Object[] params = sqlProvider.getParameters().toArray();
+        if (params == null || params.length == 0) {
+            getJdbcTemplate().update(new PreparedStatementCreator() {
+                public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                    PreparedStatement ps = con.prepareStatement(sqlProvider.getSql(),
+                            PreparedStatement.RETURN_GENERATED_KEYS);
+                    return ps;
+                }
+            }, keyHolder);
+
+        } else {
+            getJdbcTemplate().update(new PreparedStatementCreator() {
+                public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                    PreparedStatement ps = con.prepareStatement(sqlProvider.getSql(),
+                            PreparedStatement.RETURN_GENERATED_KEYS);
+                    for (int i = 0; i < params.length; i++)
+                        ps.setObject(i + 1, params[i]);
+                    return ps;
+                }
+            }, keyHolder);
+        }
+        return keyHolder.getKey().longValue();
+    }
+
+    @Override
+    public <T> int update(T entity) {
+        if (entity == null) {
+            throw new JdbcException("update entity cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.updateSql(entity, true);
+        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+            throw new JdbcException("update parameters cannot be null");
+        }
+
+        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+    }
+
+    @Override
+    public <T> int delete(T entity) {
+        if (entity == null) {
+            throw new JdbcException("delete entity cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.deleteSql(entity);
+        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+            throw new JdbcException("delete parameters cannot be null");
+        }
+        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+    }
+
+    @Override
+    public <T> int deleteById(Object id, Class<T> clazz) {
+        if (id == null) {
+            throw new JdbcException("deleteById id cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.deleteByIdSql(id, clazz);
+        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+            throw new JdbcException("deleteById parameters cannot be null");
+        }
+        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+    }
+
+    @Override
+    public <T> int[] batchUpdate(Collection<T> collection) {
+        if (collection == null || collection.isEmpty()) {
+            throw new JdbcException("updateBatch collection cannot be null");
+        }
+        int row[] = null;
+        List<Object[]> batchArgs = new ArrayList<Object[]>();
+        String sql = "";
+        for (T t : collection) {
+            SqlProvider sqlProvider = SqlGenerator.updateSql(t, true);
+            if (StringUtils.isEmpty(sql)) {
+                sql = sqlProvider.getSql();
+            }
+            batchArgs.add(sqlProvider.getParameters().toArray());
+        }
+        if (batchArgs == null || batchArgs.isEmpty()) {
+            throw new JdbcException("batchUpdate batchArgs cannot be null");
+        }
+        row = getJdbcTemplate().batchUpdate(sql, batchArgs);
+        return row;
+    }
+
+
+    @Override
+    public <T> int[] batchInsert(Collection<T> collection) {
+        if (collection == null || collection.isEmpty()) {
+            throw new JdbcException("batchInsert collection cannot be null");
+        }
+        int row[] = null;
+        List<Object[]> batchArgs = new ArrayList<Object[]>();
+        String sql = "";
+        for (T t : collection) {
+            SqlProvider sqlProvider = SqlGenerator.insertSql(t, true);
+            if (StringUtils.isEmpty(sql)) {
+                sql = sqlProvider.getSql();
+            }
+            batchArgs.add(sqlProvider.getParameters().toArray());
+        }
+        if (batchArgs == null || batchArgs.isEmpty()) {
+            throw new JdbcException("batchInsert batchArgs cannot be null");
+        }
+        row = getJdbcTemplate().batchUpdate(sql, batchArgs);
+        return row;
+    }
+
+
+    @Override
+    public <T> int[] batchDelete(Collection<T> collection) {
+        if (collection == null || collection.isEmpty()) {
+            throw new JdbcException("batchDelete collection cannot be null");
+        }
+        int row[] = null;
+        List<Object[]> batchArgs = new ArrayList<Object[]>();
+        String sql = "";
+        for (T t : collection) {
+            SqlProvider sqlProvider = SqlGenerator.deleteSql(t);
+            if (StringUtils.isEmpty(sql)) {
+                sql = sqlProvider.getSql();
+            }
+            batchArgs.add(sqlProvider.getParameters().toArray());
+        }
+        if (batchArgs == null || batchArgs.isEmpty()) {
+            throw new JdbcException("batchDelete batchArgs cannot be null");
+        }
+        row = getJdbcTemplate().batchUpdate(sql, batchArgs);
+        return row;
     }
 
 }

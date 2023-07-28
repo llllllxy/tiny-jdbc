@@ -14,7 +14,7 @@ import java.util.Map;
  * 通过对springjdbc原生提供的接口进行封装，进一步简化对数据库的操纵
  * </P>
  **/
-public interface IJdbcSupport {
+public interface ISqlSupport {
 
     /**
      * 使用提供的SQL语句和提供的参数，执行增删改

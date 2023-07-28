@@ -2,9 +2,9 @@ package org.tinycloud.jdbc;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.tinycloud.jdbc.page.IPageHandle;
-import org.tinycloud.jdbc.support.AbstractJdbcSupport;
+import org.tinycloud.jdbc.support.AbstractSqlSupport;
 
-public class BaseDao extends AbstractJdbcSupport {
+public class BaseDao extends AbstractSqlSupport {
 
     /**
      * JdbcTemplate
