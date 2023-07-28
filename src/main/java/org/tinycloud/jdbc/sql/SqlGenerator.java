@@ -5,7 +5,6 @@ import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Table;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,14 +33,13 @@ public class SqlGenerator {
 
         StringBuilder columns = new StringBuilder();
         StringBuilder values = new StringBuilder();
-        for (int i = 0; i < fields.length; i++) {
-            fields[i].setAccessible(true);
-            Column columnAnnotation = fields[i].getAnnotation(Column.class);
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
             }
             String column = columnAnnotation.value();
-
             // 数据库自增列为false, 代码插入
             boolean primaryKey = columnAnnotation.primaryKey();
             boolean autoIncrement = columnAnnotation.autoIncrement();
@@ -50,7 +48,7 @@ public class SqlGenerator {
             }
             Object filedValue = null;
             try {
-                filedValue = fields[i].get(object);
+                filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -58,18 +56,15 @@ public class SqlGenerator {
             if (ignoreNulls && filedValue == null) {
                 continue;
             }
-
-            columns.append(column);
-            columns.append(",");
-            values.append("?");
-            values.append(",");
+            columns.append(column).append(",");
+            values.append("?").append(",");
             parameters.add(filedValue);
         }
         String tableColumns = columns.subSequence(0, columns.length() - 1).toString();
         String tableValues = values.subSequence(0, values.length() - 1).toString();
-        sql.append("insert into " + tableAnnotation.value() + " ");
-        sql.append(" (" + tableColumns + ") ");
-        sql.append(" values(" + tableValues + ")");
+        sql.append("insert into ").append(tableAnnotation.value());
+        sql.append(" (").append(tableColumns).append(")");
+        sql.append(" values (").append(tableValues).append(")");
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
@@ -86,19 +81,18 @@ public class SqlGenerator {
      */
     public static SqlProvider updateSql(Object object, boolean ignoreNulls) {
         SqlUtils.validateTargetClass(object);
-        Class<?> classz = object.getClass();
-        Table tableAnnotation = (Table) classz.getAnnotation(Table.class);
-        Field[] fields = SqlUtils.getFields(classz);
+        Class<?> clazz = object.getClass();
+        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+        Field[] fields = SqlUtils.getFields(clazz);
         StringBuilder sql = new StringBuilder();
-        List<Object> parameters = new ArrayList<Object>();
+        List<Object> parameters = new ArrayList<>();
 
         StringBuilder columns = new StringBuilder();
-
         StringBuilder whereColumns = new StringBuilder();
         StringBuilder whereValues = new StringBuilder();
-        for (int i = 0; i < fields.length; i++) {
-            fields[i].setAccessible(true);
-            Column columnAnnotation = fields[i].getAnnotation(Column.class);
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
             }
@@ -108,31 +102,27 @@ public class SqlGenerator {
             }
             Object filedValue = null;
             try {
-                filedValue = fields[i].get(object);
+                filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 e.printStackTrace();
             }
-            // 是否忽略null
-            if (ignoreNulls && filedValue == null) {
-                continue;
-            }
-
             boolean primaryKey = columnAnnotation.primaryKey();
             if (primaryKey) {
                 whereColumns.append(column);
                 whereValues.append(filedValue);
                 continue;
             }
-            columns.append(column + "=?");
-            columns.append(",");
+            // 是否忽略null
+            if (ignoreNulls && filedValue == null) {
+                continue;
+            }
+            columns.append(column).append("=?,");
             parameters.add(filedValue);
         }
 
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        sql.append("update " + tableAnnotation.value() + " set " + tableColumn + "");
-        sql.append(" ");
-        sql.append("where");
-        sql.append(" ");
+        sql.append("update ").append(tableAnnotation.value()).append(" set ").append(tableColumn);
+        sql.append(" where ");
         sql.append(whereColumns);
         sql.append("=?");
 
@@ -158,11 +148,11 @@ public class SqlGenerator {
         Field[] fields = SqlUtils.getFields(classz);
         StringBuilder sql = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
-        List<Object> parameters = new ArrayList<Object>();
+        List<Object> parameters = new ArrayList<>();
 
-        for (int i = 0; i < fields.length; i++) {
-            fields[i].setAccessible(true);
-            Column columnAnnotation = fields[i].getAnnotation(Column.class);
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
             }
@@ -172,27 +162,21 @@ public class SqlGenerator {
             }
             Object filedValue = null;
             try {
-                filedValue = fields[i].get(object);
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+                filedValue = field.get(object);
+            } catch (IllegalArgumentException | IllegalAccessException e) {
                 e.printStackTrace();
             }
             if (filedValue == null) {
                 continue;
             }
-            whereColumns.append(" and " + column + "=? ");
+            whereColumns.append("and ").append(column).append("=? ");
             parameters.add(filedValue);
         }
-        String tableWhere = whereColumns.subSequence(0, whereColumns.length() - 1).toString();
 
-        sql.append("delete from");
-        sql.append(" ");
+        sql.append("delete from ");
         sql.append(tableAnnotation.value());
-        sql.append(" ");
-        sql.append("where 1=1 ");
-        sql.append(" ");
-        sql.append(tableWhere);
+        sql.append(" where ");
+        sql.append(whereColumns.toString().replaceFirst("and", ""));
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
@@ -216,9 +200,9 @@ public class SqlGenerator {
         StringBuilder whereColumns = new StringBuilder();
 
         List<Object> parameters = new ArrayList<>();
-        for (int i = 0; i < fields.length; i++) {
-            fields[i].setAccessible(true);
-            Column columnAnnotation = fields[i].getAnnotation(Column.class);
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
             }
@@ -229,34 +213,33 @@ public class SqlGenerator {
 
             Object filedValue = null;
             try {
-                filedValue = fields[i].get(object);
+                filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 e.printStackTrace();
             }
 
-            Class<?> type = fields[i].getType();
+            Class<?> type = field.getType();
             if (SqlUtils.typeValueIsNotNull(type, filedValue)) {
-                whereColumns.append("and");
-                whereColumns.append(" ");
-                whereColumns.append(column);
-                whereColumns.append("=");
-                whereColumns.append("?");
-                whereColumns.append(" ");
+                whereColumns.append("and ")
+                        .append(column)
+                        .append("=? ");
                 parameters.add(filedValue);
             }
-            columns.append(column + " " + "as" + " " + fields[i].getName());
-            columns.append(",");
+            columns.append(column)
+                    .append(" as ")
+                    .append(field.getName())
+                    .append(",");
         }
-
-
+        // 截去columns的最后一个字符
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
 
         StringBuilder sql = new StringBuilder();
-        sql.append("select " + tableColumn + " from " + tableAnnotation.value());
-        sql.append(" ");
-        sql.append("where 1=1");
-        sql.append(" ");
-        sql.append(whereColumns);
+        sql.append("select ")
+                .append(tableColumn)
+                .append(" from ")
+                .append(tableAnnotation.value())
+                .append(" where ")
+                .append(whereColumns.toString().replaceFirst("and", ""));
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
@@ -283,13 +266,13 @@ public class SqlGenerator {
         StringBuilder columns = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
 
-        for (int i = 0; i < fields.length; i++) {
-            fields[i].setAccessible(true);
-            Column columnAnnotation = fields[i].getAnnotation(Column.class);
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
             }
-            String fieldName = fields[i].getName();
+            String fieldName = field.getName();
             String column = columnAnnotation.value();
             if (StringUtils.isEmpty(column)) {
                 continue;
@@ -298,24 +281,20 @@ public class SqlGenerator {
             if (primaryKey) {
                 whereColumns.append(column);
             }
-            columns.append(column);
-            columns.append(" ");
-            columns.append("as");
-            columns.append(" ");
-            columns.append(fieldName);
-            columns.append(",");
+            columns.append(column)
+                    .append(" as ")
+                    .append(fieldName)
+                    .append(",");
         }
 
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
         parameters.add(String.valueOf(id));
 
         StringBuilder sql = new StringBuilder();
-        sql.append("select ").append(tableColumn).append(" from ").append(tableAnnotation.value());
-        sql.append(" ");
-        sql.append("where");
-        sql.append(" ");
-        sql.append(whereColumns);
-        sql.append("=?");
+        sql.append("select ").append(tableColumn).append(" from ").append(tableAnnotation.value())
+                .append(" where ")
+                .append(whereColumns)
+                .append("=?");
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
@@ -340,9 +319,9 @@ public class SqlGenerator {
         List<Object> parameters = new ArrayList<>();
         StringBuilder whereColumns = new StringBuilder();
 
-        for (int i = 0; i < fields.length; i++) {
-            fields[i].setAccessible(true);
-            Column columnAnnotation = fields[i].getAnnotation(Column.class);
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
             }
@@ -358,14 +337,11 @@ public class SqlGenerator {
         parameters.add(String.valueOf(id));
 
         StringBuilder sql = new StringBuilder();
-        sql.append("delete from");
-        sql.append(" ");
-        sql.append(tableAnnotation.value());
-        sql.append(" ");
-        sql.append("where");
-        sql.append(" ");
-        sql.append(whereColumns);
-        sql.append("=?");
+        sql.append("delete from ")
+                .append(tableAnnotation.value())
+                .append(" where ")
+                .append(whereColumns)
+                .append("=?");
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());

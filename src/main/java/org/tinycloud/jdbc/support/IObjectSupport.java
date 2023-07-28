@@ -19,13 +19,24 @@ import java.util.List;
 public interface IObjectSupport {
     /**
      *
-     * 持久化插入给定的实例
+     * 持久化插入给定的实例（默认忽略null值）
      *
      * @param entity 实例
      * @return int 受影响的行数
      *
      */
     <T> int insert(T entity);
+
+    /**
+     *
+     * 持久化插入给定的实例
+     *
+     * @param entity 实例
+     * @param ignoreNulls 是否忽略null值，true忽略，false不忽略
+     * @return int 受影响的行数
+     *
+     */
+    <T> int insert(T entity, boolean ignoreNulls);
 
     /**
      * 持久化插入给定的实例，返回主键
@@ -37,7 +48,7 @@ public interface IObjectSupport {
     <T> Long insertReturnAutoIncrement(T entity);
 
     /**
-     * 持久化更新给定的实例
+     * 持久化更新给定的实例（默认忽略null值），根据主键值更新
      *
      * @param entity 实例
      *
@@ -45,6 +56,16 @@ public interface IObjectSupport {
      *
      */
     <T> int update(T entity);
+
+    /**
+     * 持久化更新给定的实例，根据主键值更新
+     *
+     * @param entity 实例
+     * @param ignoreNulls 是否忽略null值，true忽略，false不忽略
+     * @return int 受影响的行数
+     *
+     */
+    <T> int update(T entity, boolean ignoreNulls);
 
     /**
      * 持久化删除给定的实例

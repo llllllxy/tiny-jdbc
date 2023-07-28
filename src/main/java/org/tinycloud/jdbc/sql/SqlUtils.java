@@ -20,8 +20,8 @@ public class SqlUtils {
     /**
      * 校验Entity对象的合法性
      *
-     * @param entity
-     * @param <T>
+     * @param entity 实体类对象
+     * @param <T> 泛型
      */
     public static <T> void validateTargetClass(T entity) {
         if (entity == null) {
@@ -37,7 +37,7 @@ public class SqlUtils {
             throw new JdbcException("SqlGenerator " + clazz + "@Table value cannot be null");
         }
         Field[] fields = getFields(clazz);
-        if (fields == null || fields.length < 0) {
+        if (fields == null || fields.length == 0) {
             throw new JdbcException("SqlGenerator " + clazz + " no field defined");
         }
     }
@@ -45,35 +45,35 @@ public class SqlUtils {
     /**
      * 判断数据是否为null
      *
-     * @param type
-     * @param filedValue
-     * @return
+     * @param clazz 类对象
+     * @param filedValue 属性值
+     * @return true or false
      */
-    public static boolean typeValueIsNotNull(Class<?> type, Object filedValue) {
+    public static boolean typeValueIsNotNull(Class<?> clazz, Object filedValue) {
         // String
-        if (type == java.lang.String.class) {
+        if (clazz == java.lang.String.class) {
             if (filedValue == null || filedValue == "") {
                 return false;
             }
             // Number
-        } else if (type == java.lang.Integer.class || type == java.lang.Double.class || type == java.lang.Float.class
-                || type == java.lang.Long.class || type == java.lang.Short.class
-                || type == java.math.BigDecimal.class) {
+        } else if (clazz == java.lang.Integer.class || clazz == java.lang.Double.class || clazz == java.lang.Float.class
+                || clazz == java.lang.Long.class || clazz == java.lang.Short.class
+                || clazz == java.math.BigDecimal.class) {
             if (null == filedValue) {
                 return false;
             }
             // Date
-        } else if (type == java.util.Date.class || type == java.sql.Timestamp.class || type == java.sql.Date.class) {
+        } else if (clazz == java.util.Date.class || clazz == java.sql.Timestamp.class || clazz == java.sql.Date.class) {
             if (null == filedValue) {
                 return false;
             }
             // Boolean
-        } else if (type == java.lang.Boolean.class) {
+        } else if (clazz == java.lang.Boolean.class) {
             if (null == filedValue) {
                 return false;
             }
             // Byte
-        } else if (type == java.lang.Byte.class) {
+        } else if (clazz == java.lang.Byte.class) {
             if (null == filedValue) {
                 return false;
             }
@@ -107,7 +107,6 @@ public class SqlUtils {
      */
     public static Field[] getFields(Class<?> clazz) {
         List<Field> list = new ArrayList<>();
-
         // 遍历类及其父类的所有字段并获取属性名称
         while (clazz != null && !"java.lang.Object".equals(clazz.getName())) {
             Field[] fields = clazz.getDeclaredFields();

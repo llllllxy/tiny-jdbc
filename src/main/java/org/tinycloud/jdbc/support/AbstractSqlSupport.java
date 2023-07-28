@@ -326,13 +326,17 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
                 new BeanPropertyRowMapper<T>((Class<T>) entity.getClass()));
     }
 
-
     @Override
     public <T> int insert(T entity) {
+        return insert(entity, true);
+    }
+
+    @Override
+    public <T> int insert(T entity, boolean ignoreNulls) {
         if (entity == null) {
             throw new JdbcException("insert entity cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, true);
+        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, ignoreNulls);
         if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
             throw new JdbcException("insert parameters cannot be null");
         }
@@ -373,12 +377,18 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
         return keyHolder.getKey().longValue();
     }
 
+
     @Override
     public <T> int update(T entity) {
+        return update(entity, true);
+    }
+
+    @Override
+    public <T> int update(T entity, boolean ignoreNulls) {
         if (entity == null) {
             throw new JdbcException("update entity cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.updateSql(entity, true);
+        SqlProvider sqlProvider = SqlGenerator.updateSql(entity, ignoreNulls);
         if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
             throw new JdbcException("update parameters cannot be null");
         }

@@ -60,11 +60,12 @@ public class TinyJdbcAutoConfiguration {
 
     @Bean
     public BaseDao baseDao(JdbcTemplate jdbcTemplate, IPageHandle pageHandle) {
-        if (pageHandle != null) {
-            return new BaseDao(jdbcTemplate, pageHandle);
-        } else {
-            logger.error("TinyJdbcAutoConfiguration: Bean baseDao Not Defined");
-            return null;
+        if (jdbcTemplate == null) {
+            logger.error("TinyJdbcAutoConfiguration: Bean jdbcTemplate is null");
         }
+        if (pageHandle == null) {
+            logger.error("TinyJdbcAutoConfiguration: Bean pageHandle Not Defined");
+        }
+        return new BaseDao(jdbcTemplate, pageHandle);
     }
 }

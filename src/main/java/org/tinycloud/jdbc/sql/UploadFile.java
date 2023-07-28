@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Table("b_upload_file")
-public class UploadFile extends UploadFile22 implements Serializable {
+public class UploadFile implements Serializable {
     private static final long serialVersionUID = -1L;
 
     /**
