@@ -1,0 +1,71 @@
+### gradle ###
+.gradle
+!gradle/wrapper/gradle-wrapper.jar
+
+### STS ###
+.settings/
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+bin/
+
+### IntelliJ IDEA ###
+.idea
+out/
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+### maven ###
+target/
+*.war
+*.ear
+*.zip
+*.tar
+*.tar.gz
+
+### npm ###
+node_modules/
+
+# logs #
+logs
+
+# temp ignore
+*.log
+*.cache
+*.diff
+*.patch
+*.tmp
+*.java~
+*.properties~
+*.xml~
+
+# system ignore
+.DS_Store
+Thumbs.db
+Servers
+.metadata
+upload
+gen_code
+rocksdb
+
+#vscode
+.DS_Store
+node_modules/
+/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/test/unit/coverage/
+/test/e2e/reports/
+selenium-debug.log
