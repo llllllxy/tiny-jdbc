@@ -1,5 +1,7 @@
 package org.tinycloud.jdbc.support;
 
+import org.tinycloud.jdbc.page.Page;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -132,6 +134,18 @@ public interface IObjectSupport {
      *
      */
     <T> List<T> select(T entity);
+
+    /**
+     *
+     * 分页查询给定的实例，返回实例列表
+     *
+     * @param entity 实例
+     * @param pageNumber 页码
+     * @param pageSize 页大小
+     * @return List<T> 实例列表
+     *
+     */
+    <T> Page<T> paginate(T entity, Integer pageNumber, Integer pageSize);
 
     /**
      *

@@ -326,6 +326,32 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
                 new BeanPropertyRowMapper<T>((Class<T>) entity.getClass()));
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> Page<T> paginate(T entity, Integer pageNumber, Integer pageSize) {
+        if (entity == null) {
+            throw new JdbcException("select entity cannot be null");
+        }
+        if (pageNumber <= 0) {
+            throw new JdbcException("当前页数必须大于1");
+        }
+        if (pageSize <= 0) {
+            throw new JdbcException("每页大小必须大于1");
+        }
+        SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
+        String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), pageNumber, pageSize);
+        String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
+        // 查询数据列表
+        List<T> resultList = getJdbcTemplate().query(selectSql, sqlProvider.getParameters().toArray(),
+                new BeanPropertyRowMapper<T>((Class<T>) entity.getClass()));
+        // 查询总共数量
+        int totalSize = getJdbcTemplate().queryForObject(countSql, sqlProvider.getParameters().toArray(), Integer.class);
+        Page<T> bean = new Page<>(pageNumber, pageSize);
+        bean.setRecords(resultList);
+        bean.setTotal(totalSize);
+        return bean;
+    }
+
     @Override
     public <T> int insert(T entity) {
         return insert(entity, true);
@@ -425,7 +451,7 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
         if (collection == null || collection.isEmpty()) {
             throw new JdbcException("updateBatch collection cannot be null");
         }
-        int row[] = null;
+        int[] row = null;
         List<Object[]> batchArgs = new ArrayList<Object[]>();
         String sql = "";
         for (T t : collection) {
@@ -448,7 +474,7 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
         if (collection == null || collection.isEmpty()) {
             throw new JdbcException("batchInsert collection cannot be null");
         }
-        int row[] = null;
+        int[] row = null;
         List<Object[]> batchArgs = new ArrayList<Object[]>();
         String sql = "";
         for (T t : collection) {
@@ -471,7 +497,7 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
         if (collection == null || collection.isEmpty()) {
             throw new JdbcException("batchDelete collection cannot be null");
         }
-        int row[] = null;
+        int[] row = null;
         List<Object[]> batchArgs = new ArrayList<Object[]>();
         String sql = "";
         for (T t : collection) {
