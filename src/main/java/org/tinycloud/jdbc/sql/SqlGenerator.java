@@ -3,6 +3,7 @@ package org.tinycloud.jdbc.sql;
 import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Table;
+import org.tinycloud.jdbc.exception.JdbcException;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -172,7 +173,9 @@ public class SqlGenerator {
             whereColumns.append("and ").append(column).append("=? ");
             parameters.add(filedValue);
         }
-
+        if (StringUtils.isEmpty(whereColumns.toString())) {
+            throw new JdbcException("deleteSql方法不能传入空对象，会导致删除全表！");
+        }
         sql.append("delete from ");
         sql.append(tableAnnotation.value());
         sql.append(" where ");
@@ -243,9 +246,10 @@ public class SqlGenerator {
         sql.append("select ")
                 .append(tableColumn)
                 .append(" from ")
-                .append(tableAnnotation.value())
-                .append(" where ")
-                .append(whereColumns.toString().replaceFirst("and", ""));
+                .append(tableAnnotation.value());
+        if (!StringUtils.isEmpty(whereColumns.toString())) {
+            sql.append(" where ").append(whereColumns.toString().replaceFirst("and", ""));
+        }
         if (!StringUtils.isEmpty(primaryKeyColumn)) {
             sql.append(" order by ").append(primaryKeyColumn).append(" desc");
         }
