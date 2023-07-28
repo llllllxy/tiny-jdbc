@@ -198,6 +198,7 @@ public class SqlGenerator {
         Field[] fields = SqlUtils.getFields(clazz);
         StringBuilder columns = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
+        String primaryKeyColumn = "";
 
         List<Object> parameters = new ArrayList<>();
         for (Field field : fields) {
@@ -209,6 +210,11 @@ public class SqlGenerator {
             String column = columnAnnotation.value();
             if (StringUtils.isEmpty(column)) {
                 continue;
+            }
+
+            boolean primaryKey = columnAnnotation.primaryKey();
+            if (primaryKey) {
+                primaryKeyColumn = column;
             }
 
             Object filedValue = null;
@@ -240,6 +246,9 @@ public class SqlGenerator {
                 .append(tableAnnotation.value())
                 .append(" where ")
                 .append(whereColumns.toString().replaceFirst("and", ""));
+        if (!StringUtils.isEmpty(primaryKeyColumn)) {
+            sql.append(" order by ").append(primaryKeyColumn).append(" desc");
+        }
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
