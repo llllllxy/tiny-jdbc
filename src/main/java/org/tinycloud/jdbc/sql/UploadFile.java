@@ -13,9 +13,12 @@ public class UploadFile implements Serializable {
     private static final long serialVersionUID = -1L;
 
     /**
-     * 主键自增id
+     * 主键，
+     * 注意，如果设置为自增主键的话，则此字段必须为Long
+     * 如果设置为assignUuid的话，则此字段必须为String
+     * 如果设置为assignId的话，则此字段必须为String或者Long
      */
-    @Column(value = "id", primaryKey = true, autoIncrement = true)
+    @Column(value = "id", primaryKey = true, assignId = true)
     private Long id;
 
     /**

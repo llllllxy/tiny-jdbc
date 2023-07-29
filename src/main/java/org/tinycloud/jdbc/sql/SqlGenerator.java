@@ -4,6 +4,7 @@ import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.exception.JdbcException;
+import org.tinycloud.jdbc.id.IdUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -25,10 +26,10 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider insertSql(Object object, boolean ignoreNulls) {
-        SqlUtils.validateTargetClass(object);
+        ReflectUtils.validateTargetClass(object);
         Class<?> clazz = object.getClass();
         Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = SqlUtils.getFields(clazz);
+        Field[] fields = ReflectUtils.getFields(clazz);
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
 
@@ -41,25 +42,53 @@ public class SqlGenerator {
                 continue;
             }
             String column = columnAnnotation.value();
-            // 数据库自增列为false, 代码插入
             boolean primaryKey = columnAnnotation.primaryKey();
             boolean autoIncrement = columnAnnotation.autoIncrement();
+            // 如果是自增主键，那么直接跳过，无需后面的逻辑了
             if (primaryKey && autoIncrement) {
                 continue;
             }
-            Object filedValue = null;
+
+            boolean assignId = columnAnnotation.assignId();
+            boolean assignUuid = columnAnnotation.assignUuid();
+            // 如果是其他主键策略，设置完主键后，塞回到实体类里，这样可以方便插入后获取主键值
+            if (primaryKey && assignId) {
+                Class<?> type = field.getType();
+                Object fieldValue;
+                if (type == java.lang.String.class) {
+                    fieldValue = IdUtils.nextId();
+                } else {
+                    fieldValue = IdUtils.nextLongId();
+                }
+                try {
+                    field.set(object, fieldValue);
+                } catch (IllegalArgumentException | IllegalAccessException e) {
+                    throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String or Long when assignId!");
+                }
+            }
+            if (primaryKey && assignUuid) {
+                Object fieldValue = IdUtils.simpleUUID();
+                try {
+                    field.set(object, fieldValue);
+                } catch (IllegalArgumentException | IllegalAccessException e) {
+                    throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String when assignUuid!");
+                }
+            }
+
+            Object fieldValue = null;
             try {
-                filedValue = field.get(object);
+                fieldValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 e.printStackTrace();
             }
             // 是否忽略null
-            if (ignoreNulls && filedValue == null) {
+            if (ignoreNulls && fieldValue == null) {
                 continue;
             }
+
             columns.append(column).append(",");
             values.append("?").append(",");
-            parameters.add(filedValue);
+            parameters.add(fieldValue);
         }
         String tableColumns = columns.subSequence(0, columns.length() - 1).toString();
         String tableValues = values.subSequence(0, values.length() - 1).toString();
@@ -81,10 +110,10 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider updateSql(Object object, boolean ignoreNulls) {
-        SqlUtils.validateTargetClass(object);
+        ReflectUtils.validateTargetClass(object);
         Class<?> clazz = object.getClass();
         Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = SqlUtils.getFields(clazz);
+        Field[] fields = ReflectUtils.getFields(clazz);
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
 
@@ -143,10 +172,10 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteSql(Object object) {
-        SqlUtils.validateTargetClass(object);
+        ReflectUtils.validateTargetClass(object);
         Class<?> classz = object.getClass();
         Table tableAnnotation = (Table) classz.getAnnotation(Table.class);
-        Field[] fields = SqlUtils.getFields(classz);
+        Field[] fields = ReflectUtils.getFields(classz);
         StringBuilder sql = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
@@ -195,10 +224,10 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectSql(Object object) {
-        SqlUtils.validateTargetClass(object);
+        ReflectUtils.validateTargetClass(object);
         Class<?> clazz = object.getClass();
         Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = SqlUtils.getFields(clazz);
+        Field[] fields = ReflectUtils.getFields(clazz);
         StringBuilder columns = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
         String primaryKeyColumn = "";
@@ -228,7 +257,7 @@ public class SqlGenerator {
             }
 
             Class<?> type = field.getType();
-            if (SqlUtils.typeValueIsNotNull(type, filedValue)) {
+            if (ReflectUtils.typeValueIsNotNull(type, filedValue)) {
                 whereColumns.append("and ")
                         .append(column)
                         .append("=? ");
@@ -269,12 +298,12 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectByIdSql(Object id, Class<?> clazz) {
-        Object object = SqlUtils.createInstance(clazz);
+        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        SqlUtils.validateTargetClass(object);
+        ReflectUtils.validateTargetClass(object);
 
         Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = SqlUtils.getFields(clazz);
+        Field[] fields = ReflectUtils.getFields(clazz);
         List<Object> parameters = new ArrayList<>();
         StringBuilder columns = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
@@ -323,12 +352,12 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteByIdSql(Object id, Class<?> clazz) {
-        Object object = SqlUtils.createInstance(clazz);
+        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        SqlUtils.validateTargetClass(object);
+        ReflectUtils.validateTargetClass(object);
 
         Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = SqlUtils.getFields(clazz);
+        Field[] fields = ReflectUtils.getFields(clazz);
         List<Object> parameters = new ArrayList<>();
         StringBuilder whereColumns = new StringBuilder();
 
@@ -361,4 +390,5 @@ public class SqlGenerator {
         so.setParameters(parameters);
         return so;
     }
+
 }
