@@ -26,36 +26,27 @@ public class TinyJdbcAutoConfiguration {
     @ConditionalOnMissingBean(IPageHandle.class)
     @ConditionalOnProperty(name = "tiny-jdbc.db-type", havingValue = "mysql")
     @Bean
-    public IPageHandle mysqlPageHandle(JdbcTemplate jdbcTemplate) {
-        if (jdbcTemplate == null) {
-            logger.error("TinyJdbcAutoConfiguration: Bean jdbcTemplate is null");
-        }
+    public IPageHandle mysqlPageHandle() {
         logger.info("mysqlPageHandle is running");
-        return new MysqlPageHandleImpl(jdbcTemplate);
+        return new MysqlPageHandleImpl();
     }
 
 
     @ConditionalOnMissingBean(IPageHandle.class)
     @ConditionalOnProperty(name = "tiny-jdbc.db-type", havingValue = "oracle")
     @Bean
-    public IPageHandle oraclePageHandle(JdbcTemplate jdbcTemplate) {
-        if (jdbcTemplate == null) {
-            logger.error("TinyJdbcAutoConfiguration: Bean jdbcTemplate is null");
-        }
+    public IPageHandle oraclePageHandle() {
         logger.info("oraclePageHandle is running");
-        return new OraclePageHandleImpl(jdbcTemplate);
+        return new OraclePageHandleImpl();
     }
 
 
     @ConditionalOnMissingBean(IPageHandle.class)
     @ConditionalOnProperty(name = "tiny-jdbc.db-type", havingValue = "db2")
     @Bean
-    public IPageHandle db2PageHandle(JdbcTemplate jdbcTemplate) {
-        if (jdbcTemplate == null) {
-            logger.error("TinyJdbcAutoConfiguration: Bean jdbcTemplate is null");
-        }
+    public IPageHandle db2PageHandle() {
         logger.info("db2PageHandle is running");
-        return new DB2PageHandleImpl(jdbcTemplate);
+        return new DB2PageHandleImpl();
     }
 
     @Bean

@@ -12,13 +12,6 @@ import java.util.Map;
  **/
 public class DB2PageHandleImpl implements IPageHandle {
 
-    private final JdbcTemplate jdbcTemplate;
-
-    public DB2PageHandleImpl(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
-
     /**
      * 分页查询适配
      * @param oldSQL 需要改造为分页查询的SQL
@@ -47,25 +40,5 @@ public class DB2PageHandleImpl implements IPageHandle {
         newSql.append(oldSQL);
         newSql.append(" ) TEMP");
         return newSql.toString();
-    }
-
-
-    @Override
-    public Page<Map<String, Object>> getPage(String oldSQL, int pageNo, int pageSize) {
-        if (pageNo <= 0) {
-            throw new RuntimeException("当前页数必须大于1");
-        }
-        if (pageSize <= 0) {
-            throw new RuntimeException("每页大小必须大于1");
-        }
-        // 数据列表
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(this.handlerPagingSQL(oldSQL, pageNo, pageSize));
-        // 总共数量
-        int totalSize = jdbcTemplate.queryForObject(handlerCountSQL(oldSQL), Integer.class);
-
-        Page<Map<String, Object>> bean = new Page<>(pageNo, pageSize);
-        bean.setRecords(list);
-        bean.setTotal(totalSize);
-        return bean;
     }
 }
