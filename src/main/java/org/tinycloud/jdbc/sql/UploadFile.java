@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
+@Deprecated
 @Table("b_upload_file")
 public class UploadFile implements Serializable {
     private static final long serialVersionUID = -1L;
