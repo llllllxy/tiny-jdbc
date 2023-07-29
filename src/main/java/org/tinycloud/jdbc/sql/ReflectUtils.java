@@ -6,22 +6,24 @@ import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.exception.JdbcException;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * sql构建工具类
+ * java反射工具类
  *
  * @author liuxingyu01
  * @since 2023-07-28-16:49
  **/
-public class SqlUtils {
+public class ReflectUtils {
 
     /**
      * 校验Entity对象的合法性
      *
      * @param entity 实体类对象
-     * @param <T> 泛型
+     * @param <T>    泛型
      */
     public static <T> void validateTargetClass(T entity) {
         if (entity == null) {
@@ -45,7 +47,7 @@ public class SqlUtils {
     /**
      * 判断数据是否为null
      *
-     * @param clazz 类对象
+     * @param clazz      类对象
      * @param filedValue 属性值
      * @return true or false
      */
@@ -118,4 +120,56 @@ public class SqlUtils {
         return list.toArray(new Field[0]);
     }
 
+
+    /**
+     * 直接注入属性值
+     *
+     * @param o          对象
+     * @param fieldName  对象属性名
+     * @param fieldValue 对象属性值
+     */
+    public static void injectFieldValue(Object o, String fieldName, Object fieldValue) {
+        try {
+            Field field = o.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(o, fieldValue);
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+            throw new RuntimeException("there are no field named " + fieldName + " in class " + o.getClass().getName());
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            throw new RuntimeException("inject field value fail : " + fieldName);
+        }
+    }
+
+    /**
+     * 通过set注入属性值
+     *
+     * @param o          对象
+     * @param fieldName  对象属性名
+     * @param fieldValue 对象属性值
+     */
+    public static void setFieldValue(Object o, String fieldName, Object fieldValue) {
+        Method[] declaredMethods = o.getClass().getDeclaredMethods();
+        for (Method declaredMethod : declaredMethods) {
+            if (declaredMethod.getName().equalsIgnoreCase("set" + capitalize(fieldName))) {
+                try {
+                    declaredMethod.invoke(o, fieldValue);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("set field value fail : " + fieldName);
+                }
+            }
+        }
+    }
+
+    /**
+     * 字符串首字母转换为大写
+     *
+     * @param str 字符串
+     * @return 转换好的字符串
+     */
+    private static String capitalize(String str) {
+        return Character.toUpperCase(str.charAt(0)) + str.substring(1);
+    }
 }
