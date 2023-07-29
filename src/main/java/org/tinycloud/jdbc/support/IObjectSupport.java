@@ -41,7 +41,7 @@ public interface IObjectSupport {
     <T> int insert(T entity, boolean ignoreNulls);
 
     /**
-     * 持久化插入给定的实例，返回主键
+     * 持久化插入给定的实例，并且返回自增主键
      *
      * @param entity 实例
      * @return Integer 返回主键
