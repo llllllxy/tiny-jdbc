@@ -11,9 +11,29 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface Column {
+
+    /**
+     * 数据库字段对应
+     */
     String value() default "";
 
+    /**
+     * 标记字段是否为主键
+     */
     boolean primaryKey() default false;
 
+    /**
+     * 标记自增主键
+     */
     boolean autoIncrement() default false;
+
+    /**
+     * 标记雪花id
+     */
+    boolean assignId() default false;
+
+    /**
+     * 标记UUID
+     */
+    boolean assignUuid() default false;
 }
