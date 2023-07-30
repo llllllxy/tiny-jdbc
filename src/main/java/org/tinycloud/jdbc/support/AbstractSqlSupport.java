@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.exception.JdbcException;
 import org.tinycloud.jdbc.page.IPageHandle;
@@ -36,19 +37,19 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
      * 执行查询sql，有查询条件
      *
      * @param sql    要执行的SQL
-     * @param classz 实体类
+     * @param clazz 实体类
      * @param params 要绑定到查询的参数 ，可以不传
      * @param <T>    泛型
      * @return 查询结果
      */
     @Override
-    public <T> List<T> select(String sql, Class<T> classz, Object... params) {
+    public <T> List<T> select(String sql, Class<T> clazz, Object... params) {
         List<T> resultList = null;
         if (params != null && params.length > 0) {
-            resultList = getJdbcTemplate().query(sql, params, new BeanPropertyRowMapper<T>(classz));
+            resultList = getJdbcTemplate().query(sql, params, new BeanPropertyRowMapper<T>(clazz));
         } else {
             // BeanPropertyRowMapper是自动映射实体类的
-            resultList = getJdbcTemplate().query(sql, new BeanPropertyRowMapper<T>(classz));
+            resultList = getJdbcTemplate().query(sql, new BeanPropertyRowMapper<T>(clazz));
         }
         return resultList;
     }
@@ -81,14 +82,14 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
      * 执行查询sql，有查询条件，结果返回第一条
      *
      * @param sql    要执行的SQL
-     * @param classz 实体类
+     * @param clazz 实体类
      * @param params 要绑定到查询的参数
      * @param <T>    泛型
      * @return 查询结果
      */
     @Override
-    public <T> T selectOne(String sql, Class<T> classz, final Object... params) {
-        List<T> resultList = this.select(sql, classz, params);
+    public <T> T selectOne(String sql, Class<T> clazz, final Object... params) {
+        List<T> resultList = this.select(sql, clazz, params);
         if (resultList != null && !resultList.isEmpty()) {
             return resultList.get(0);
         }
@@ -104,7 +105,7 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
     @Override
     public Map<String, Object> selectOne(String sql) {
         List<Map<String, Object>> resultList = getJdbcTemplate().queryForList(sql);
-        if (resultList != null && !resultList.isEmpty()) {
+        if (!CollectionUtils.isEmpty(resultList)) {
             return resultList.get(0);
         }
         return null;
@@ -121,7 +122,7 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
     @Override
     public Map<String, Object> selectOne(String sql, final Object... params) {
         List<Map<String, Object>> resultList = getJdbcTemplate().queryForList(sql, params);
-        if (resultList != null && !resultList.isEmpty()) {
+        if (!CollectionUtils.isEmpty(resultList)) {
             return resultList.get(0);
         }
         return null;
@@ -294,7 +295,7 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
         SqlProvider sqlProvider = SqlGenerator.selectByIdSql(id, clazz);
         List<T> list = getJdbcTemplate().query(sqlProvider.getSql(), sqlProvider.getParameters().toArray(),
                 new BeanPropertyRowMapper<T>((Class<T>) clazz));
-        if (list != null && !list.isEmpty()) {
+        if (!CollectionUtils.isEmpty(list)) {
             return list.get(0);
         }
         return null;
@@ -309,7 +310,7 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
         SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
         List<T> list = getJdbcTemplate().query(sqlProvider.getSql(), sqlProvider.getParameters().toArray(),
                 new BeanPropertyRowMapper<T>((Class<T>) entity.getClass()));
-        if (list != null && !list.isEmpty()) {
+        if (!CollectionUtils.isEmpty(list)) {
             return list.get(0);
         }
         return null;
@@ -346,10 +347,10 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
                 new BeanPropertyRowMapper<T>((Class<T>) entity.getClass()));
         // 查询总共数量
         int totalSize = getJdbcTemplate().queryForObject(countSql, sqlProvider.getParameters().toArray(), Integer.class);
-        Page<T> bean = new Page<>(pageNumber, pageSize);
-        bean.setRecords(resultList);
-        bean.setTotal(totalSize);
-        return bean;
+        Page<T> page = new Page<>(pageNumber, pageSize);
+        page.setRecords(resultList);
+        page.setTotal(totalSize);
+        return page;
     }
 
     @Override
@@ -372,11 +373,11 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
     @Override
     public <T> Long insertReturnAutoIncrement(T entity) {
         if (entity == null) {
-            throw new JdbcException("insert entity cannot be null");
+            throw new JdbcException("insertReturnAutoIncrement entity cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.insertSql(entity, true);
         if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
-            throw new JdbcException("insert parameters cannot be null");
+            throw new JdbcException("insertReturnAutoIncrement parameters cannot be null");
         }
         KeyHolder keyHolder = new GeneratedKeyHolder();
         final Object[] params = sqlProvider.getParameters().toArray();
@@ -400,9 +401,12 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
                 }
             }, keyHolder);
         }
-        return keyHolder.getKey().longValue();
+        if (keyHolder.getKey() != null) {
+            return keyHolder.getKey().longValue();
+        } else {
+            throw new JdbcException("insertReturnAutoIncrement please check whether it is an autoincrement primary key");
+        }
     }
-
 
     @Override
     public <T> int updateById(T entity) {
@@ -418,7 +422,6 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
         if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
             throw new JdbcException("update parameters cannot be null");
         }
-
         return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
@@ -461,7 +464,7 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
             }
             batchArgs.add(sqlProvider.getParameters().toArray());
         }
-        if (batchArgs == null || batchArgs.isEmpty()) {
+        if (CollectionUtils.isEmpty(batchArgs)) {
             throw new JdbcException("batchUpdate batchArgs cannot be null");
         }
         row = getJdbcTemplate().batchUpdate(sql, batchArgs);
@@ -484,7 +487,7 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
             }
             batchArgs.add(sqlProvider.getParameters().toArray());
         }
-        if (batchArgs == null || batchArgs.isEmpty()) {
+        if (CollectionUtils.isEmpty(batchArgs)) {
             throw new JdbcException("batchInsert batchArgs cannot be null");
         }
         row = getJdbcTemplate().batchUpdate(sql, batchArgs);
@@ -507,7 +510,7 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
             }
             batchArgs.add(sqlProvider.getParameters().toArray());
         }
-        if (batchArgs == null || batchArgs.isEmpty()) {
+        if (CollectionUtils.isEmpty(batchArgs)) {
             throw new JdbcException("batchDelete batchArgs cannot be null");
         }
         row = getJdbcTemplate().batchUpdate(sql, batchArgs);
