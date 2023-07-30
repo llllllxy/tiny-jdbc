@@ -198,7 +198,42 @@ int result = baseDao.insert(project, false);
 ```
 
 3.  更新操作
-    
+```java
+@Autowired
+private BaseDao baseDao;
+
+// 使用sql插入一条数据
+int result = baseDao.update(""update project_info set project_name = ? where id = ?"", new Object[]{"测试项目", 1});
+
+Project project = new Project();
+project.setId(1);
+project.setProjectName("xxxx");
+project.setDelFlag(1);
+project.setCreatedBy("admin");
+project.setRemark("XXXX");
+// 使用实体类更新一条数据，默认忽略null
+int result = baseDao.updateById(project);
+
+// 使用实体类更新一条数据，不忽略null
+int result = baseDao.updateById(project, false);
+
+``` 
 
 
 4.  删除操作
+```java
+@Autowired
+private BaseDao baseDao;
+
+// 使用sql插入一条数据
+int result = baseDao.delete(""delete from project_info where id = ?"", new Object[]{1});
+
+Project project = new Project();
+project.setId(1);
+// 使用实体类删除一条数据，默认忽略null
+int result = baseDao.delete(project);
+
+// 根据id删除一条数据
+int result = baseDao.deleteById(1, Project.class);
+
+``` 
