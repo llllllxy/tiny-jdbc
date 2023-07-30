@@ -57,7 +57,7 @@ public interface IObjectSupport {
      * @return int 受影响的行数
      *
      */
-    <T> int update(T entity);
+    <T> int updateById(T entity);
 
     /**
      * 持久化更新给定的实例，根据主键值更新
@@ -67,7 +67,7 @@ public interface IObjectSupport {
      * @return int 受影响的行数
      *
      */
-    <T> int update(T entity, boolean ignoreNulls);
+    <T> int updateById(T entity, boolean ignoreNulls);
 
     /**
      * 持久化删除给定的实例

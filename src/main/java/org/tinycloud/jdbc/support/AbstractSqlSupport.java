@@ -405,12 +405,12 @@ public abstract class AbstractSqlSupport implements ISqlSupport, IObjectSupport 
 
 
     @Override
-    public <T> int update(T entity) {
-        return update(entity, true);
+    public <T> int updateById(T entity) {
+        return updateById(entity, true);
     }
 
     @Override
-    public <T> int update(T entity, boolean ignoreNulls) {
+    public <T> int updateById(T entity, boolean ignoreNulls) {
         if (entity == null) {
             throw new JdbcException("update entity cannot be null");
         }
