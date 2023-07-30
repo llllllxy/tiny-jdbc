@@ -30,15 +30,15 @@ tiny-jdbc-boot-starter是一个基于Spring JdbcTemplate 开发的轻量级数�
     </dependency>
 ```
 ### 2.2、配置项
-### 2.2.1 全局配置
+#### 2.2.1 全局配置
 ```yaml
 tiny-jdbc:
   # 数据库分页类型，目前支持三种(mysql,oracle,db2)
   db-type: mysql
 ```
 
-### 2.2.2 注解说明
-#### @Table
+#### 2.2.2 注解说明
+##### @Table
 - 描述：表名注解，标识实体类对应的表
 - 使用位置：实体类
 ```java
@@ -49,7 +49,7 @@ public class UploadFile implements Serializable {
     ...
 }
 ```
-#### @Column
+##### @Column
 - 描述：字段注解
 - 使用位置：实体类
 ```java
@@ -83,12 +83,12 @@ public class UploadFile implements Serializable {
 
 
 ### 2.3、使用说明
-### 2.3.1、注入BaseDao
+#### 2.3.1、注入BaseDao
 ```java
     @Autowired
     private BaseDao baseDao;
 ```
-### 2.3.2、查询操作
+#### 2.3.2、查询操作
 |方法|说明|
 |---|---|
 |`<T> List<T> select(String sql, Class<T> classz, Object... params);` |根据给定的sql和实体类型和参数，查询数据库并返回实体类对象列表|
@@ -105,7 +105,7 @@ public class UploadFile implements Serializable {
 |`<T> Page<T> paginate(T entity, Integer pageNumber, Integer pageSize);`|实体类里面非null的属性作为查询条件，执行分页查询|
 |`<T> T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象|
 
-### 2.3.3、插入操作
+#### 2.3.3、插入操作
 |方法|说明|
 |---|---|
 |`int insert(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行插入|
@@ -113,14 +113,14 @@ public class UploadFile implements Serializable {
 |`<T> int insert(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里属性值为null的属性，如果主键策略为assignId或assignUuid，那将在entity里返回生成的主键值|
 |`<T> Long insertReturnAutoIncrement(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，并且返回自增的主键|
 
-### 2.3.4、修改操作
+#### 2.3.4、修改操作
 |方法|说明|
 |---|---|
 |`int update(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行修改|
 |`<T> int updateById(T entity);`|根据主键值更新数据，将忽略entity里属性值为null的属性|
 |`<T> int updateById(T entity, boolean ignoreNulls);`|根据主键值更新数据，可选择是否忽略entity里属性值为null的属性|
 
-### 2.3.5、删除操作
+#### 2.3.5、删除操作
 |方法|说明|
 |---|---|
 |`int delete(String sql, final Object... params);` | 根据提供的SQL语句和提供的参数，执行删除|
