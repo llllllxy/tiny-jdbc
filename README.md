@@ -131,7 +131,74 @@ public class UploadFile implements Serializable {
 
 ## 3、示例
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+1.  查询操作
+```java
+@Autowired
+private BaseDao baseDao;
+
+// 查询所以的项目，返回列表
+List<Project> projectList = baseDao.select("select * from t_project_info order by created_at desc", Project.class);
+
+// 查询所以的项目，返回Map列表
+List<Map<String, Object>> projectList = baseDao.select("select * from t_project_info order by created_at desc");
+
+// 查询id=1的项目，返回列表
+List<Project> projectList = baseDao.select("select * from t_project_info where id = ? ", Project.class, 1);
+
+// 模糊查询项目，返回列表
+List<Project> projectList =  baseDao.select("select * from t_project_info where project_name like CONCAT('%', ?, '%')",  Project.class, "测试项目");
+
+// 查询id=1的项目，返回对象
+Project project = baseDao.selectOne("select * from t_project_info where id = ? ", Project.class, 1);
+
+// 查询记录数
+Integer count = baseDao.selectOneColumn("select count(*) from t_project_info order by created_at desc", Integer.class));
+
+// 分页查询id>100的记录，第一页，每页10个
+Page<Project> page = baseDao.paginate("select * from t_project_info order by created_at desc where id > ?", Project.class, 1, 10, 100));
+
+// 查询id=3的项目信息列表
+Project project = new Project();
+project.setId(3L);
+List<Project> projectList = baseDao.select(project)
+
+// 查询id=3的项目信息
+Project project = new Project();
+project.setId(3L);
+Project project = baseDao.selectOne(project);
+
+// 查询id=3的项目信息
+Project project = baseDao.selectById(3L, Project.class);
+
+// 分页查询id=3的项目信息，第一页，每页10个
+Project project = new Project();
+project.setId(3L);
+Page<Project> page = baseDao.paginate(project, 1, 10)
+
+```
+2.  新增操作
+```java
+@Autowired
+private BaseDao baseDao;
+
+// 使用sql插入一条数据
+int result = baseDao.insert("insert t_into project_info(project_name, del_flag, remark) values (?,?,?)", "测试项目", 1, "XXXXXXX");
+
+Project project = new Project();
+project.setProjectName("xxxx");
+project.setDelFlag(1);
+project.setCreatedBy("admin");
+project.setRemark("XXXX");
+// 使用实体类插入一条数据，默认忽略null
+int result = baseDao.insert(project);
+
+// 使用实体类插入一条数据，不忽略null
+int result = baseDao.insert(project, false);
+
+```
+
+3.  更新操作
+    
+
+
+4.  删除操作
