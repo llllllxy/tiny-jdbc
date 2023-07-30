@@ -2,15 +2,11 @@ package org.tinycloud.jdbc.exception;
 
 
 /**
+ * 自定义异常类
  * @author liuxingyu01
- * @date 2022-03-11-16:49
- * @description 自定义异常类
+ * @since  2023-07-26-16:49
  **/
 public class JdbcException extends RuntimeException {
-
-    /**
-     *
-     */
     private static final long serialVersionUID = 5423027429182629901L;
 
     /**
