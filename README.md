@@ -25,7 +25,7 @@ tiny-jdbc-boot-starter是一个基于Spring JdbcTemplate 开发的轻量级数�
     </dependency>
     <dependency>
         <groupId>org.tinycloud</groupId>
-        <artifactId>tiny-security-boot-starter</artifactId>
+        <artifactId>tiny-jdbc-boot-starter</artifactId>
         <version>1.0-SNAPSHOT</version>
     </dependency>
 ```
