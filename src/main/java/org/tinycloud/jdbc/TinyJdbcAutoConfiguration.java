@@ -12,7 +12,7 @@ import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.MysqlPageHandleImpl;
 import org.tinycloud.jdbc.page.OraclePageHandleImpl;
 import org.tinycloud.jdbc.util.DbType;
-import org.tinycloud.jdbc.util.DbTypeUtil;
+import org.tinycloud.jdbc.util.DbTypeUtils;
 
 import javax.sql.DataSource;
 
@@ -24,7 +24,7 @@ public class TinyJdbcAutoConfiguration {
     @ConditionalOnMissingBean(IPageHandle.class)
     @Bean
     public IPageHandle pageHandle(@Autowired DataSource dataSource) {
-        DbType dbType = DbTypeUtil.getDbType(dataSource);
+        DbType dbType = DbTypeUtils.getDbType(dataSource);
         if (logger.isInfoEnabled()) {
             logger.info("TinyJdbcAutoConfiguration pageHandle dbType={}", dbType.getName());
         }

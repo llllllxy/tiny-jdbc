@@ -9,8 +9,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.regex.Pattern;
 
-public class DbTypeUtil {
-    private DbTypeUtil() {
+public class DbTypeUtils {
+    private DbTypeUtils() {
     }
 
 
