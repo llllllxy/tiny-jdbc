@@ -74,6 +74,14 @@ public interface IObjectSupport<T> {
     int deleteById(Object id);
 
     /**
+     * 根据ID列表进行批量删除
+     *
+     * @param ids 主键id列表
+     * @return T 对象
+     */
+    int deleteByIds(List<Object> ids);
+
+    /**
      * 批量持久化更新给定的实例
      *
      * @param collection 实例集合

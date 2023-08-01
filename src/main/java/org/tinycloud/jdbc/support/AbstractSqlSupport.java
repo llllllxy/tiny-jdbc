@@ -467,6 +467,18 @@ public abstract class AbstractSqlSupport<T> implements ISqlSupport<T>, IObjectSu
     }
 
     @Override
+    public int deleteByIds(List<Object> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new JdbcException("deleteByIds ids cannot be null or empty");
+        }
+        SqlProvider sqlProvider = SqlGenerator.deleteByIdsSql(entityClass);
+        NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(getJdbcTemplate());
+        Map<String, Object> param = new HashMap<>();
+        param.put("idList", ids);
+        return namedJdbcTemplate.update(sqlProvider.getSql(), param);
+    }
+
+    @Override
     public int[] batchUpdate(Collection<T> collection) {
         if (collection == null || collection.isEmpty()) {
             throw new JdbcException("updateBatch collection cannot be null");

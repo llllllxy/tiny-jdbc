@@ -391,4 +391,44 @@ public class SqlGenerator {
         return so;
     }
 
+    /**
+     * 构建删除SQL（根据id批量删除）
+     *
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider deleteByIdsSql(Class<?> clazz) {
+        Object object = ReflectUtils.createInstance(clazz);
+        // 对象检验
+        ReflectUtils.validateTargetClass(object);
+
+        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+        Field[] fields = ReflectUtils.getFields(clazz);
+        StringBuilder whereColumns = new StringBuilder();
+
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
+            if (columnAnnotation == null) {
+                continue;
+            }
+            String column = columnAnnotation.value();
+            if (StringUtils.isEmpty(column)) {
+                continue;
+            }
+            boolean primaryKey = columnAnnotation.primaryKey();
+            if (primaryKey) {
+                whereColumns.append(column);
+                break;
+            }
+        }
+        StringBuilder sql = new StringBuilder();
+        sql.append("delete from ")
+                .append(tableAnnotation.value())
+                .append(" where ")
+                .append(whereColumns)
+                .append(" in (:idList)");
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        return so;
+    }
 }
