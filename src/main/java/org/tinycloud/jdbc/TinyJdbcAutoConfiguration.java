@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.tinycloud.jdbc.page.DB2PageHandleImpl;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.MysqlPageHandleImpl;
@@ -42,16 +41,5 @@ public class TinyJdbcAutoConfiguration {
             logger.info("TinyJdbcAutoConfiguration pageHandle is running!");
         }
         return pageHandle;
-    }
-
-    @Bean
-    public BaseDao baseDao(@Autowired JdbcTemplate jdbcTemplate, @Autowired IPageHandle pageHandle) {
-        if (jdbcTemplate == null) {
-            logger.error("TinyJdbcAutoConfiguration: Bean jdbcTemplate is null");
-        }
-        if (pageHandle == null) {
-            logger.error("TinyJdbcAutoConfiguration: Bean pageHandle Not Defined");
-        }
-        return new BaseDao(jdbcTemplate, pageHandle);
     }
 }
