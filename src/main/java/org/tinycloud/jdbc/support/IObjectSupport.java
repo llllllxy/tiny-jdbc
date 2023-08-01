@@ -7,14 +7,15 @@ import java.util.List;
 
 /**
  * <p>
- *     对象操作接口，传入要执行的实例，操纵数据库，执行增、删、改、查操作，
- *     前提是传入的实例中用@Table指定了数据库表，用@Column指定了表字段
- *     对象操作只支持对单表的增、删、改、查。多表查询和存储过程等请使用sql操作接口或JdbcTemplate原生接口
+ * 对象操作接口，传入要执行的实例，操纵数据库，执行增、删、改、查操作，
+ * 前提是传入的实例中用@Table指定了数据库表，用@Column指定了表字段
+ * 对象操作只支持对单表的增、删、改、查。多表查询和存储过程等请使用sql操作接口或JdbcTemplate原生接口
  * </p>
+ *
  * @author liuxingyu01
  * @since 2023-07-28-16:49
  **/
-public interface IObjectSupport<T> {
+public interface IObjectSupport<T, ID> {
     /**
      * 持久化插入给定的实例（默认忽略null值）
      *
@@ -71,7 +72,7 @@ public interface IObjectSupport<T> {
      * @param id 主键id
      * @return T 对象
      */
-    int deleteById(Object id);
+    int deleteById(ID id);
 
     /**
      * 根据ID列表进行批量删除
@@ -79,7 +80,7 @@ public interface IObjectSupport<T> {
      * @param ids 主键id列表
      * @return T 对象
      */
-    int deleteByIds(List<Object> ids);
+    int deleteByIds(List<ID> ids);
 
     /**
      * 批量持久化更新给定的实例
@@ -111,7 +112,7 @@ public interface IObjectSupport<T> {
      * @param id 主键id
      * @return T 对象
      */
-    T selectById(Object id);
+    T selectById(ID id);
 
     /**
      * 查询给定的实例，返回实例列表

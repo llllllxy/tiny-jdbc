@@ -13,7 +13,7 @@ import java.util.Map;
  * @author liuxingyu01
  * @since 2023-07-19
  **/
-public interface ISqlSupport<T> {
+public interface ISqlSupport<T,ID> {
 
     /**
      * 使用提供的SQL语句和提供的参数，执行增删改

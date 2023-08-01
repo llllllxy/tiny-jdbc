@@ -5,7 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.support.AbstractSqlSupport;
 
-public class BaseDao<T> extends AbstractSqlSupport<T> {
+public class BaseDao<T, ID> extends AbstractSqlSupport<T, ID> {
 
     /**
      * JdbcTemplate

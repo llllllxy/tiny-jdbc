@@ -25,7 +25,7 @@ import java.util.*;
  * @author liuxingyu01
  * @since 2022-03-11-16:49
  **/
-public abstract class AbstractSqlSupport<T> implements ISqlSupport<T>, IObjectSupport<T> {
+public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, IObjectSupport<T, ID> {
 
     protected abstract JdbcTemplate getJdbcTemplate();
 
@@ -306,7 +306,7 @@ public abstract class AbstractSqlSupport<T> implements ISqlSupport<T>, IObjectSu
 
     // ---------------------------------IObjectSupport开始---------------------------------
     @Override
-    public T selectById(Object id) {
+    public T selectById(ID id) {
         if (id == null) {
             throw new JdbcException("selectById id cannot be null");
         }
@@ -455,7 +455,7 @@ public abstract class AbstractSqlSupport<T> implements ISqlSupport<T>, IObjectSu
     }
 
     @Override
-    public int deleteById(Object id) {
+    public int deleteById(ID id) {
         if (id == null) {
             throw new JdbcException("deleteById id cannot be null");
         }
@@ -467,7 +467,7 @@ public abstract class AbstractSqlSupport<T> implements ISqlSupport<T>, IObjectSu
     }
 
     @Override
-    public int deleteByIds(List<Object> ids) {
+    public int deleteByIds(List<ID> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             throw new JdbcException("deleteByIds ids cannot be null or empty");
         }
