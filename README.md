@@ -102,10 +102,16 @@ public class UploadFile implements Serializable {
 |`<T> T selectOneColumn(String sql, Class<T> clazz, Object... params);`|根据给定的sql和实体类型和参数，查询数据并返回一个值（常用于查count）|
 |`Page<T> paginate(String sql, Integer pageNumber, Integer pageSize);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
 |`Page<T> paginate(String sql, Integer pageNumber, Integer pageSize, Object... params);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+
 |`T selectById(Object id);`|根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`List<T> select(T entity);`|实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
 |`Page<T> paginate(T entity, Integer pageNumber, Integer pageSize);`|实体类里面非null的属性作为查询条件，执行分页查询，类型使用的是xxxDao<T>的类型|
 |`T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
+
+|`List<T> select(Criteria criteria);`|根据条件构造器查询，类型使用的是xxxDao<T>的类型|
+|`List<T> select(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)查询，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
+|`T selectOne(Criteria criteria);`|根据条件构造器查询，类型使用的是xxxDao<T>的类型|
+|`T selectOne(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)查询，类型使用的是xxxDao<T>的类型|
 
 #### 2.3.3、插入操作
 |方法|说明|
@@ -119,6 +125,8 @@ public class UploadFile implements Serializable {
 |方法|说明|
 |---|---|
 |`int update(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行修改|
+|`int update(T entity, Criteria criteria);`|根据entity里的值和条件构造器，执行修改|
+|`int update(T entity, LambdaCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改|
 |`int updateById(T entity);`|根据主键值更新数据，将忽略entity里属性值为null的属性|
 |`int updateById(T entity, boolean ignoreNulls);`|根据主键值更新数据，可选择是否忽略entity里属性值为null的属性|
 
@@ -128,9 +136,77 @@ public class UploadFile implements Serializable {
 |`int delete(String sql, final Object... params);` | 根据提供的SQL语句和提供的参数，执行删除|
 |`int deleteById(Object id);` | 根据主键ID进行删除，类型使用的是xxxDao<T>的类型 |
 |`int delete(T entity);`| 根据entity里的属性值进行删除，entity里不为null的属性，将作为参数 |
+|`int delete(Criteria criteria);`| 根据条件构造器，将作为where参数 |
+|`int delete(LambdaCriteria criteria);`| 根据条件构造器（lambda），将作为where参数 |
+
+## 3、条件构造器说明
+|方法|说明|
+|---|---|
+|equal|等于|
+|notEqual|不等于|
+|isNull|等于null|
+|isNotNull|不等于null|
+|like|模糊查询|
+|gt|大于|
+|gte|大于等于|
+|lt|小于|
+|lte|小于等于|
+|in|SQL里的in|
+|notIn|SQL里的not in|
+|betweenAnd|SQL里的between and|
+|orderBy|排序，false=asc, true=desc|
+
+### 3.1、Criteria
+```java
+    List<Integer> ids = new ArrayList<Integer>() {{
+        add(1);
+        add(2);
+        add(3);
+    }};
+
+    Criteria criteria = new Criteria()
+            .lt("age", 28)
+            .in("name", names)
+            .equal("created_at", new java.util.Date())
+            .in("id", ids)
+            .orderBy("age", true);
+
+    List<Project> list = projectDao.select(criteria)
+    
+    int num = projectDao.delete(criteria);
+
+    Project project = new Project();
+    project.setProjectName("测试项目");
+    int num = projectDao.update(project, criteria);
+```
+
+### 3.2、LambdaCriteria
+```java
+public static void main(String[] args) {
+    List<Long> ids = new ArrayList<Long>() {{
+        add(1L);
+        add(2L);
+        add(3L);
+    }};
+    
+    LambdaCriteria criteria = new LambdaCriteria()
+            .lt(UploadFile::getFileId, "1000")
+            .gt(UploadFile::getFileId, "100")
+            .equal(UploadFile::getFileMd5, "b8394b15e02c50b508b3e46cc120f0f5")
+            .in(UploadFile::getId, ids)
+            .orderBy(UploadFile::getCreatedAt, true);
+
+    List<Project> list = projectDao.select(criteria)
+
+    int num = projectDao.delete(criteria);
+
+    Project project = new Project();
+    project.setProjectName("测试项目");
+    int num = projectDao.update(project, criteria);
+```
 
 
-## 3、示例
+## 4、示例
 
 1.  查询操作
 ```java
