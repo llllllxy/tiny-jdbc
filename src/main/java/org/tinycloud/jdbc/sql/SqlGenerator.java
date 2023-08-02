@@ -167,7 +167,14 @@ public class SqlGenerator {
         return so;
     }
 
-
+    /**
+     * 构建更新SQL
+     *
+     * @param object      实体对象
+     * @param ignoreNulls 是否忽略null
+     * @param criteria    条件构造器
+     * @return 组装完毕的SqlProvider
+     */
     public static SqlProvider updateByCriteriaSql(Object object, boolean ignoreNulls, Criteria criteria) {
         ReflectUtils.validateTargetClass(object);
         Class<?> clazz = object.getClass();
@@ -213,6 +220,14 @@ public class SqlGenerator {
         return so;
     }
 
+    /**
+     * 构建更新SQL
+     *
+     * @param object      实体对象
+     * @param ignoreNulls 是否忽略null
+     * @param criteria    条件构造器Lambda
+     * @return 组装完毕的SqlProvider
+     */
     public static SqlProvider updateByLambdaCriteriaSql(Object object, boolean ignoreNulls, LambdaCriteria criteria) {
         ReflectUtils.validateTargetClass(object);
         Class<?> clazz = object.getClass();
@@ -309,6 +324,45 @@ public class SqlGenerator {
         return so;
     }
 
+    /**
+     * 构建删除SQL（根据条件构造器删除）
+     *
+     * @param criteria 条件构造器
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider deleteCriteriaSql(Criteria criteria, Class<?> clazz) {
+        Object object = ReflectUtils.createInstance(clazz);
+        // 对象检验
+        ReflectUtils.validateTargetClass(object);
+        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("DELETE FROM ").append(tableAnnotation.value()).append(criteria.generateSql());
+
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        return so;
+    }
+
+    /**
+     * 构建删除SQL（根据条件构造器删除）
+     *
+     * @param criteria 条件构造器Lambda
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider deleteLambdaCriteriaSql(LambdaCriteria criteria, Class<?> clazz) {
+        Object object = ReflectUtils.createInstance(clazz);
+        // 对象检验
+        ReflectUtils.validateTargetClass(object);
+        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("DELETE FROM ").append(tableAnnotation.value()).append(criteria.generateSql());
+
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        return so;
+    }
 
     /**
      * 构建查询SQL

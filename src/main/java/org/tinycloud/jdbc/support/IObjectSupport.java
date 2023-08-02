@@ -101,6 +101,22 @@ public interface IObjectSupport<T, ID> {
     int delete(T entity);
 
     /**
+     * 持久化删除给定的实例
+     *
+     * @param criteria 条件构造器
+     * @return int 受影响的行数
+     */
+    int delete(Criteria criteria);
+
+    /**
+     * 持久化删除给定的实例
+     *
+     * @param criteria 条件构造器(lambda版)
+     * @return int 受影响的行数
+     */
+    int delete(LambdaCriteria criteria);
+
+    /**
      * 根据ID进行删除
      *
      * @param id 主键id

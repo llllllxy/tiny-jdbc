@@ -574,6 +574,24 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
+    public int delete(LambdaCriteria criteria) {
+        if (criteria == null) {
+            throw new JdbcException("delete criteria cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.deleteLambdaCriteriaSql(criteria, entityClass);
+        return execute(sqlProvider.getSql());
+    }
+
+    @Override
+    public int delete(Criteria criteria) {
+        if (criteria == null) {
+            throw new JdbcException("delete criteria cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.deleteCriteriaSql(criteria, entityClass);
+        return execute(sqlProvider.getSql());
+    }
+
+    @Override
     public int deleteById(ID id) {
         if (id == null) {
             throw new JdbcException("deleteById id cannot be null");
