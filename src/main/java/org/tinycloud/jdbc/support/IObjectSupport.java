@@ -1,5 +1,7 @@
 package org.tinycloud.jdbc.support;
 
+import org.tinycloud.jdbc.criteria.Criteria;
+import org.tinycloud.jdbc.criteria.LambdaCriteria;
 import org.tinycloud.jdbc.page.Page;
 
 import java.util.Collection;
@@ -57,6 +59,38 @@ public interface IObjectSupport<T, ID> {
      * @return int 受影响的行数
      */
     int updateById(T entity, boolean ignoreNulls);
+
+    /**
+     * 持久化更新给定的实例（默认忽略null值）
+     *
+     * @param criteria 条件构造器
+     * @return int 受影响的行数
+     */
+    int update(T entity, boolean ignoreNulls, Criteria criteria);
+
+    /**
+     * 持久化更新给定的实例（默认忽略null值）
+     *
+     * @param lambdaCriteria 条件构造器(lambda版)
+     * @return int 受影响的行数
+     */
+    int update(T entity, boolean ignoreNulls, LambdaCriteria lambdaCriteria);
+
+    /**
+     * 持久化更新给定的实例（默认忽略null值）
+     *
+     * @param criteria 条件构造器
+     * @return int 受影响的行数
+     */
+    int update(T entity, Criteria criteria);
+
+    /**
+     * 持久化更新给定的实例（默认忽略null值）
+     *
+     * @param lambdaCriteria 条件构造器(lambda版)
+     * @return int 受影响的行数
+     */
+    int update(T entity, LambdaCriteria lambdaCriteria);
 
     /**
      * 持久化删除给定的实例
@@ -123,6 +157,22 @@ public interface IObjectSupport<T, ID> {
     List<T> select(T entity);
 
     /**
+     * 查询给定的实例，返回实例列表
+     *
+     * @param criteria 条件构造器
+     * @return List<T> 实例列表
+     */
+    List<T> select(Criteria criteria);
+
+    /**
+     * 查询给定的实例，返回实例列表
+     *
+     * @param lambdaCriteria 条件构造器(lambda版)
+     * @return List<T> 实例列表
+     */
+    List<T> select(LambdaCriteria lambdaCriteria);
+
+    /**
      * 分页查询给定的实例，返回实例列表
      *
      * @param entity     实例
@@ -133,10 +183,46 @@ public interface IObjectSupport<T, ID> {
     Page<T> paginate(T entity, Integer pageNumber, Integer pageSize);
 
     /**
+     * 分页查询给定的实例，返回实例列表
+     *
+     * @param criteria   条件构造器
+     * @param pageNumber 页码
+     * @param pageSize   页大小
+     * @return List<T> 实例列表
+     */
+    Page<T> paginate(Criteria criteria, Integer pageNumber, Integer pageSize);
+
+    /**
+     * 分页查询给定的实例，返回实例列表
+     *
+     * @param lambdaCriteria 条件构造器(lambda版)
+     * @param pageNumber     页码
+     * @param pageSize       页大小
+     * @return List<T> 实例列表
+     */
+    Page<T> paginate(LambdaCriteria lambdaCriteria, Integer pageNumber, Integer pageSize);
+
+    /**
      * 查询给定的实例，返回一个实例
      *
      * @param entity 实例
      * @return T 实例
      */
     T selectOne(T entity);
+
+    /**
+     * 查询给定的实例，返回一个实例
+     *
+     * @param criteria 条件构造器
+     * @return T 实例
+     */
+    T selectOne(Criteria criteria);
+
+    /**
+     * 查询给定的实例，返回一个实例
+     *
+     * @param lambdaCriteria 条件构造器(lambda版)
+     * @return T 实例
+     */
+    T selectOne(LambdaCriteria lambdaCriteria);
 }
