@@ -1,7 +1,7 @@
 package org.tinycloud.jdbc.criteria;
 
 import org.tinycloud.jdbc.annotation.Column;
-import org.tinycloud.jdbc.util.SqlUtils;
+import org.tinycloud.jdbc.util.StrUtils;
 
 import java.beans.Introspector;
 import java.io.Serializable;
@@ -38,7 +38,7 @@ public interface TypeFunction<T, R> extends Serializable, Function<T, R> {
 
             String sqlField;
             if (annotation == null || annotation.value().isEmpty()) {
-                sqlField = SqlUtils.humpToLine(fieldName);
+                sqlField = StrUtils.humpToLine(fieldName);
             } else {
                 sqlField = annotation.value();
             }
