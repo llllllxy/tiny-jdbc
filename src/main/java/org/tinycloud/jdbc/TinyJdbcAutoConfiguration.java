@@ -6,10 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.tinycloud.jdbc.page.DB2PageHandleImpl;
-import org.tinycloud.jdbc.page.IPageHandle;
-import org.tinycloud.jdbc.page.MysqlPageHandleImpl;
-import org.tinycloud.jdbc.page.OraclePageHandleImpl;
+import org.tinycloud.jdbc.page.*;
 import org.tinycloud.jdbc.util.DbType;
 import org.tinycloud.jdbc.util.DbTypeUtils;
 
@@ -18,7 +15,6 @@ import javax.sql.DataSource;
 @Configuration
 public class TinyJdbcAutoConfiguration {
     final static Logger logger = LoggerFactory.getLogger(TinyJdbcAutoConfiguration.class);
-
 
     @ConditionalOnMissingBean(IPageHandle.class)
     @Bean
@@ -34,6 +30,8 @@ public class TinyJdbcAutoConfiguration {
             pageHandle = new DB2PageHandleImpl();
         } else if (dbType == DbType.ORACLE) {
             pageHandle = new OraclePageHandleImpl();
+        } else if (dbType == DbType.POSTGRE_SQL) {
+            pageHandle = new PostgreSqlPageHandleImpl();
         } else {
             pageHandle = new MysqlPageHandleImpl();
         }
