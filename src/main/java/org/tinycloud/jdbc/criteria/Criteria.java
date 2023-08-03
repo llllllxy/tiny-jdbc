@@ -50,7 +50,7 @@ public class Criteria extends AbstractCriteria {
     }
 
     public <R> Criteria notEqual(String field, R value) {
-        String condition = field + " != " + formatValue(value);
+        String condition = field + " <> " + formatValue(value);
         conditions.add(condition);
         return this;
     }

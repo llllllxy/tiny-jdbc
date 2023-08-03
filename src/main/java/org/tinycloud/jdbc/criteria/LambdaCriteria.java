@@ -62,7 +62,7 @@ public class LambdaCriteria extends AbstractCriteria {
 
     public <T, R> LambdaCriteria notEqual(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
-        String condition = columnName + " != " + formatValue(value);
+        String condition = columnName + " <> " + formatValue(value);
         conditions.add(condition);
         return this;
     }
