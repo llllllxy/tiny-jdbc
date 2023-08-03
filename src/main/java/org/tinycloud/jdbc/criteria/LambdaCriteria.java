@@ -135,6 +135,16 @@ public class LambdaCriteria extends AbstractCriteria {
         return this;
     }
 
+    public <T, R> LambdaCriteria notBetweenAnd(TypeFunction<T, R> field, R start, R end) {
+        String columnName = getColumnName(field);
+        String condition = "(" + columnName + " NOT BETWEEN " +
+                formatValue(start) +
+                " AND " +
+                formatValue(end) + ")";
+        conditions.add(condition);
+        return this;
+    }
+
     public <T, R> LambdaCriteria orderBy(TypeFunction<T, R> field, boolean desc) {
         String columnName = getColumnName(field);
         orderBy = " ORDER BY " + columnName;

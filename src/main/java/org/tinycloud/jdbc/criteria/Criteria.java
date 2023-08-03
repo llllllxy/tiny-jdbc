@@ -116,6 +116,15 @@ public class Criteria extends AbstractCriteria {
         return this;
     }
 
+    public <R> Criteria notBetweenAnd(String field, R start, R end) {
+        String condition = "(" + field + " NOT BETWEEN " +
+                formatValue(start) +
+                " AND " +
+                formatValue(end) + ")";
+        conditions.add(condition);
+        return this;
+    }
+
     public Criteria orderBy(String field, boolean desc) {
         orderBy = " ORDER BY " + field;
         if (desc) {
