@@ -8,6 +8,7 @@ import org.tinycloud.jdbc.criteria.LambdaCriteria;
 import org.tinycloud.jdbc.exception.JdbcException;
 import org.tinycloud.jdbc.id.IdUtils;
 import org.tinycloud.jdbc.util.ReflectUtils;
+import org.tinycloud.jdbc.util.Triple;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -29,17 +30,18 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider insertSql(Object object, boolean ignoreNulls) {
-        ReflectUtils.validateTargetClass(object);
-        Class<?> clazz = object.getClass();
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = ReflectUtils.getFields(clazz);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Field[] fields = triple.getSecond();
+        Table tableAnnotation = triple.getThird();
+
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
 
         StringBuilder columns = new StringBuilder();
         StringBuilder values = new StringBuilder();
         for (Field field : fields) {
-            field.setAccessible(true);
+            ReflectUtils.makeAccessible(field);
+            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
@@ -113,18 +115,17 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider updateByIdSql(Object object, boolean ignoreNulls) {
-        ReflectUtils.validateTargetClass(object);
-        Class<?> clazz = object.getClass();
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = ReflectUtils.getFields(clazz);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Field[] fields = triple.getSecond();
+        Table tableAnnotation = triple.getThird();
+
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
-
         StringBuilder columns = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
-        StringBuilder whereValues = new StringBuilder();
+        Object whereValues = new Object();
         for (Field field : fields) {
-            field.setAccessible(true);
+            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
@@ -142,7 +143,7 @@ public class SqlGenerator {
             boolean primaryKey = columnAnnotation.primaryKey();
             if (primaryKey) {
                 whereColumns.append(column);
-                whereValues.append(filedValue);
+                whereValues = filedValue;
                 continue;
             }
             // 是否忽略null
@@ -152,14 +153,16 @@ public class SqlGenerator {
             columns.append(column).append("=?,");
             parameters.add(filedValue);
         }
-
+        if (whereValues == null) {
+            throw new JdbcException("SqlGenerator updateByIdSql primaryKeyId can not null!");
+        }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
         sql.append("UPDATE ").append(tableAnnotation.value()).append(" SET ").append(tableColumn);
         sql.append(" WHERE ");
         sql.append(whereColumns);
         sql.append("=?");
 
-        parameters.add(whereValues.toString());
+        parameters.add(whereValues);
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
@@ -176,17 +179,16 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider updateByCriteriaSql(Object object, boolean ignoreNulls, Criteria criteria) {
-        ReflectUtils.validateTargetClass(object);
-        Class<?> clazz = object.getClass();
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = ReflectUtils.getFields(clazz);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Field[] fields = triple.getSecond();
+        Table tableAnnotation = triple.getThird();
+
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
-
         StringBuilder columns = new StringBuilder();
 
         for (Field field : fields) {
-            field.setAccessible(true);
+            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
@@ -229,17 +231,17 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider updateByLambdaCriteriaSql(Object object, boolean ignoreNulls, LambdaCriteria criteria) {
-        ReflectUtils.validateTargetClass(object);
-        Class<?> clazz = object.getClass();
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = ReflectUtils.getFields(clazz);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Field[] fields = triple.getSecond();
+        Table tableAnnotation = triple.getThird();
+
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
 
         StringBuilder columns = new StringBuilder();
 
         for (Field field : fields) {
-            field.setAccessible(true);
+            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
@@ -280,16 +282,16 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteSql(Object object) {
-        ReflectUtils.validateTargetClass(object);
-        Class<?> classz = object.getClass();
-        Table tableAnnotation = (Table) classz.getAnnotation(Table.class);
-        Field[] fields = ReflectUtils.getFields(classz);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Field[] fields = triple.getSecond();
+        Table tableAnnotation = triple.getThird();
+
         StringBuilder sql = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
 
         for (Field field : fields) {
-            field.setAccessible(true);
+            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
@@ -333,8 +335,8 @@ public class SqlGenerator {
     public static SqlProvider deleteCriteriaSql(Criteria criteria, Class<?> clazz) {
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        ReflectUtils.validateTargetClass(object);
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Table tableAnnotation = triple.getThird();
 
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ").append(tableAnnotation.value()).append(criteria.generateSql());
@@ -353,8 +355,8 @@ public class SqlGenerator {
     public static SqlProvider deleteLambdaCriteriaSql(LambdaCriteria criteria, Class<?> clazz) {
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        ReflectUtils.validateTargetClass(object);
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+        Triple<Class<?>, Field[], Table> triple =ReflectUtils.validateTargetClass(object);
+        Table tableAnnotation = triple.getThird();
 
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ").append(tableAnnotation.value()).append(criteria.generateSql());
@@ -371,17 +373,17 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectSql(Object object) {
-        ReflectUtils.validateTargetClass(object);
-        Class<?> clazz = object.getClass();
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = ReflectUtils.getFields(clazz);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Field[] fields = triple.getSecond();
+        Table tableAnnotation = triple.getThird();
+
         StringBuilder columns = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
         String primaryKeyColumn = "";
 
         List<Object> parameters = new ArrayList<>();
         for (Field field : fields) {
-            field.setAccessible(true);
+            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
@@ -390,7 +392,6 @@ public class SqlGenerator {
             if (StringUtils.isEmpty(column)) {
                 continue;
             }
-
             boolean primaryKey = columnAnnotation.primaryKey();
             if (primaryKey) {
                 primaryKeyColumn = column;
@@ -446,16 +447,16 @@ public class SqlGenerator {
     public static SqlProvider selectByIdSql(Object id, Class<?> clazz) {
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
 
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+        Table tableAnnotation = triple.getThird();
         Field[] fields = ReflectUtils.getFields(clazz);
         List<Object> parameters = new ArrayList<>();
         StringBuilder columns = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
 
         for (Field field : fields) {
-            field.setAccessible(true);
+            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
@@ -500,15 +501,15 @@ public class SqlGenerator {
     public static SqlProvider deleteByIdSql(Object id, Class<?> clazz) {
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Table tableAnnotation = triple.getThird();
+        Field[] fields = triple.getSecond();
 
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = ReflectUtils.getFields(clazz);
         List<Object> parameters = new ArrayList<>();
         StringBuilder whereColumns = new StringBuilder();
 
         for (Field field : fields) {
-            field.setAccessible(true);
+            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
@@ -545,14 +546,14 @@ public class SqlGenerator {
     public static SqlProvider deleteByIdsSql(Class<?> clazz) {
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Field[] fields = triple.getSecond();
+        Table tableAnnotation = triple.getThird();
 
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = ReflectUtils.getFields(clazz);
         StringBuilder whereColumns = new StringBuilder();
 
         for (Field field : fields) {
-            field.setAccessible(true);
+            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
@@ -588,14 +589,14 @@ public class SqlGenerator {
     public static SqlProvider selectCriteriaSql(Criteria criteria, Class<?> clazz) {
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Field[] fields = triple.getSecond();
+        Table tableAnnotation = triple.getThird();
 
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = ReflectUtils.getFields(clazz);
         StringBuilder columns = new StringBuilder();
 
         for (Field field : fields) {
-            field.setAccessible(true);
+            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
@@ -632,14 +633,14 @@ public class SqlGenerator {
     public static SqlProvider selectLambdaCriteriaSql(LambdaCriteria lambdaCriteria, Class<?> clazz) {
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Field[] fields = triple.getSecond();
+        Table tableAnnotation = triple.getThird();
 
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        Field[] fields = ReflectUtils.getFields(clazz);
         StringBuilder columns = new StringBuilder();
 
         for (Field field : fields) {
-            field.setAccessible(true);
+            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
@@ -650,7 +651,7 @@ public class SqlGenerator {
                 continue;
             }
             columns.append(column)
-                    .append(" as ")
+                    .append(" AS ")
                     .append(fieldName)
                     .append(",");
         }
@@ -665,4 +666,5 @@ public class SqlGenerator {
         so.setSql(sql.toString());
         return so;
     }
+
 }

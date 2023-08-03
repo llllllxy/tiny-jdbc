@@ -1,6 +1,5 @@
 package org.tinycloud.jdbc.util;
 
-import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.exception.JdbcException;
@@ -10,6 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * java反射工具类
@@ -23,8 +23,8 @@ public class ReflectUtils {
     private static final Method[] EMPTY_METHOD_ARRAY = new Method[0];
     private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
 
-    private static final Map<Class<?>, Method[]> declaredMethodsCache = new ConcurrentReferenceHashMap<>(256);
-    private static final Map<Class<?>, Field[]> declaredFieldsCache = new ConcurrentReferenceHashMap<>(256);
+    private static final Map<String, Method[]> declaredMethodsCache = new ConcurrentHashMap<>();
+    private static final Map<String, Field[]> declaredFieldsCache = new ConcurrentHashMap<>();
 
     /**
      * 校验Entity对象的合法性
@@ -32,7 +32,7 @@ public class ReflectUtils {
      * @param entity 实体类对象
      * @param <T>    泛型
      */
-    public static <T> void validateTargetClass(T entity) {
+    public static <T> Triple<Class<?>, Field[], Table> validateTargetClass(T entity) {
         if (entity == null) {
             throw new JdbcException("SqlGenerator entity cannot be null");
         }
@@ -49,6 +49,11 @@ public class ReflectUtils {
         if (fields == null || fields.length == 0) {
             throw new JdbcException("SqlGenerator " + clazz + " no field defined");
         }
+        Triple<Class<?>, Field[], Table> triple = new Triple<>();
+        triple.setFirst(clazz);
+        triple.setSecond(fields);
+        triple.setThird(tableAnnotation);
+        return triple;
     }
 
 
@@ -116,7 +121,8 @@ public class ReflectUtils {
      * @return 字段数组
      */
     public static Field[] getFields(Class<?> clazz) {
-        Field[] result = declaredFieldsCache.get(clazz);
+        String className = clazz.getName();
+        Field[] result = declaredFieldsCache.get(className);
         if (result != null) {
             return result;
         }
@@ -124,13 +130,12 @@ public class ReflectUtils {
         // 遍历类及其父类的所有字段并获取属性名称
         while (clazz != null && !"java.lang.Object".equals(clazz.getName())) {
             Field[] fields = clazz.getDeclaredFields();
-            for (Field field : fields) {
-                list.add(field);
-            }
+            list.addAll(Arrays.asList(fields));
             clazz = clazz.getSuperclass();
         }
         result = list.toArray(new Field[0]);
-        declaredFieldsCache.put(clazz, result.length == 0 ? EMPTY_FIELD_ARRAY : result);
+
+        declaredFieldsCache.put(className, result.length == 0 ? EMPTY_FIELD_ARRAY : result);
         return result;
     }
 
@@ -142,12 +147,13 @@ public class ReflectUtils {
      * @return 字段数组
      */
     public static Method[] getMethods(Class<?> clazz) {
-        Method[] result = declaredMethodsCache.get(clazz);
+        String className = clazz.getName();
+        Method[] result = declaredMethodsCache.get(className);
         if (result != null) {
             return result;
         }
         result = clazz.getDeclaredMethods();
-        declaredMethodsCache.put(clazz, result.length == 0 ? EMPTY_METHOD_ARRAY : result);
+        declaredMethodsCache.put(className, result.length == 0 ? EMPTY_METHOD_ARRAY : result);
         return result;
     }
 
