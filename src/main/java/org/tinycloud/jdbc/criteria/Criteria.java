@@ -101,6 +101,12 @@ public class Criteria extends AbstractCriteria {
         return this;
     }
 
+    public <R> Criteria notLike(String field, R value) {
+        String condition = field + " NOT LIKE '%" + value + "%'";
+        conditions.add(condition);
+        return this;
+    }
+
     public <R> Criteria betweenAnd(String field, R start, R end) {
         String condition = "(" + field + " BETWEEN " +
                 formatValue(start) +

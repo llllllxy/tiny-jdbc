@@ -118,6 +118,13 @@ public class LambdaCriteria extends AbstractCriteria {
         return this;
     }
 
+    public <T, R> LambdaCriteria notLike(TypeFunction<T, R> field, R value) {
+        String columnName = getColumnName(field);
+        String condition = columnName + " NOT LIKE '%" + value + "%'";
+        conditions.add(condition);
+        return this;
+    }
+
     public <T, R> LambdaCriteria betweenAnd(TypeFunction<T, R> field, R start, R end) {
         String columnName = getColumnName(field);
         String condition = "(" + columnName + " BETWEEN " +
