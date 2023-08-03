@@ -1,9 +1,5 @@
 package org.tinycloud.jdbc.page;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author liuxingyu01

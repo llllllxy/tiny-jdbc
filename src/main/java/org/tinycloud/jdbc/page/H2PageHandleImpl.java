@@ -1,17 +1,17 @@
 package org.tinycloud.jdbc.page;
 
-
 /**
+ * 分页查询适配器-h2数据库
  * @author liuxingyu01
- * @date 2022-05-10 8:32
- * @description 分页查询适配器-MySQL
+ * @since 2023-08-03
  **/
-public class MysqlPageHandleImpl implements IPageHandle {
+public class H2PageHandleImpl implements IPageHandle {
 
     /**
      * 分页查询适配
-     * @param oldSQL 需要改造为分页查询的SQL
-     * @param pageNo pageNo 第几页，用来计算offset，这个值由（pageNo-1）*pageSize
+     *
+     * @param oldSQL   需要改造为分页查询的SQL
+     * @param pageNo   pageNo 第几页，用来计算offset，这个值由（pageNo-1）*pageSize
      * @param pageSize pageSize 每页数量
      * @return 处理过后的sql
      */
@@ -30,7 +30,6 @@ public class MysqlPageHandleImpl implements IPageHandle {
         }
         return sql.toString();
     }
-
 
     @Override
     public String handlerCountSQL(String oldSQL) {

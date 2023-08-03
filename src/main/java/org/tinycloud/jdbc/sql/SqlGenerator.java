@@ -3,8 +3,11 @@ package org.tinycloud.jdbc.sql;
 import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Table;
+import org.tinycloud.jdbc.criteria.Criteria;
+import org.tinycloud.jdbc.criteria.LambdaCriteria;
 import org.tinycloud.jdbc.exception.JdbcException;
 import org.tinycloud.jdbc.id.IdUtils;
+import org.tinycloud.jdbc.util.ReflectUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -92,9 +95,9 @@ public class SqlGenerator {
         }
         String tableColumns = columns.subSequence(0, columns.length() - 1).toString();
         String tableValues = values.subSequence(0, values.length() - 1).toString();
-        sql.append("insert into ").append(tableAnnotation.value());
+        sql.append("INSERT INTO ").append(tableAnnotation.value());
         sql.append(" (").append(tableColumns).append(")");
-        sql.append(" values (").append(tableValues).append(")");
+        sql.append(" VALUES (").append(tableValues).append(")");
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
@@ -109,7 +112,7 @@ public class SqlGenerator {
      * @param object 入参
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider updateSql(Object object, boolean ignoreNulls) {
+    public static SqlProvider updateByIdSql(Object object, boolean ignoreNulls) {
         ReflectUtils.validateTargetClass(object);
         Class<?> clazz = object.getClass();
         Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
@@ -151,8 +154,8 @@ public class SqlGenerator {
         }
 
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        sql.append("update ").append(tableAnnotation.value()).append(" set ").append(tableColumn);
-        sql.append(" where ");
+        sql.append("UPDATE ").append(tableAnnotation.value()).append(" SET ").append(tableColumn);
+        sql.append(" WHERE ");
         sql.append(whereColumns);
         sql.append("=?");
 
@@ -164,6 +167,111 @@ public class SqlGenerator {
         return so;
     }
 
+    /**
+     * 构建更新SQL
+     *
+     * @param object      实体对象
+     * @param ignoreNulls 是否忽略null
+     * @param criteria    条件构造器
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider updateByCriteriaSql(Object object, boolean ignoreNulls, Criteria criteria) {
+        ReflectUtils.validateTargetClass(object);
+        Class<?> clazz = object.getClass();
+        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+        Field[] fields = ReflectUtils.getFields(clazz);
+        StringBuilder sql = new StringBuilder();
+        List<Object> parameters = new ArrayList<>();
+
+        StringBuilder columns = new StringBuilder();
+
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
+            if (columnAnnotation == null) {
+                continue;
+            }
+            String column = columnAnnotation.value();
+            if (StringUtils.isEmpty(column)) {
+                continue;
+            }
+            Object filedValue = null;
+            try {
+                filedValue = field.get(object);
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            // 是否忽略null
+            if (ignoreNulls && filedValue == null) {
+                continue;
+            }
+            columns.append(column).append("=?,");
+            parameters.add(filedValue);
+        }
+
+        String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
+        String criteriaSql = criteria.generateSql();
+        sql.append("UPDATE ").append(tableAnnotation.value()).append(" SET ").append(tableColumn);
+        sql.append(criteriaSql);
+
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        so.setParameters(parameters);
+        return so;
+    }
+
+    /**
+     * 构建更新SQL
+     *
+     * @param object      实体对象
+     * @param ignoreNulls 是否忽略null
+     * @param criteria    条件构造器Lambda
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider updateByLambdaCriteriaSql(Object object, boolean ignoreNulls, LambdaCriteria criteria) {
+        ReflectUtils.validateTargetClass(object);
+        Class<?> clazz = object.getClass();
+        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+        Field[] fields = ReflectUtils.getFields(clazz);
+        StringBuilder sql = new StringBuilder();
+        List<Object> parameters = new ArrayList<>();
+
+        StringBuilder columns = new StringBuilder();
+
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
+            if (columnAnnotation == null) {
+                continue;
+            }
+            String column = columnAnnotation.value();
+            if (StringUtils.isEmpty(column)) {
+                continue;
+            }
+            Object filedValue = null;
+            try {
+                filedValue = field.get(object);
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            // 是否忽略null
+            if (ignoreNulls && filedValue == null) {
+                continue;
+            }
+            columns.append(column).append("=?,");
+            parameters.add(filedValue);
+        }
+
+        String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
+        String criteriaSql = criteria.generateSql();
+        sql.append("UPDATE ").append(tableAnnotation.value()).append(" SET ").append(tableColumn);
+        sql.append(criteriaSql);
+
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        so.setParameters(parameters);
+        return so;
+    }
 
     /**
      * 构建删除SQL
@@ -199,16 +307,16 @@ public class SqlGenerator {
             if (filedValue == null) {
                 continue;
             }
-            whereColumns.append("and ").append(column).append("=? ");
+            whereColumns.append("AND ").append(column).append("=? ");
             parameters.add(filedValue);
         }
         if (StringUtils.isEmpty(whereColumns.toString())) {
             throw new JdbcException("deleteSql方法不能传入空对象，会导致删除全表！");
         }
-        sql.append("delete from ");
+        sql.append("DELETE FROM ");
         sql.append(tableAnnotation.value());
-        sql.append(" where ");
-        sql.append(whereColumns.toString().replaceFirst("and", ""));
+        sql.append(" WHERE ");
+        sql.append(whereColumns.toString().replaceFirst("AND", ""));
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
@@ -216,6 +324,45 @@ public class SqlGenerator {
         return so;
     }
 
+    /**
+     * 构建删除SQL（根据条件构造器删除）
+     *
+     * @param criteria 条件构造器
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider deleteCriteriaSql(Criteria criteria, Class<?> clazz) {
+        Object object = ReflectUtils.createInstance(clazz);
+        // 对象检验
+        ReflectUtils.validateTargetClass(object);
+        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("DELETE FROM ").append(tableAnnotation.value()).append(criteria.generateSql());
+
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        return so;
+    }
+
+    /**
+     * 构建删除SQL（根据条件构造器删除）
+     *
+     * @param criteria 条件构造器Lambda
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider deleteLambdaCriteriaSql(LambdaCriteria criteria, Class<?> clazz) {
+        Object object = ReflectUtils.createInstance(clazz);
+        // 对象检验
+        ReflectUtils.validateTargetClass(object);
+        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("DELETE FROM ").append(tableAnnotation.value()).append(criteria.generateSql());
+
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        return so;
+    }
 
     /**
      * 构建查询SQL
@@ -258,13 +405,13 @@ public class SqlGenerator {
 
             Class<?> type = field.getType();
             if (ReflectUtils.typeValueIsNotNull(type, filedValue)) {
-                whereColumns.append("and ")
+                whereColumns.append("AND ")
                         .append(column)
                         .append("=? ");
                 parameters.add(filedValue);
             }
             columns.append(column)
-                    .append(" as ")
+                    .append(" AS ")
                     .append(field.getName())
                     .append(",");
         }
@@ -272,17 +419,16 @@ public class SqlGenerator {
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
 
         StringBuilder sql = new StringBuilder();
-        sql.append("select ")
+        sql.append("SELECT ")
                 .append(tableColumn)
-                .append(" from ")
+                .append(" FROM ")
                 .append(tableAnnotation.value());
         if (!StringUtils.isEmpty(whereColumns.toString())) {
-            sql.append(" where ").append(whereColumns.toString().replaceFirst("and", ""));
+            sql.append(" WHERE ").append(whereColumns.toString().replaceFirst("AND", ""));
         }
         if (!StringUtils.isEmpty(primaryKeyColumn)) {
-            sql.append(" order by ").append(primaryKeyColumn).append(" desc");
+            sql.append(" ORDER BY ").append(primaryKeyColumn).append(" DESC");
         }
-
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
         so.setParameters(parameters);
@@ -324,7 +470,7 @@ public class SqlGenerator {
                 whereColumns.append(column);
             }
             columns.append(column)
-                    .append(" as ")
+                    .append(" AS ")
                     .append(fieldName)
                     .append(",");
         }
@@ -333,8 +479,8 @@ public class SqlGenerator {
         parameters.add(String.valueOf(id));
 
         StringBuilder sql = new StringBuilder();
-        sql.append("select ").append(tableColumn).append(" from ").append(tableAnnotation.value())
-                .append(" where ")
+        sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableAnnotation.value())
+                .append(" WHERE ")
                 .append(whereColumns)
                 .append("=?");
 
@@ -379,9 +525,9 @@ public class SqlGenerator {
         parameters.add(String.valueOf(id));
 
         StringBuilder sql = new StringBuilder();
-        sql.append("delete from ")
+        sql.append("DELETE FROM ")
                 .append(tableAnnotation.value())
-                .append(" where ")
+                .append(" WHERE ")
                 .append(whereColumns)
                 .append("=?");
 
@@ -391,4 +537,132 @@ public class SqlGenerator {
         return so;
     }
 
+    /**
+     * 构建删除SQL（根据id批量删除）
+     *
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider deleteByIdsSql(Class<?> clazz) {
+        Object object = ReflectUtils.createInstance(clazz);
+        // 对象检验
+        ReflectUtils.validateTargetClass(object);
+
+        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+        Field[] fields = ReflectUtils.getFields(clazz);
+        StringBuilder whereColumns = new StringBuilder();
+
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
+            if (columnAnnotation == null) {
+                continue;
+            }
+            String column = columnAnnotation.value();
+            if (StringUtils.isEmpty(column)) {
+                continue;
+            }
+            boolean primaryKey = columnAnnotation.primaryKey();
+            if (primaryKey) {
+                whereColumns.append(column);
+                break;
+            }
+        }
+        StringBuilder sql = new StringBuilder();
+        sql.append("DELETE FROM ")
+                .append(tableAnnotation.value())
+                .append(" WHERE ")
+                .append(whereColumns)
+                .append(" in (:idList)");
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        return so;
+    }
+
+    /**
+     * 构建查询SQL（根据条件构造器查询）
+     *
+     * @param criteria 条件构造器
+     * @param clazz    实体类Entity.class
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider selectCriteriaSql(Criteria criteria, Class<?> clazz) {
+        Object object = ReflectUtils.createInstance(clazz);
+        // 对象检验
+        ReflectUtils.validateTargetClass(object);
+
+        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+        Field[] fields = ReflectUtils.getFields(clazz);
+        StringBuilder columns = new StringBuilder();
+
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
+            if (columnAnnotation == null) {
+                continue;
+            }
+            String fieldName = field.getName();
+            String column = columnAnnotation.value();
+            if (StringUtils.isEmpty(column)) {
+                continue;
+            }
+            columns.append(column)
+                    .append(" AS ")
+                    .append(fieldName)
+                    .append(",");
+        }
+        String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
+        String criteriaSql = criteria.generateSql();
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableAnnotation.value())
+                .append(criteriaSql);
+
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        return so;
+    }
+
+    /**
+     * 构建查询SQL（根据条件构造器查询）
+     *
+     * @param lambdaCriteria 条件构造器(lambda版)
+     * @param clazz          实体类Entity.class
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider selectLambdaCriteriaSql(LambdaCriteria lambdaCriteria, Class<?> clazz) {
+        Object object = ReflectUtils.createInstance(clazz);
+        // 对象检验
+        ReflectUtils.validateTargetClass(object);
+
+        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
+        Field[] fields = ReflectUtils.getFields(clazz);
+        StringBuilder columns = new StringBuilder();
+
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column columnAnnotation = field.getAnnotation(Column.class);
+            if (columnAnnotation == null) {
+                continue;
+            }
+            String fieldName = field.getName();
+            String column = columnAnnotation.value();
+            if (StringUtils.isEmpty(column)) {
+                continue;
+            }
+            columns.append(column)
+                    .append(" as ")
+                    .append(fieldName)
+                    .append(",");
+        }
+        String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
+        String criteriaSql = lambdaCriteria.generateSql();
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableAnnotation.value())
+                .append(criteriaSql);
+
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        return so;
+    }
 }

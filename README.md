@@ -30,14 +30,7 @@ tiny-jdbc-boot-starter是一个基于Spring JdbcTemplate 开发的轻量级数�
     </dependency>
 ```
 ### 2.2、配置项
-#### 2.2.1 全局配置
-```yaml
-tiny-jdbc:
-  # 数据库分页类型，目前支持三种(mysql,oracle,db2)
-  db-type: mysql
-```
-
-#### 2.2.2 注解说明
+#### 2.2.1 注解说明
 ##### @Table
 - 描述：表名注解，标识实体类对应的表
 - 使用位置：实体类
@@ -83,106 +76,188 @@ public class UploadFile implements Serializable {
 
 
 ### 2.3、使用说明
-#### 2.3.1、注入BaseDao
+#### 2.3.1、继承BaseDao
 ```java
+    import org.springframework.stereotype.Repository;
+    import org.tinycloud.jdbc.BaseDao;
+    import org.tinycloud.entity.Project;
+
+    @Repository
+    public class ProjectDao extends BaseDao<Project> {
+    }
+
+    // 之后就可以在Service层注入使用了
     @Autowired
-    private BaseDao baseDao;
+    private ProjectDao projectDao;
 ```
 #### 2.3.2、查询操作
 |方法|说明|
 |---|---|
 |`<T> List<T> select(String sql, Class<T> classz, Object... params);` |根据给定的sql和实体类型和参数，查询数据库并返回实体类对象列表|
-|`List<Map<String, Object>> select(String sql, Object... params);`|根据给定的sql和参数，查询数据库并返回Map<String, Object>列表|
-|`List<Map<String, Object>> select(String sql);`|根据给定的sql，，查询数据库并返回Map<String, Object>列表|
 |`<T> T selectOne(String sql, Class<T> classz, Object... params);`|根据给定的sql和实体类型和参数，查询数据并返回一个实体类对象|
-|`Map<String, Object> selectOne(String sql, Object... params);`|根据给定的sql和参数，查询数据并返回一个Map<String, Object>对象|
-|`Map<String, Object> selectOne(String sql);`|根据给定的sql，，查询数据库并返回一个Map<String, Object>对象|
+|`List<T> select(String sql, Object... params);` |根据给定的sql和参数，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
+|`T selectOne(String sql, Object... params);`|根据给定的sql和参数，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
+|`List<Map<String, Object>> selectMap(String sql, Object... params);`|根据给定的sql和参数，查询数据库并返回Map<String, Object>列表|
+|`Map<String, Object> selectOneMap(String sql, Object... params);`|根据给定的sql和参数，查询数据并返回一个Map<String, Object>对象|
 |`<T> T selectOneColumn(String sql, Class<T> clazz, Object... params);`|根据给定的sql和实体类型和参数，查询数据并返回一个值（常用于查count）|
-|`<T> Page<T> paginate(String sql, Class<T> clazz, Integer pageNumber, Integer pageSize);`|执行分页查询，返回Page对象|
-|`<T> Page<T> paginate(String sql, Class<T> clazz, Integer pageNumber, Integer pageSize, Object... params);`|执行分页查询，返回Page对象|
-|`<T> T selectById(Object id, Class<T> classz);`|根据主键ID值，查询数据并返回一个实体类对象|
-|`<T> List<T> select(T entity);`|实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表|
-|`<T> Page<T> paginate(T entity, Integer pageNumber, Integer pageSize);`|实体类里面非null的属性作为查询条件，执行分页查询|
-|`<T> T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象|
+|`Page<T> paginate(String sql, Integer pageNumber, Integer pageSize);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(String sql, Integer pageNumber, Integer pageSize, Object... params);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`T selectById(Object id);`|根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
+|`List<T> select(T entity);`|实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(T entity, Integer pageNumber, Integer pageSize);`|实体类里面非null的属性作为查询条件，执行分页查询，类型使用的是xxxDao<T>的类型|
+|`T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
+|`List<T> select(Criteria criteria);`|根据条件构造器查询，类型使用的是xxxDao<T>的类型|
+|`List<T> select(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)查询，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
+|`T selectOne(Criteria criteria);`|根据条件构造器查询，类型使用的是xxxDao<T>的类型|
+|`T selectOne(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)查询，类型使用的是xxxDao<T>的类型|
 
 #### 2.3.3、插入操作
 |方法|说明|
 |---|---|
 |`int insert(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行插入|
-|`<T> int insert(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，如果主键策略为assignId或assignUuid，那将在entity里返回生成的主键值|
-|`<T> int insert(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里属性值为null的属性，如果主键策略为assignId或assignUuid，那将在entity里返回生成的主键值|
-|`<T> Long insertReturnAutoIncrement(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，并且返回自增的主键|
+|`int insert(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，如果主键策略为assignId或assignUuid，那将在entity里返回生成的主键值|
+|`int insert(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里属性值为null的属性，如果主键策略为assignId或assignUuid，那将在entity里返回生成的主键值|
+|`Long insertReturnAutoIncrement(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，并且返回自增的主键|
 
 #### 2.3.4、修改操作
 |方法|说明|
 |---|---|
 |`int update(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行修改|
-|`<T> int updateById(T entity);`|根据主键值更新数据，将忽略entity里属性值为null的属性|
-|`<T> int updateById(T entity, boolean ignoreNulls);`|根据主键值更新数据，可选择是否忽略entity里属性值为null的属性|
+|`int update(T entity, Criteria criteria);`|根据entity里的值和条件构造器，执行修改|
+|`int update(T entity, LambdaCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改|
+|`int updateById(T entity);`|根据主键值更新数据，将忽略entity里属性值为null的属性|
+|`int updateById(T entity, boolean ignoreNulls);`|根据主键值更新数据，可选择是否忽略entity里属性值为null的属性|
 
 #### 2.3.5、删除操作
 |方法|说明|
 |---|---|
 |`int delete(String sql, final Object... params);` | 根据提供的SQL语句和提供的参数，执行删除|
-|`<T> int deleteById(Object id, Class<T> clazz);` | 根据主键ID进行删除 |
-|`<T> int delete(T entity);`| 根据entity里的属性值进行删除，entity里不为null的属性，将作为参数 |
+|`int deleteById(Object id);` | 根据主键ID进行删除，类型使用的是xxxDao<T>的类型 |
+|`int delete(T entity);`| 根据entity里的属性值进行删除，entity里不为null的属性，将作为参数 |
+|`int delete(Criteria criteria);`| 根据条件构造器，将作为where参数 |
+|`int delete(LambdaCriteria criteria);`| 根据条件构造器（lambda），将作为where参数 |
+
+## 3、条件构造器说明
+|方法|说明|
+|---|---|
+|equal|等于|
+|notEqual|不等于|
+|isNull|等于null|
+|isNotNull|不等于null|
+|like|模糊查询|
+|gt|大于|
+|gte|大于等于|
+|lt|小于|
+|lte|小于等于|
+|in|SQL里的in|
+|notIn|SQL里的not in|
+|betweenAnd|SQL里的between and|
+|orderBy|排序，false=asc, true=desc|
+
+### 3.1、Criteria
+```java
+    List<Integer> ids = new ArrayList<Integer>() {{
+        add(1);
+        add(2);
+        add(3);
+    }};
+
+    Criteria criteria = new Criteria()
+            .lt("age", 28)
+            .in("name", names)
+            .equal("created_at", new java.util.Date())
+            .in("id", ids)
+            .orderBy("age", true);
+
+    List<Project> list = projectDao.select(criteria)
+    
+    int num = projectDao.delete(criteria);
+
+    Project project = new Project();
+    project.setProjectName("测试项目");
+    int num = projectDao.update(project, criteria);
+```
+
+### 3.2、LambdaCriteria
+```java
+public static void main(String[] args) {
+    List<Long> ids = new ArrayList<Long>() {{
+        add(1L);
+        add(2L);
+        add(3L);
+    }};
+    
+    LambdaCriteria criteria = new LambdaCriteria()
+            .lt(UploadFile::getFileId, "1000")
+            .gt(UploadFile::getFileId, "100")
+            .equal(UploadFile::getFileMd5, "b8394b15e02c50b508b3e46cc120f0f5")
+            .in(UploadFile::getId, ids)
+            .orderBy(UploadFile::getCreatedAt, true);
+
+    List<Project> list = projectDao.select(criteria)
+
+    int num = projectDao.delete(criteria);
+
+    Project project = new Project();
+    project.setProjectName("测试项目");
+    int num = projectDao.update(project, criteria);
+```
 
 
-
-## 3、示例
+## 4、示例
 
 1.  查询操作
 ```java
 @Autowired
-private BaseDao baseDao;
+private ProjectDao projectDao;
 
 // 查询所以的项目，返回列表
-List<Project> projectList = baseDao.select("select * from t_project_info order by created_at desc", Project.class);
+List<Project> projectList = projectDao.select("select * from t_project_info order by created_at desc");
 
 // 查询所以的项目，返回Map列表
-List<Map<String, Object>> projectList = baseDao.select("select * from t_project_info order by created_at desc");
+List<Map<String, Object>> projectList = projectDao.selectMap("select * from t_project_info order by created_at desc");
 
 // 查询id=1的项目，返回列表
-List<Project> projectList = baseDao.select("select * from t_project_info where id = ? ", Project.class, 1);
+List<Project> projectList = projectDao.select("select * from t_project_info where id = ? ", 1);
 
 // 模糊查询项目，返回列表
-List<Project> projectList =  baseDao.select("select * from t_project_info where project_name like CONCAT('%', ?, '%')",  Project.class, "测试项目");
+List<Project> projectList =  projectDao.select("select * from t_project_info where project_name like CONCAT('%', ?, '%')", "测试项目");
 
 // 查询id=1的项目，返回对象
-Project project = baseDao.selectOne("select * from t_project_info where id = ? ", Project.class, 1);
+Project project = projectDao.selectOne("select * from t_project_info where id = ? ", 1);
 
 // 查询记录数
-Integer count = baseDao.selectOneColumn("select count(*) from t_project_info order by created_at desc", Integer.class));
+Integer count = projectDao.selectOneColumn("select count(*) from t_project_info order by created_at desc", Integer.class));
 
 // 分页查询id>100的记录，第一页，每页10个
-Page<Project> page = baseDao.paginate("select * from t_project_info order by created_at desc where id > ?", Project.class, 1, 10, 100));
+Page<Project> page = projectDao.paginate("select * from t_project_info order by created_at desc where id > ?", 1, 10, 100));
 
 // 查询id=3的项目信息列表
 Project project = new Project();
 project.setId(3L);
-List<Project> projectList = baseDao.select(project)
+List<Project> projectList = projectDao.select(project)
 
 // 查询id=3的项目信息
 Project project = new Project();
 project.setId(3L);
-Project project = baseDao.selectOne(project);
+Project project = projectDao.selectOne(project);
 
 // 查询id=3的项目信息
-Project project = baseDao.selectById(3L, Project.class);
+Project project = projectDao.selectById(3L);
 
 // 分页查询id=3的项目信息，第一页，每页10个
 Project project = new Project();
 project.setId(3L);
-Page<Project> page = baseDao.paginate(project, 1, 10)
+Page<Project> page = projectDao.paginate(project, 1, 10)
 
 ```
 2.  新增操作
 ```java
 @Autowired
-private BaseDao baseDao;
+private ProjectDao projectDao;
 
 // 使用sql插入一条数据
-int result = baseDao.insert("insert t_into project_info(project_name, del_flag, remark) values (?,?,?)", "测试项目", 1, "XXXXXXX");
+int result = projectDao.insert("insert t_into project_info(project_name, del_flag, remark) values (?,?,?)", "测试项目", 1, "XXXXXXX");
 
 Project project = new Project();
 project.setProjectName("xxxx");
@@ -193,7 +268,7 @@ project.setRemark("XXXX");
 int result = baseDao.insert(project);
 
 // 使用实体类插入一条数据，不忽略null
-int result = baseDao.insert(project, false);
+int result = projectDao.insert(project, false);
 
 ```
 

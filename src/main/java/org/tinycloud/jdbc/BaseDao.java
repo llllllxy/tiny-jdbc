@@ -1,25 +1,23 @@
 package org.tinycloud.jdbc;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.support.AbstractSqlSupport;
 
-public class BaseDao extends AbstractSqlSupport {
+public class BaseDao<T, ID> extends AbstractSqlSupport<T, ID> {
 
     /**
      * JdbcTemplate
      */
-    private final JdbcTemplate jdbcTemplate;
+    @Autowired
+    private  JdbcTemplate jdbcTemplate;
 
     /**
      * 分页处理
      */
-    protected final IPageHandle pageHandle;
-
-    public BaseDao(JdbcTemplate jdbcTemplate, IPageHandle pageHandle) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.pageHandle = pageHandle;
-    }
+    @Autowired
+    private IPageHandle pageHandle;
 
     @Override
     protected JdbcTemplate getJdbcTemplate() {
