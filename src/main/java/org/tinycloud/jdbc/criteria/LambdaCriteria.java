@@ -1,5 +1,6 @@
 package org.tinycloud.jdbc.criteria;
 
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -18,11 +19,11 @@ public class LambdaCriteria extends AbstractCriteria {
 
     private final List<String> conditions;
 
-    private String orderBy;
+    private final List<String> orderBy;
 
     public LambdaCriteria() {
         this.conditions = new ArrayList<>();
-        this.orderBy = null;
+        this.orderBy = new ArrayList<>();
     }
 
     public <T, R> LambdaCriteria lt(TypeFunction<T, R> field, R value) {
@@ -147,10 +148,16 @@ public class LambdaCriteria extends AbstractCriteria {
 
     public <T, R> LambdaCriteria orderBy(TypeFunction<T, R> field, boolean desc) {
         String columnName = getColumnName(field);
-        orderBy = " ORDER BY " + columnName;
         if (desc) {
-            orderBy += " DESC";
+            columnName += " DESC";
         }
+        orderBy.add(columnName);
+        return this;
+    }
+
+    public <T, R> LambdaCriteria orderBy(TypeFunction<T, R> field) {
+        String columnName = getColumnName(field);
+        orderBy.add(columnName);
         return this;
     }
 
@@ -170,8 +177,14 @@ public class LambdaCriteria extends AbstractCriteria {
                 sql.append(conditions.get(i));
             }
         }
-        if (orderBy != null) {
-            sql.append(orderBy);
+        if (!orderBy.isEmpty()) {
+            sql.append(" ORDER BY ");
+            for (int i = 0; i < orderBy.size(); i++) {
+                if (i > 0) {
+                    sql.append(",");
+                }
+                sql.append(orderBy.get(i));
+            }
         }
         return sql.toString();
     }

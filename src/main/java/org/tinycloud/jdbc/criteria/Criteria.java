@@ -12,11 +12,11 @@ import java.util.List;
 public class Criteria extends AbstractCriteria {
 
     private final List<String> conditions;
-    private String orderBy;
+    private final List<String> orderBy;
 
     public Criteria() {
         this.conditions = new ArrayList<>();
-        this.orderBy = null;
+        this.orderBy = new ArrayList<>();
     }
 
     public <R> Criteria lt(String field, R value) {
@@ -126,10 +126,17 @@ public class Criteria extends AbstractCriteria {
     }
 
     public Criteria orderBy(String field, boolean desc) {
-        orderBy = " ORDER BY " + field;
+        String orderByString = field;
         if (desc) {
-            orderBy += " DESC";
+            orderByString += " DESC";
         }
+        orderBy.add(orderByString);
+        return this;
+    }
+
+    public Criteria orderBy(String field) {
+        String orderByString = field;
+        orderBy.add(orderByString);
         return this;
     }
 
@@ -144,8 +151,14 @@ public class Criteria extends AbstractCriteria {
                 sql.append(conditions.get(i));
             }
         }
-        if (orderBy != null) {
-            sql.append(orderBy);
+        if (!orderBy.isEmpty()) {
+            sql.append(" ORDER BY ");
+            for (int i = 0; i < orderBy.size(); i++) {
+                if (i > 0) {
+                    sql.append(",");
+                }
+                sql.append(orderBy.get(i));
+            }
         }
         return sql.toString();
     }
