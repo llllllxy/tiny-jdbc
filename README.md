@@ -102,12 +102,10 @@ public class UploadFile implements Serializable {
 |`<T> T selectOneColumn(String sql, Class<T> clazz, Object... params);`|根据给定的sql和实体类型和参数，查询数据并返回一个值（常用于查count）|
 |`Page<T> paginate(String sql, Integer pageNumber, Integer pageSize);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
 |`Page<T> paginate(String sql, Integer pageNumber, Integer pageSize, Object... params);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
-
 |`T selectById(Object id);`|根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`List<T> select(T entity);`|实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
 |`Page<T> paginate(T entity, Integer pageNumber, Integer pageSize);`|实体类里面非null的属性作为查询条件，执行分页查询，类型使用的是xxxDao<T>的类型|
 |`T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
-
 |`List<T> select(Criteria criteria);`|根据条件构造器查询，类型使用的是xxxDao<T>的类型|
 |`List<T> select(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)查询，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`T selectOne(Criteria criteria);`|根据条件构造器查询，类型使用的是xxxDao<T>的类型|
