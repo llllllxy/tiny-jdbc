@@ -34,6 +34,8 @@ public class TinyJdbcAutoConfiguration {
             pageHandle = new PostgreSqlPageHandleImpl();
         } else if (dbType == DbType.SQLITE) {
             pageHandle = new SqlitePageHandleImpl();
+        } else if (dbType == DbType.H2) {
+            pageHandle = new H2PageHandleImpl();
         } else {
             pageHandle = new MysqlPageHandleImpl();
         }
