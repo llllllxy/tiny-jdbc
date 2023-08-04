@@ -243,12 +243,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (params == null || params.length == 0) {
             num = getJdbcTemplate().update(sql);
         } else {
-            num = getJdbcTemplate().update(sql, new PreparedStatementSetter() {
-                public void setValues(PreparedStatement ps) throws SQLException {
-                    for (int i = 0; i < params.length; i++)
-                        ps.setObject(i + 1, params[i]);
-                }
-            });
+            num = getJdbcTemplate().update(sql, params);
         }
         return num;
     }
@@ -484,7 +479,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
                     return ps;
                 }
             }, keyHolder);
-
         } else {
             getJdbcTemplate().update(new PreparedStatementCreator() {
                 public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
