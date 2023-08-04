@@ -19,7 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
  **/
 public class ReflectUtils {
 
-    private static final Class<?>[] EMPTY_CLASS_ARRAY = new Class[0];
     private static final Method[] EMPTY_METHOD_ARRAY = new Method[0];
     private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
 
@@ -231,15 +230,14 @@ public class ReflectUtils {
      * @param obj       对象
      * @param fieldName 属性名称
      */
-    public static Field getAccessibleField(final Object obj, final String fieldName) {
+    public static Field getAccessibleField(Object obj, String fieldName) {
         for (Class<?> superClass = obj.getClass(); superClass != Object.class; superClass = superClass.getSuperclass()) {
             try {
                 Field field = superClass.getDeclaredField(fieldName);
                 makeAccessible(field);
                 return field;
-            } catch (NoSuchFieldException e) {
-                // Field不在当前类定义,继续向上转型
-                continue;// new add
+            } catch (NoSuchFieldException ignored) {
+
             }
         }
         return null;
