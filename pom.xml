@@ -7,6 +7,9 @@
     <groupId>org.tinycloud</groupId>
     <artifactId>tiny-jdbc-boot-starter</artifactId>
     <version>1.2.0</version>
+    <packaging>jar</packaging>
+    <url>https://gitee.com/leisureLXY/tiny-jdbc-boot-starter</url>
+    <description>A simple and easy-to-use ORM framework</description>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
