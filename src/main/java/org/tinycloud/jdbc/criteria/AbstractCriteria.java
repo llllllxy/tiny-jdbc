@@ -29,6 +29,9 @@ public abstract class AbstractCriteria {
      */
     protected final List<String> orderBy;
 
+    /**
+     * 构造方法
+     */
     public AbstractCriteria() {
         this.conditions = new ArrayList<>();
         this.orderBy = new ArrayList<>();
