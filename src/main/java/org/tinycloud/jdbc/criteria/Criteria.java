@@ -1,6 +1,5 @@
 package org.tinycloud.jdbc.criteria;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -10,14 +9,6 @@ import java.util.List;
  * @since 2023-08-02
  **/
 public class Criteria extends AbstractCriteria {
-
-    private final List<String> conditions;
-    private final List<String> orderBy;
-
-    public Criteria() {
-        this.conditions = new ArrayList<>();
-        this.orderBy = new ArrayList<>();
-    }
 
     public <R> Criteria lt(String field, R value) {
         String condition = field + " < " + formatValue(value);
@@ -138,28 +129,5 @@ public class Criteria extends AbstractCriteria {
         String orderByString = field;
         orderBy.add(orderByString);
         return this;
-    }
-
-    public String generateSql() {
-        StringBuilder sql = new StringBuilder();
-        if (!conditions.isEmpty()) {
-            sql.append(" WHERE ");
-            for (int i = 0; i < conditions.size(); i++) {
-                if (i > 0) {
-                    sql.append(" AND ");
-                }
-                sql.append(conditions.get(i));
-            }
-        }
-        if (!orderBy.isEmpty()) {
-            sql.append(" ORDER BY ");
-            for (int i = 0; i < orderBy.size(); i++) {
-                if (i > 0) {
-                    sql.append(",");
-                }
-                sql.append(orderBy.get(i));
-            }
-        }
-        return sql.toString();
     }
 }

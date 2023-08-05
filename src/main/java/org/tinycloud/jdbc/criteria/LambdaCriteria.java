@@ -1,7 +1,6 @@
 package org.tinycloud.jdbc.criteria;
 
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,15 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LambdaCriteria extends AbstractCriteria {
 
     public static final Map<String, String> cache = new ConcurrentHashMap<>();
-
-    private final List<String> conditions;
-
-    private final List<String> orderBy;
-
-    public LambdaCriteria() {
-        this.conditions = new ArrayList<>();
-        this.orderBy = new ArrayList<>();
-    }
 
     public <T, R> LambdaCriteria lt(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
@@ -164,28 +154,5 @@ public class LambdaCriteria extends AbstractCriteria {
     private <T, R> String getColumnName(TypeFunction<T, R> field) {
         String fieldName = TypeFunction.getLambdaColumnName(field);
         return fieldName;
-    }
-
-    public String generateSql() {
-        StringBuilder sql = new StringBuilder();
-        if (!conditions.isEmpty()) {
-            sql.append(" WHERE ");
-            for (int i = 0; i < conditions.size(); i++) {
-                if (i > 0) {
-                    sql.append(" AND ");
-                }
-                sql.append(conditions.get(i));
-            }
-        }
-        if (!orderBy.isEmpty()) {
-            sql.append(" ORDER BY ");
-            for (int i = 0; i < orderBy.size(); i++) {
-                if (i > 0) {
-                    sql.append(",");
-                }
-                sql.append(orderBy.get(i));
-            }
-        }
-        return sql.toString();
     }
 }
