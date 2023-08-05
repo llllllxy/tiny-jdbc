@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc.criteria;
 
 import org.springframework.format.datetime.DateFormatter;
+import org.tinycloud.jdbc.exception.JdbcException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -71,10 +72,14 @@ public abstract class AbstractCriteria {
         if (!conditions.isEmpty()) {
             sql.append(" WHERE ");
             for (int i = 0; i < conditions.size(); i++) {
-                if (i > 0) {
-                    sql.append(" AND ");
+                if (i == 0) {
+                    if (conditions.get(i).startsWith(" OR ")) {
+                        throw new JdbcException("Criteria can not start with a function orXXX!");
+                    }
+                    sql.append(conditions.get(i).replace(" AND ", ""));
+                } else {
+                    sql.append(conditions.get(i));
                 }
-                sql.append(conditions.get(i));
             }
         }
         if (!orderBy.isEmpty()) {
@@ -85,6 +90,29 @@ public abstract class AbstractCriteria {
                 }
                 sql.append(orderBy.get(i));
             }
+        }
+        return sql.toString();
+    }
+
+    /**
+     * 用于子构造器SQL的生成
+     * @return 条件SQL
+     */
+    public String children() {
+        StringBuilder sql = new StringBuilder();
+        if (!conditions.isEmpty()) {
+            sql.append("(");
+            for (int i = 0; i < conditions.size(); i++) {
+                if (i == 0) {
+                    if (conditions.get(i).startsWith(" OR ")) {
+                        throw new JdbcException("Criteria can not start with a function orXXX!");
+                    }
+                    sql.append(conditions.get(i).replace(" AND ", ""));
+                } else {
+                    sql.append(conditions.get(i));
+                }
+            }
+            sql.append(")");
         }
         return sql.toString();
     }
