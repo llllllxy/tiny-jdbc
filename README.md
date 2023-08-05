@@ -13,11 +13,23 @@
     <br/>
 </p>
 
-## 1、介绍
-tiny-jdbc-boot-starter是一个基于Spring JdbcTemplate 开发的轻量级数据库ORM工具包，同时支持sql操作、实体类映射操作，让操作数据库这件事变得更加简单！
+## 1、简介
+`tiny-jdbc-boot-starter`是一个基于`Spring Data JDBC`开发的轻量级数据库ORM工具包，在不改变原有功能的基础上，做了大量的增强，让操作数据库这件事变得更加简单便捷！
 
-## 2、使用
-### 2.1、引入依赖
+### 优势
+- **无侵入**：只做增强不做改变，引入它不会对现有工程产生任何影响
+- **性能高**：基于高性能的Spring Data JDBC，性能基本无损耗
+- **功能强**：既支持SQL操作、又支持实体类映射操作，BaseDao里封装了大量的公共方法，拿来即用，配合强大的条件构造器，基本满足各类使用需求
+- **支持 Lambda 形式调用**：条件构造器支持Lambda形式调用，编译期增强，无需再担心字段写错
+- **支持主键自动生成**：内含多种主键生成策略（包括自增主键、UUID、雪花ID）
+- **支持多种数据库分页方言**：包括MySQL、ORACLE、DB2、PostgreSql等多种常用数据库
+
+### 支持数据库
+- 分页插件目前支持MySQL、ORACLE、DB2、PostgreSql、SQLITE、H2
+- 其他操作支持任何使用标准 SQL 的数据库
+
+## 2、快速开始
+### 引入Maven依赖
 ```xml
     <dependency>
         <groupId>org.springframework.boot</groupId>
@@ -29,68 +41,189 @@ tiny-jdbc-boot-starter是一个基于Spring JdbcTemplate 开发的轻量级数�
         <version>1.0-SNAPSHOT</version>
     </dependency>
 ```
-### 2.2、配置项
-#### 2.2.1 注解说明
-##### @Table
-- 描述：表名注解，标识实体类对应的表
-- 使用位置：实体类
-```java
-@Table("b_upload_file")
-public class UploadFile implements Serializable {
-    private static final long serialVersionUID = -1L;
-    
-    ...
-}
-```
-##### @Column
-- 描述：字段注解
-- 使用位置：实体类
+
+### 定义Entity实体类，对应数据库的一张表
 ```java
 @Table("b_upload_file")
 public class UploadFile implements Serializable {
     private static final long serialVersionUID = -1L;
 
     /**
-     * 主键，三种主键策略互斥，只能选择其中一种
+     * 主键，
      * 注意，如果设置为自增主键的话，则此字段必须为Long
      * 如果设置为assignUuid的话，则此字段必须为String
      * 如果设置为assignId的话，则此字段必须为String或者Long
      */
     @Column(value = "id", primaryKey = true, assignId = true)
     private Long id;
-    
+
+    /**
+     * 文件id
+     */
     @Column("file_id")
     private String fileId;
-    
+
+    /**
+     * 文件原名称
+     */
     @Column("file_name_old")
     private String fileNameOld;
+
+    /**
+     * 文件新名称
+     */
+    @Column("file_name_new")
+    private String fileNameNew;
+
+    /**
+     * 文件路径
+     */
+    @Column("file_path")
+    private String filePath;
+
+    /**
+     * 文件md5
+     */
+    @Column("file_md5")
+    private String fileMd5;
+
+    /**
+     * 上传时间
+     */
+    @Column("created_at")
+    private Date createdAt;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getFileId() {
+        return fileId;
+    }
+
+    public void setFileId(String fileId) {
+        this.fileId = fileId;
+    }
+
+    public String getFileNameOld() {
+        return fileNameOld;
+    }
+
+    public void setFileNameOld(String fileNameOld) {
+        this.fileNameOld = fileNameOld;
+    }
+
+    public String getFileNameNew() {
+        return fileNameNew;
+    }
+
+    public void setFileNameNew(String fileNameNew) {
+        this.fileNameNew = fileNameNew;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public String getFileMd5() {
+        return fileMd5;
+    }
+
+    public void setFileMd5(String fileMd5) {
+        this.fileMd5 = fileMd5;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
 }
 ```
-|属性|类型|必须指定|默认值|描述|
-|---|---|---|---|---|
-| value         | String  |  是 | ""    | 对应数据库字段名  |
-| primaryKey    | boolean |  否 | false | 是否为主键  |
-| autoIncrement | boolean |  否 | false | 主键策略：自增主键，三种主键策略互斥，只能选择其一 |   
-| assignId      | boolean |  否 | false | 主键策略：雪花ID，三种主键策略互斥，只能选择其一  |
-| assignUuid    | boolean |  否 | false | 主键策略：UUID，三种主键策略互斥，只能选择其一 |
 
+> 注解说明
+> ##### @Table
+> - 描述：表名注解，标识实体类对应的表
+> - 使用位置：实体类
+> ```java
+> @Table("b_upload_file")
+> public class UploadFile implements Serializable {
+>     private static final long serialVersionUID = -1L;
+>     
+>     ...
+> }
+> ```
+> ##### @Column
+> - 描述：字段注解
+> - 使用位置：实体类
+> ```java
+> @Table("b_upload_file")
+> public class UploadFile implements Serializable {
+>     private static final long serialVersionUID = -1L;
+>
+>     /**
+>      * 主键，三种主键策略互斥，只能选择其中一种
+>      * 注意，如果设置为自增主键的话，则此字段必须为Long
+>      * 如果设置为assignUuid的话，则此字段必须为String
+>      * 如果设置为assignId的话，则此字段必须为String或者Long
+>      */
+>     @Column(value = "id", primaryKey = true, assignId = true)
+>     private Long id;
+>     
+>     @Column("file_id")
+>     private String fileId;
+> 
+>     @Column("file_name_old")
+>    private String fileNameOld;
+> }
+> ```
+> |属性|类型|必须指定|默认值|描述|
+> |---|---|---|---|---|
+> | value         | String  |  是 | ""    | 对应数据库字段名  |
+> | primaryKey    | boolean |  否 | false | 是否为主键  |
+> | autoIncrement | boolean |  否 | false | 主键策略：自增主键，三种主键策略互斥，只能选择其一 |   
+> | assignId      | boolean |  否 | false | 主键策略：雪花ID，三种主键策略互斥，只能选择其一  |
+> | assignUuid    | boolean |  否 | false | 主键策略：UUID，三种主键策略互斥，只能选择其一 |
 
-### 2.3、使用说明
-#### 2.3.1、继承BaseDao
+### 定义Dao类，继承自BaseDao
+```java
+    import org.springframework.stereotype.Repository;
+    import org.tinycloud.jdbc.BaseDao;
+    import org.tinycloud.entity.UploadFile;
+
+    @Repository
+    public class UploadFileDao extends BaseDao<UploadFile> {
+    }
+```
+### Service层注入即可使用
 ```java
     import org.springframework.stereotype.Repository;
     import org.tinycloud.jdbc.BaseDao;
     import org.tinycloud.entity.Project;
 
     @Repository
-    public class ProjectDao extends BaseDao<Project> {
+    public class UploadFileService extends BaseDao<Project> {
+        
+        @Autowired
+        private ProjectDao projectDao;
+        
     }
-
-    // 之后就可以在Service层注入使用了
-    @Autowired
-    private ProjectDao projectDao;
 ```
-#### 2.3.2、查询操作
+
+
+## 3、BaseDao接口说明
+
+### 查询操作
 |方法|说明|
 |---|---|
 |`<T> List<T> select(String sql, Class<T> classz, Object... params);` |根据给定的sql和实体类型和参数，查询数据库并返回实体类对象列表|
@@ -106,12 +239,14 @@ public class UploadFile implements Serializable {
 |`List<T> select(T entity);`|实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
 |`Page<T> paginate(T entity, Integer pageNumber, Integer pageSize);`|实体类里面非null的属性作为查询条件，执行分页查询，类型使用的是xxxDao<T>的类型|
 |`T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
-|`List<T> select(Criteria criteria);`|根据条件构造器查询，类型使用的是xxxDao<T>的类型|
-|`List<T> select(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)查询，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
-|`T selectOne(Criteria criteria);`|根据条件构造器查询，类型使用的是xxxDao<T>的类型|
-|`T selectOne(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)查询，类型使用的是xxxDao<T>的类型|
+|`List<T> select(Criteria criteria);`|根据条件构造器查询，返回多条，类型使用的是xxxDao<T>的类型|
+|`List<T> select(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
+|`T selectOne(Criteria criteria);`|根据条件构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型|
+|`T selectOne(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(Criteria criteria, Integer pageNumber, Integer pageSize);`|根据条件构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(LambdaCriteria lambdaCriteria, Integer pageNumber, Integer pageSize, Object... params);`|根据条件构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
 
-#### 2.3.3、插入操作
+### 插入操作
 |方法|说明|
 |---|---|
 |`int insert(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行插入|
@@ -119,42 +254,27 @@ public class UploadFile implements Serializable {
 |`int insert(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里属性值为null的属性，如果主键策略为assignId或assignUuid，那将在entity里返回生成的主键值|
 |`Long insertReturnAutoIncrement(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，并且返回自增的主键|
 
-#### 2.3.4、修改操作
+### 更新操作
 |方法|说明|
 |---|---|
 |`int update(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行修改|
 |`int update(T entity, Criteria criteria);`|根据entity里的值和条件构造器，执行修改|
 |`int update(T entity, LambdaCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改|
-|`int updateById(T entity);`|根据主键值更新数据，将忽略entity里属性值为null的属性|
+|`int updateById(T entity);`|根据主键值作为条件更新数据，将忽略entity里属性值为null的属性|
 |`int updateById(T entity, boolean ignoreNulls);`|根据主键值更新数据，可选择是否忽略entity里属性值为null的属性|
 
-#### 2.3.5、删除操作
+#### 删除操作
 |方法|说明|
 |---|---|
-|`int delete(String sql, final Object... params);` | 根据提供的SQL语句和提供的参数，执行删除|
+|`int delete(String sql, final Object... params);` | 根据提供的SQL语句和提供的参数，执行删除 |
 |`int deleteById(Object id);` | 根据主键ID进行删除，类型使用的是xxxDao<T>的类型 |
 |`int delete(T entity);`| 根据entity里的属性值进行删除，entity里不为null的属性，将作为参数 |
 |`int delete(Criteria criteria);`| 根据条件构造器，将作为where参数 |
 |`int delete(LambdaCriteria criteria);`| 根据条件构造器（lambda），将作为where参数 |
 
-## 3、条件构造器说明
-|方法|说明|
-|---|---|
-|equal|等于|
-|notEqual|不等于|
-|isNull|等于null|
-|isNotNull|不等于null|
-|like|模糊查询|
-|gt|大于|
-|gte|大于等于|
-|lt|小于|
-|lte|小于等于|
-|in|SQL里的in|
-|notIn|SQL里的not in|
-|betweenAnd|SQL里的between and|
-|orderBy|排序，false=asc, true=desc|
+## 4、条件构造器说明
 
-### 3.1、Criteria
+### Criteria示例
 ```java
     List<Integer> ids = new ArrayList<Integer>() {{
         add(1);
@@ -164,21 +284,14 @@ public class UploadFile implements Serializable {
 
     Criteria criteria = new Criteria()
             .lt("age", 28)
-            .in("name", names)
-            .equal("created_at", new java.util.Date())
+            .eq("created_at", new java.util.Date())
             .in("id", ids)
             .orderBy("age", true);
-
-    List<Project> list = projectDao.select(criteria)
     
-    int num = projectDao.delete(criteria);
-
-    Project project = new Project();
-    project.setProjectName("测试项目");
-    int num = projectDao.update(project, criteria);
+    // 等价于  WHERE age < 28 AND created_at = '2023-08-05 17:31:26' AND id IN (1,2,3) ORDER BY age DESC
 ```
 
-### 3.2、LambdaCriteria
+### LambdaCriteria示例
 ```java
 public static void main(String[] args) {
     List<Long> ids = new ArrayList<Long>() {{
@@ -189,22 +302,31 @@ public static void main(String[] args) {
     
     LambdaCriteria criteria = new LambdaCriteria()
             .lt(UploadFile::getFileId, "1000")
-            .gt(UploadFile::getFileId, "100")
-            .equal(UploadFile::getFileMd5, "b8394b15e02c50b508b3e46cc120f0f5")
+            .eq(UploadFile::getFileMd5, "b8394b15e02c50b508b3e46cc120f0f5")
             .in(UploadFile::getId, ids)
             .orderBy(UploadFile::getCreatedAt, true);
 
-    List<Project> list = projectDao.select(criteria)
-
-    int num = projectDao.delete(criteria);
-
-    Project project = new Project();
-    project.setProjectName("测试项目");
-    int num = projectDao.update(project, criteria);
+    // 等价于  WHERE fileId < '1000' AND file_md5 = 'b8394b15e02c50b508b3e46cc120f0f5' AND id IN (1,2,3) ORDER BY created_at DESC
 ```
+### 说明
 
+|方法|说明|示例|lambda实例|
+|---|---|---|---|
+|eq|等于=|  |  |
+|notEqual|不等于<>|  |  |
+|isNull|等于null|  |  |
+|isNotNull|不等于null|  |  |
+|like|模糊查询|  |  |
+|gt|大于|  |  |
+|gte|大于等于|  |  |
+|lt|小于|  |  |
+|lte|小于等于|  |  |
+|in|SQL里的in|  |  |
+|notIn|SQL里的not in|  |  |
+|betweenAnd|SQL里的between and|  |  |
+|orderBy|排序，false=asc, true=desc|  |  |
 
-## 4、示例
+## 5、一些示例
 
 1.  查询操作
 ```java
