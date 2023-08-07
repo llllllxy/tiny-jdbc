@@ -25,7 +25,7 @@ public interface TypeFunction<T, R> extends Serializable, Function<T, R> {
             SerializedLambda serializedLambda = (SerializedLambda) method.invoke(lambda);
             String implClass = serializedLambda.getImplClass();
             String getter = serializedLambda.getImplMethodName();
-            String fieldName = Introspector.decapitalize(getter.replace("get", ""));
+            String fieldName = Introspector.decapitalize(getter.replaceFirst("get", ""));
 
             String cacheKey = implClass + fieldName;
             if (LambdaCriteria.cache.containsKey(cacheKey)) {
