@@ -84,23 +84,35 @@ public interface ISqlSupport<T,ID> {
     <F> Page<F> paginate(String sql, Class<F> clazz, Integer pageNumber, Integer pageSize, final Object... params);
 
     /**
-     * 查询给定的SQL和参数列表，返回一实例
+     * 查询给定的SQL和参数列表，结果返回第一条
      *
      * @param sql    要执行的SQL查询
      * @param params 要绑定到查询的参数
      * @return T 实例
      */
-    T selectOne(String sql, Object... params);
+    default T selectOne(String sql, Object... params) {
+        List<T> resultList = this.select(sql, params);
+        if (resultList != null && !resultList.isEmpty()) {
+            return resultList.get(0);
+        }
+        return null;
+    }
 
     /**
-     * 查询给定的SQL和参数列表，返回一实例
+     * 查询给定的SQL和参数列表，结果返回第一条
      *
      * @param sql    要执行的SQL查询
      * @param params 要绑定到查询的参数
      * @param clazz  实体类
      * @return F 实例
      */
-    <F> F selectOne(String sql, Class<F> clazz, Object... params);
+    default <F> F selectOne(String sql, Class<F> clazz, Object... params) {
+        List<F> resultList = this.select(sql, clazz, params);
+        if (resultList != null && !resultList.isEmpty()) {
+            return resultList.get(0);
+        }
+        return null;
+    }
 
     /**
      * 执行查询sql，有查询条件，（固定返回List<Map<String, Object>>）

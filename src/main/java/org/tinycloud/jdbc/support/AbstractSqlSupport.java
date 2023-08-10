@@ -72,22 +72,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     /**
-     * 执行查询sql，有查询条件，结果返回第一条
-     *
-     * @param sql    要执行的SQL
-     * @param params 要绑定到查询的参数
-     * @return 查询结果
-     */
-    @Override
-    public T selectOne(String sql, final Object... params) {
-        List<T> resultList = this.select(sql, params);
-        if (resultList != null && !resultList.isEmpty()) {
-            return resultList.get(0);
-        }
-        return null;
-    }
-
-    /**
      * 执行查询sql，有查询条件
      *
      * @param sql    要执行的SQL
@@ -106,24 +90,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             resultList = getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz));
         }
         return resultList;
-    }
-
-    /**
-     * 执行查询sql，有查询条件，结果返回第一条
-     *
-     * @param sql    要执行的SQL
-     * @param clazz  实体类
-     * @param params 要绑定到查询的参数
-     * @param <F>    泛型
-     * @return 查询结果
-     */
-    @Override
-    public <F> F selectOne(String sql, Class<F> clazz, final Object... params) {
-        List<F> resultList = this.select(sql, clazz, params);
-        if (resultList != null && !resultList.isEmpty()) {
-            return resultList.get(0);
-        }
-        return null;
     }
 
     /**
@@ -153,7 +119,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         }
         return null;
     }
-
 
     /**
      * 查询一个值（经常用于查count）
@@ -350,33 +315,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public T selectOne(T entity) {
-        List<T> list = this.select(entity);
-        if (!CollectionUtils.isEmpty(list)) {
-            return list.get(0);
-        }
-        return null;
-    }
-
-    @Override
-    public T selectOne(Criteria criteria) {
-        List<T> list = this.select(criteria);
-        if (!CollectionUtils.isEmpty(list)) {
-            return list.get(0);
-        }
-        return null;
-    }
-
-    @Override
-    public T selectOne(LambdaCriteria lambdaCriteria) {
-        List<T> list = this.select(lambdaCriteria);
-        if (!CollectionUtils.isEmpty(list)) {
-            return list.get(0);
-        }
-        return null;
-    }
-
-    @Override
     public List<T> select(T entity) {
         if (entity == null) {
             throw new JdbcException("select entity cannot be null");
@@ -473,6 +411,24 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
+    }
+
+    @Override
+    public Long selectCount(Criteria criteria) {
+        if (criteria == null) {
+            throw new JdbcException("criteria cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.selectCountCriteriaSql(criteria, entityClass);
+        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), Long.class);
+    }
+
+    @Override
+    public Long selectCount(LambdaCriteria lambdaCriteria) {
+        if (lambdaCriteria == null) {
+            throw new JdbcException("lambdaCriteria cannot be null");
+        }
+        SqlProvider sqlProvider = SqlGenerator.selectCountLambdaCriteriaSql(lambdaCriteria, entityClass);
+        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), Long.class);
     }
 
     @Override

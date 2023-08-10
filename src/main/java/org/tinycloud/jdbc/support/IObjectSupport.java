@@ -1,5 +1,6 @@
 package org.tinycloud.jdbc.support;
 
+import org.springframework.util.CollectionUtils;
 import org.tinycloud.jdbc.criteria.Criteria;
 import org.tinycloud.jdbc.criteria.LambdaCriteria;
 import org.tinycloud.jdbc.page.Page;
@@ -224,7 +225,13 @@ public interface IObjectSupport<T, ID> {
      * @param entity 实例
      * @return T 实例
      */
-    T selectOne(T entity);
+    default T selectOne(T entity) {
+        List<T> list = this.select(entity);
+        if (!CollectionUtils.isEmpty(list)) {
+            return list.get(0);
+        }
+        return null;
+    }
 
     /**
      * 查询给定的实例，返回一个实例
@@ -232,7 +239,13 @@ public interface IObjectSupport<T, ID> {
      * @param criteria 条件构造器
      * @return T 实例
      */
-    T selectOne(Criteria criteria);
+    default T selectOne(Criteria criteria) {
+        List<T> list = this.select(criteria);
+        if (!CollectionUtils.isEmpty(list)) {
+            return list.get(0);
+        }
+        return null;
+    }
 
     /**
      * 查询给定的实例，返回一个实例
@@ -240,5 +253,47 @@ public interface IObjectSupport<T, ID> {
      * @param lambdaCriteria 条件构造器(lambda版)
      * @return T 实例
      */
-    T selectOne(LambdaCriteria lambdaCriteria);
+    default T selectOne(LambdaCriteria lambdaCriteria) {
+        List<T> list = this.select(lambdaCriteria);
+        if (!CollectionUtils.isEmpty(list)) {
+            return list.get(0);
+        }
+        return null;
+    }
+
+    /**
+     * 根据 criteria 条件，查询总记录数
+     *
+     * @param criteria 条件构造器
+     * @return 总记录数
+     */
+    Long selectCount(Criteria criteria);
+
+    /**
+     * 根据 criteria 条件，查询总记录数
+     *
+     * @param lambdaCriteria 条件构造器(lambda版)
+     * @return 总记录数
+     */
+    Long selectCount(LambdaCriteria lambdaCriteria);
+
+    /**
+     * 查询记录日否存在
+     * @param criteria 条件构造器
+     * @return true存在，false不存在
+     */
+    default boolean exists(Criteria criteria) {
+        Long count = this.selectCount(criteria);
+        return null != count && count > 0L;
+    }
+
+    /**
+     *
+     * @param lambdaCriteria 条件构造器(lambda版)
+     * @return true存在，false不存在
+     */
+    default boolean exists(LambdaCriteria lambdaCriteria) {
+        Long count = this.selectCount(lambdaCriteria);
+        return null != count && count > 0L;
+    }
 }
