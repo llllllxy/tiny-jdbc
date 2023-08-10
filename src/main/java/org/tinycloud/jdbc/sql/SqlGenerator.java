@@ -667,4 +667,45 @@ public class SqlGenerator {
         return so;
     }
 
+
+    /**
+     * 构建查询数量SQL（根据条件构造器）
+     *
+     * @param criteria 条件构造器
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider selectCountCriteriaSql(Criteria criteria, Class<?> clazz) {
+        Object object = ReflectUtils.createInstance(clazz);
+        // 对象检验
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Table tableAnnotation = triple.getThird();
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM ").append(tableAnnotation.value()).append(criteria.generateSql());
+
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        return so;
+    }
+
+
+    /**
+     * 构建查询数量SQL（根据条件构造器lambda）
+     *
+     * @param lambdaCriteria 条件构造器lambda
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider selectCountLambdaCriteriaSql(LambdaCriteria lambdaCriteria, Class<?> clazz) {
+        Object object = ReflectUtils.createInstance(clazz);
+        // 对象检验
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Table tableAnnotation = triple.getThird();
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM ").append(tableAnnotation.value()).append(lambdaCriteria.generateSql());
+
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        return so;
+    }
 }
