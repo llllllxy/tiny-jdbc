@@ -72,6 +72,18 @@ public interface ISqlSupport<T,ID> {
     <F> List<F> select(String sql, Class<F> clazz, Object... params);
 
     /**
+     * 分页查询（带参数）
+     *
+     * @param sql    要执行的SQL
+     * @param clazz  实体类型
+     * @param pageNumber 当前页
+     * @param pageSize   页大小
+     * @param params     ？参数
+     * @return Page<F>
+     */
+    <F> Page<F> paginate(String sql, Class<F> clazz, Integer pageNumber, Integer pageSize, final Object... params);
+
+    /**
      * 查询给定的SQL和参数列表，返回一实例
      *
      * @param sql    要执行的SQL查询
