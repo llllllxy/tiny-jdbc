@@ -195,14 +195,14 @@ public class UploadFile implements Serializable {
 > | assignId      | boolean |  否 | false | 主键策略：雪花ID，三种主键策略互斥，只能选择其一  |
 > | assignUuid    | boolean |  否 | false | 主键策略：UUID，三种主键策略互斥，只能选择其一 |
 
-### 定义Dao类，继承自BaseDao
+### 定义Dao类，继承自BaseDao，泛型1为对应实体类，泛型二实体类主键类型
 ```java
     import org.springframework.stereotype.Repository;
     import org.tinycloud.jdbc.BaseDao;
     import org.tinycloud.entity.UploadFile;
 
     @Repository
-    public class UploadFileDao extends BaseDao<UploadFile> {
+    public class UploadFileDao extends BaseDao<UploadFile, Long> {
     }
 ```
 ### Service层注入即可使用
