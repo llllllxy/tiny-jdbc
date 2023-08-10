@@ -477,7 +477,7 @@ public class SqlGenerator {
         }
 
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        parameters.add(String.valueOf(id));
+        parameters.add(id);
 
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableAnnotation.value())
@@ -523,7 +523,7 @@ public class SqlGenerator {
                 whereColumns.append(column);
             }
         }
-        parameters.add(String.valueOf(id));
+        parameters.add(id);
 
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ")
