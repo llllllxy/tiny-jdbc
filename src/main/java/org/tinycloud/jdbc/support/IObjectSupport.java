@@ -278,7 +278,7 @@ public interface IObjectSupport<T, ID> {
     Long selectCount(LambdaCriteria lambdaCriteria);
 
     /**
-     * 查询记录日否存在
+     * 查询记录是否存在
      * @param criteria 条件构造器
      * @return true存在，false不存在
      */
@@ -288,7 +288,7 @@ public interface IObjectSupport<T, ID> {
     }
 
     /**
-     *
+     * 查询记录是否存在
      * @param lambdaCriteria 条件构造器(lambda版)
      * @return true存在，false不存在
      */
