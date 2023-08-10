@@ -166,6 +166,13 @@ public interface IObjectSupport<T, ID> {
     T selectById(ID id);
 
     /**
+     * 根据ID列表进行批量查询
+     * @param ids 主键id列表
+     * @return List<T> 实例列表
+     */
+    List<T> selectByIds(List<ID> ids);
+
+    /**
      * 查询给定的实例，返回实例列表
      *
      * @param entity 实例

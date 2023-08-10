@@ -493,6 +493,56 @@ public class SqlGenerator {
 
 
     /**
+     * 构建查询SQL（根据id列表查询）
+     *
+     * @param clazz 实体类Entity.class
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider selectByIdsSql(Class<?> clazz) {
+        Object object = ReflectUtils.createInstance(clazz);
+        // 对象检验
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+
+        Table tableAnnotation = triple.getThird();
+        Field[] fields = ReflectUtils.getFields(clazz);
+        StringBuilder columns = new StringBuilder();
+        StringBuilder whereColumns = new StringBuilder();
+
+        for (Field field : fields) {
+            ReflectUtils.makeAccessible(field);
+            Column columnAnnotation = field.getAnnotation(Column.class);
+            if (columnAnnotation == null) {
+                continue;
+            }
+            String fieldName = field.getName();
+            String column = columnAnnotation.value();
+            if (StringUtils.isEmpty(column)) {
+                continue;
+            }
+            boolean primaryKey = columnAnnotation.primaryKey();
+            if (primaryKey) {
+                whereColumns.append(column);
+            }
+            columns.append(column)
+                    .append(" AS ")
+                    .append(fieldName)
+                    .append(",");
+        }
+        String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableAnnotation.value())
+                .append(" WHERE ")
+                .append(whereColumns)
+                .append(" IN (:idList)");
+
+        SqlProvider so = new SqlProvider();
+        so.setSql(sql.toString());
+        return so;
+    }
+
+
+    /**
      * 构建删除SQL（根据id删除）
      *
      * @param id 入参
@@ -573,7 +623,7 @@ public class SqlGenerator {
                 .append(tableAnnotation.value())
                 .append(" WHERE ")
                 .append(whereColumns)
-                .append(" in (:idList)");
+                .append(" IN (:idList)");
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
         return so;

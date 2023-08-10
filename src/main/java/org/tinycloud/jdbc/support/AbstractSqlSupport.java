@@ -315,6 +315,15 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
+    public List<T> selectByIds(List<ID> ids) {
+        SqlProvider sqlProvider = SqlGenerator.selectByIdsSql(entityClass);
+        NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(getJdbcTemplate());
+        Map<String, Object> param = new HashMap<>();
+        param.put("idList", ids);
+        return namedJdbcTemplate.query(sqlProvider.getSql(), param, rowMapper);
+    }
+
+    @Override
     public List<T> select(T entity) {
         if (entity == null) {
             throw new JdbcException("select entity cannot be null");
