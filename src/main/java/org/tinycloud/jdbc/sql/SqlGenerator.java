@@ -55,28 +55,36 @@ public class SqlGenerator {
             }
 
             boolean assignId = columnAnnotation.assignId();
-            boolean assignUuid = columnAnnotation.assignUuid();
+            boolean uuid = columnAnnotation.uuid();
+            boolean objectId = columnAnnotation.objectId();
+
             // 如果是其他主键策略，设置完主键后，塞回到实体类里，这样可以方便插入后获取主键值
+            /* 雪花ID */
             if (primaryKey && assignId) {
                 Class<?> type = field.getType();
-                Object fieldValue;
-                if (type == java.lang.String.class) {
-                    fieldValue = IdUtils.nextId();
-                } else {
-                    fieldValue = IdUtils.nextLongId();
-                }
+                Object fieldValue = (type == java.lang.String.class) ? IdUtils.nextId() : IdUtils.nextLongId();
                 try {
                     field.set(object, fieldValue);
                 } catch (IllegalArgumentException | IllegalAccessException e) {
                     throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String or Long when assignId!");
                 }
             }
-            if (primaryKey && assignUuid) {
+            /* UUID */
+            if (primaryKey && uuid) {
                 Object fieldValue = IdUtils.simpleUUID();
                 try {
                     field.set(object, fieldValue);
                 } catch (IllegalArgumentException | IllegalAccessException e) {
-                    throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String when assignUuid!");
+                    throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String when uuid!");
+                }
+            }
+            /* objectId */
+            if (primaryKey && objectId) {
+                Object fieldValue = IdUtils.objectId();
+                try {
+                    field.set(object, fieldValue);
+                } catch (IllegalArgumentException | IllegalAccessException e) {
+                    throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String when objectId!");
                 }
             }
 
@@ -355,7 +363,7 @@ public class SqlGenerator {
     public static SqlProvider deleteLambdaCriteriaSql(LambdaCriteria criteria, Class<?> clazz) {
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        Triple<Class<?>, Field[], Table> triple =ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
         Table tableAnnotation = triple.getThird();
 
         StringBuilder sql = new StringBuilder();

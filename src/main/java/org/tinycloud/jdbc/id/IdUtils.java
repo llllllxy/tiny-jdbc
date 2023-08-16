@@ -73,6 +73,14 @@ public class IdUtils {
         return UUID.randomUUID().toString().replaceAll("-", "");
     }
 
+    /**
+     * 生成MongoDB中的ObjectId，长度24，类似于：a5c8a5edf2b4706bd09390e3
+     *
+     * @return String
+     */
+    public static String objectId() {
+        return ObjectId.nextId();
+    }
 
 
     public static void main(String[] args) {

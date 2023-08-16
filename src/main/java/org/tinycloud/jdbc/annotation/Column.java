@@ -35,5 +35,10 @@ public @interface Column {
     /**
      * 标记UUID
      */
-    boolean assignUuid() default false;
+    boolean uuid() default false;
+
+    /**
+     * 标记MongoDB中的ObjectId
+     */
+    boolean objectId() default false;
 }

@@ -49,9 +49,10 @@ public class UploadFile implements Serializable {
     private static final long serialVersionUID = -1L;
 
     /**
-     * 主键，
+     * 表的主键
      * 注意，如果设置为自增主键的话，则此字段必须为Long
-     * 如果设置为assignUuid的话，则此字段必须为String
+     * 如果设置为uuid的话，则此字段必须为String
+     * 如果设置为objectId的话，则此字段必须为String
      * 如果设置为assignId的话，则此字段必须为String或者Long
      */
     @Column(value = "id", primaryKey = true, assignId = true)
@@ -172,9 +173,10 @@ public class UploadFile implements Serializable {
 >     private static final long serialVersionUID = -1L;
 >
 >     /**
->      * 主键，三种主键策略互斥，只能选择其中一种
->      * 注意，如果设置为自增主键的话，则此字段必须为Long
->      * 如果设置为assignUuid的话，则此字段必须为String
+>      * 表的主键，四种主键策略互斥，只能选择其中一种
+>      * 注意，如果设置为数据库自增主键的话，则此字段必须为Long
+>      * 如果设置为uuid的话，则此字段必须为String
+>      * 如果设置为objectId的话，则此字段必须为String
 >      * 如果设置为assignId的话，则此字段必须为String或者Long
 >      */
 >     @Column(value = "id", primaryKey = true, assignId = true)
@@ -191,9 +193,10 @@ public class UploadFile implements Serializable {
 > |---|---|---|---|---|
 > | value         | String  |  是 | ""    | 对应数据库字段名  |
 > | primaryKey    | boolean |  否 | false | 是否为主键  |
-> | autoIncrement | boolean |  否 | false | 主键策略：自增主键，三种主键策略互斥，只能选择其一 |   
-> | assignId      | boolean |  否 | false | 主键策略：雪花ID，三种主键策略互斥，只能选择其一  |
-> | assignUuid    | boolean |  否 | false | 主键策略：UUID，三种主键策略互斥，只能选择其一 |
+> | autoIncrement | boolean |  否 | false | 主键策略：自增主键，四种主键策略互斥，只能选择其一 |
+> | assignId      | boolean |  否 | false | 主键策略：雪花ID，四种主键策略互斥，只能选择其一  |
+> | uuid          | boolean |  否 | false | 主键策略：UUID，四种主键策略互斥，只能选择其一 |
+> | objectId      | boolean |  否 | false | 主键策略：MongoDB ObjectId，四种主键策略互斥，只能选择其一 |
 
 ### 定义Dao类，继承自BaseDao，泛型1为对应实体类，泛型二实体类主键类型
 ```java
