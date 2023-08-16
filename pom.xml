@@ -6,7 +6,7 @@
 
     <groupId>org.tinycloud</groupId>
     <artifactId>tiny-jdbc-boot-starter</artifactId>
-    <version>1.4.1</version>
+    <version>1.4.2</version>
     <packaging>jar</packaging>
     <url>https://gitee.com/leisureLXY/tiny-jdbc-boot-starter</url>
     <description>A simple and easy-to-use ORM framework</description>
@@ -39,19 +39,6 @@
             <artifactId>spring-boot-autoconfigure</artifactId>
             <version>${springboot.version}</version>
             <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.25</version>
-        </dependency>
-
-        <!--还是引入其中一个实现类-->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
         </dependency>
     </dependencies>
 
