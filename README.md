@@ -253,8 +253,8 @@ public class UploadFile implements Serializable {
 |方法|说明|
 |---|---|
 |`int insert(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行插入|
-|`int insert(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，如果主键策略为assignId或assignUuid，那将在entity里返回生成的主键值|
-|`int insert(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里属性值为null的属性，如果主键策略为assignId或assignUuid，那将在entity里返回生成的主键值|
+|`int insert(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，如果主键策略为assignId、uuid或objectId，那将在entity里返回生成的主键值|
+|`int insert(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里属性值为null的属性，如果主键策略为assignId、uuid或objectId，那将在entity里返回生成的主键值|
 |`Long insertReturnAutoIncrement(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，并且返回自增的主键|
 
 ### 更新操作
