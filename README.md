@@ -248,6 +248,11 @@ public class UploadFile implements Serializable {
 |`T selectOne(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型|
 |`Page<T> paginate(Criteria criteria, Integer pageNumber, Integer pageSize);`|根据条件构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
 |`Page<T> paginate(LambdaCriteria lambdaCriteria, Integer pageNumber, Integer pageSize, Object... params);`|根据条件构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Long selectCount(Criteria criteria);`|根据条件构造器执行总记录数查询，返回符合条件的总记录数量|
+|`Long selectCount(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)执行总记录数查询，返回符合条件的总记录数量|
+|`boolean exists(Criteria criteria);`|根据条件构造器执行查询记录是否存在，返回true或者false|
+|`boolean exists(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)执行查询记录是否存在，返回true或者false|
+
 
 ### 插入操作
 |方法|说明|
@@ -391,7 +396,7 @@ Page<Project> page = projectDao.paginate("select * from t_project_info order by 
 // 查询id=3的项目信息列表
 Project project = new Project();
 project.setId(3L);
-List<Project> projectList = projectDao.select(project)
+List<Project> projectList = projectDao.select(project);
 
 // 查询id=3的项目信息
 Project project = new Project();
@@ -401,10 +406,40 @@ Project project = projectDao.selectOne(project);
 // 查询id=3的项目信息
 Project project = projectDao.selectById(3L);
 
+// 查询id=3的项目信息
+LambdaCriteria criteria = new LambdaCriteria().eq(Project::getId, 3L);        
+Project project = projectDao.selectOne(criteria);
+
+// 查询id=3的项目信息
+Criteria criteria = new Criteria().eq("id", 3L);
+Project project = projectDao.selectOne(criteria);
+
 // 分页查询id=3的项目信息，第一页，每页10个
 Project project = new Project();
 project.setId(3L);
 Page<Project> page = projectDao.paginate(project, 1, 10)
+
+// 根据条件构造器构建复杂查询条件
+// 等价于SQL: SELECT id AS id,project_name AS projectName,del_flag AS delFlag,created_by AS createdBy,updated_by AS updatedBy,created_at AS createdAt,updated_at AS updatedAt,remark AS remark FROM t_project_info WHERE created_by = 'admin' AND del_flag >= 0 AND id IN (1, 5) OR (remark NOT LIKE '%XXX%') ORDER BY created_at DESC
+List<Long> ids = new ArrayList<>();
+ids.add(1L);
+ids.add(5L);
+LambdaCriteria criteria = new LambdaCriteria()
+    .eq(Project::getCreatedBy, "admin")
+    .gte(Project::getDelFlag, 0)
+    .in(Project::getId, ids)
+    .or(new LambdaCriteria().notLike(Project::getRemark, "XXX"))
+    .orderBy(Project::getCreatedAt, true);
+List<Project> projectList = projectDao.select(criteria);
+
+
+// 根据条件构造器查询记录数量
+LambdaCriteria criteria = new LambdaCriteria().eq(Project::getId, 1695713712801116162L);
+Long count = projectDao.selectCount(criteria);
+
+// 根据条件构造器查询记录是否存在
+LambdaCriteria criteria = new LambdaCriteria().eq(Project::getId, 1695713712801116162L);
+boolean result = projectDao.exists(criteria)
 
 ```
 2.  新增操作
@@ -415,56 +450,86 @@ private ProjectDao projectDao;
 // 使用sql插入一条数据
 int result = projectDao.insert("insert t_into project_info(project_name, del_flag, remark) values (?,?,?)", "测试项目", 1, "XXXXXXX");
 
+// 使用实体类插入一条数据，默认忽略null
 Project project = new Project();
 project.setProjectName("xxxx");
 project.setDelFlag(1);
 project.setCreatedBy("admin");
 project.setRemark("XXXX");
-// 使用实体类插入一条数据，默认忽略null
-int result = baseDao.insert(project);
+int result = projectDao.insert(project);
+// 获取生成的主键id，在主键策略为assignId、uuid或objectId时适用
+Long id = project.getId();
 
 // 使用实体类插入一条数据，不忽略null
 int result = projectDao.insert(project, false);
+// 获取生成的主键id，在主键策略为assignId、uuid或objectId时适用
+Long id = project.getId();
+        
+// 使用实体类插入一条数据，并返回数据库自增的主键值，默认忽略null
+int result = projectDao.insertReturnAutoIncrement(project);
 
 ```
 
 3.  更新操作
 ```java
 @Autowired
-private BaseDao baseDao;
+private ProjectDao projectDao;
 
 // 使用sql插入一条数据
 int result = baseDao.update(""update project_info set project_name = ? where id = ?"", new Object[]{"测试项目", 1});
 
+// 使用实体类更新一条数据，其中以主键Id值为where条件，默认忽略null
 Project project = new Project();
 project.setId(1);
 project.setProjectName("xxxx");
 project.setDelFlag(1);
 project.setCreatedBy("admin");
 project.setRemark("XXXX");
-// 使用实体类更新一条数据，默认忽略null
 int result = baseDao.updateById(project);
 
 // 使用实体类更新一条数据，不忽略null
 int result = baseDao.updateById(project, false);
 
-``` 
+// 根据条件构造器（Lambda）作为条件更新一条数据，默认忽略null
+LambdaCriteria criteria = new LambdaCriteria().eq(Project::getId(), 1L)
+int result = baseDao.update(project, criteria);
 
+// 根据条件构造器作为条件更新一条数据，默认忽略null
+Criteria criteria = new Criteria().eq("id", 1L)
+int result = update.delete(project, criteria);
+
+// 根据条件构造器作为条件更新一条数据，不忽略null
+Criteria criteria = new Criteria().eq("id", 1L)
+int result = update.delete(project, false, criteria);
+```
 
 4.  删除操作
 ```java
 @Autowired
-private BaseDao baseDao;
+private ProjectDao projectDao;
 
-// 使用sql插入一条数据
-int result = baseDao.delete(""delete from project_info where id = ?"", new Object[]{1});
+// 使用sql删除一条数据
+int result = projectDao.delete(""delete from t_project_info where id = ?"", new Object[]{1});
 
+// 根据实体类作为查询条件删除一条数据
 Project project = new Project();
 project.setId(1);
-// 使用实体类删除一条数据，默认忽略null
 int result = baseDao.delete(project);
 
-// 根据id删除一条数据
-int result = baseDao.deleteById(1, Project.class);
+// 根据主键id删除一条数据
+int result = baseDao.deleteById(1L);
 
+// 根据主键id删除一条数据
+List<Long> ids = new ArrayList<Long>();
+ids.add(1L);
+ids.add(5L);
+int result = baseDao.deleteByIds(ids);
+
+// 根据条件构造器（Lambda）作为查询条件删除一条数据
+LambdaCriteria criteria = new LambdaCriteria().eq(Project::getId(), 1L)
+int result = baseDao.delete(criteria);
+
+// 根据条件构造器作为查询条件删除一条数据
+Criteria criteria = new Criteria().eq("id", 1L)
+int result = baseDao.delete(criteria);
 ``` 
