@@ -187,6 +187,11 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider updateByCriteriaSql(Object object, boolean ignoreNulls, Criteria criteria) {
+        String criteriaSql = criteria.generateSql();
+        if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
+            throw new JdbcException("SqlGenerator updateByCriteriaSql criteria can not null or empty!");
+        }
+
         Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
         Field[] fields = triple.getSecond();
         Table tableAnnotation = triple.getThird();
@@ -220,7 +225,6 @@ public class SqlGenerator {
         }
 
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        String criteriaSql = criteria.generateSql();
         sql.append("UPDATE ").append(tableAnnotation.value()).append(" SET ").append(tableColumn);
         sql.append(criteriaSql);
 
@@ -239,6 +243,11 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider updateByLambdaCriteriaSql(Object object, boolean ignoreNulls, LambdaCriteria criteria) {
+        String criteriaSql = criteria.generateSql();
+        if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
+            throw new JdbcException("SqlGenerator updateByLambdaCriteriaSql criteria can not null or empty!");
+        }
+
         Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
         Field[] fields = triple.getSecond();
         Table tableAnnotation = triple.getThird();
@@ -273,7 +282,6 @@ public class SqlGenerator {
         }
 
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        String criteriaSql = criteria.generateSql();
         sql.append("UPDATE ").append(tableAnnotation.value()).append(" SET ").append(tableColumn);
         sql.append(criteriaSql);
 
@@ -321,7 +329,7 @@ public class SqlGenerator {
             parameters.add(filedValue);
         }
         if (StringUtils.isEmpty(whereColumns.toString())) {
-            throw new JdbcException("deleteSql方法不能传入空对象，会导致删除全表！");
+            throw new JdbcException("SqlGenerator deleteSql whereColumns can not null!");
         }
         sql.append("DELETE FROM ");
         sql.append(tableAnnotation.value());
@@ -341,13 +349,18 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteCriteriaSql(Criteria criteria, Class<?> clazz) {
+        String criteriaSql = criteria.generateSql();
+        if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
+            throw new JdbcException("SqlGenerator deleteCriteriaSql criteria can not null or empty!");
+        }
+
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
         Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
         Table tableAnnotation = triple.getThird();
 
         StringBuilder sql = new StringBuilder();
-        sql.append("DELETE FROM ").append(tableAnnotation.value()).append(criteria.generateSql());
+        sql.append("DELETE FROM ").append(tableAnnotation.value()).append(criteriaSql);
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
@@ -361,13 +374,18 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteLambdaCriteriaSql(LambdaCriteria criteria, Class<?> clazz) {
+        String criteriaSql = criteria.generateSql();
+        if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
+            throw new JdbcException("SqlGenerator deleteLambdaCriteriaSql criteria can not null or empty!");
+        }
+
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
         Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
         Table tableAnnotation = triple.getThird();
 
         StringBuilder sql = new StringBuilder();
-        sql.append("DELETE FROM ").append(tableAnnotation.value()).append(criteria.generateSql());
+        sql.append("DELETE FROM ").append(tableAnnotation.value()).append(criteriaSql);
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
