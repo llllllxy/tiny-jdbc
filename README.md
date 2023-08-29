@@ -200,27 +200,29 @@ public class UploadFile implements Serializable {
 
 ### 定义Dao类，继承自BaseDao，泛型一为对应实体类，泛型二实体类主键类型
 ```java
-    import org.springframework.stereotype.Repository;
-    import org.tinycloud.jdbc.BaseDao;
-    import org.tinycloud.entity.UploadFile;
+import org.springframework.stereotype.Repository;
+import org.tinycloud.jdbc.BaseDao;
+import org.tinycloud.entity.UploadFile;
 
-    @Repository
-    public class UploadFileDao extends BaseDao<UploadFile, Long> {
-    }
+@Repository
+public class UploadFileDao extends BaseDao<UploadFile, Long> {
+    
+    ...
+}
 ```
 ### Service层注入即可使用
 ```java
-    import org.springframework.stereotype.Repository;
-    import org.tinycloud.jdbc.BaseDao;
-    import org.tinycloud.entity.Project;
+import org.springframework.stereotype.Service;
+import org.tinycloud.dao.UploadFileDao;
 
-    @Repository
-    public class UploadFileService extends BaseDao<Project> {
-        
-        @Autowired
-        private ProjectDao projectDao;
-        
-    }
+@Service
+public class UploadFileService {
+    
+    @Autowired
+    private UploadFileDao uploadFileDao;
+    
+    ...
+}
 ```
 
 
@@ -406,6 +408,12 @@ Project project = projectDao.selectOne(project);
 // 查询id=3的项目信息
 Project project = projectDao.selectById(3L);
 
+// 查询id=3和id=4的项目信息
+List<Long> ids = new ArrayList<Long>();
+ids.add(3L);
+ids.add(4L);
+Project project = projectDao.selectByIds(ids)
+
 // 查询id=3的项目信息
 LambdaCriteria criteria = new LambdaCriteria().eq(Project::getId, 3L);        
 Project project = projectDao.selectOne(criteria);
@@ -417,7 +425,11 @@ Project project = projectDao.selectOne(criteria);
 // 分页查询id=3的项目信息，第一页，每页10个
 Project project = new Project();
 project.setId(3L);
-Page<Project> page = projectDao.paginate(project, 1, 10)
+Page<Project> page = projectDao.paginate(project, 1, 10);
+
+// 分页查询id=3的项目信息，第一页，每页10个
+Criteria criteria = new Criteria().eq("id", 3L);
+Page<Project> page = projectDao.paginate(criteria, 1, 10);        
 
 // 根据条件构造器构建复杂查询条件
 // 等价于SQL: SELECT id AS id,project_name AS projectName,del_flag AS delFlag,created_by AS createdBy,updated_by AS updatedBy,created_at AS createdAt,updated_at AS updatedAt,remark AS remark FROM t_project_info WHERE created_by = 'admin' AND del_flag >= 0 AND id IN (1, 5) OR (remark NOT LIKE '%XXX%') ORDER BY created_at DESC
