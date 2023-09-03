@@ -1,7 +1,5 @@
 package org.tinycloud.jdbc.criteria;
 
-
-import java.util.ArrayList;
 import java.util.List;
 
 /**
