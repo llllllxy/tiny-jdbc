@@ -429,9 +429,7 @@ public class SqlGenerator {
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 e.printStackTrace();
             }
-
-            Class<?> type = field.getType();
-            if (ReflectUtils.typeValueIsNotNull(type, filedValue)) {
+            if (filedValue != null) {
                 whereColumns.append("AND ")
                         .append(column)
                         .append("=? ");
@@ -450,10 +448,10 @@ public class SqlGenerator {
                 .append(tableColumn)
                 .append(" FROM ")
                 .append(tableAnnotation.value());
-        if (!StringUtils.isEmpty(whereColumns.toString())) {
+        if (StringUtils.hasLength(whereColumns.toString())) {
             sql.append(" WHERE ").append(whereColumns.toString().replaceFirst("AND", ""));
         }
-        if (!StringUtils.isEmpty(primaryKeyColumn)) {
+        if (StringUtils.hasLength(primaryKeyColumn)) {
             sql.append(" ORDER BY ").append(primaryKeyColumn).append(" DESC");
         }
         SqlProvider so = new SqlProvider();
