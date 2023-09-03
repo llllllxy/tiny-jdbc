@@ -66,7 +66,7 @@ public class ReflectUtils {
     public static boolean typeValueIsNotNull(Class<?> clazz, Object filedValue) {
         // String
         if (clazz == java.lang.String.class) {
-            if (filedValue == null || filedValue == "") {
+            if (filedValue == null || "".equals(filedValue)) {
                 return false;
             }
             // Number
