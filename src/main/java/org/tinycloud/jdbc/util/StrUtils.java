@@ -95,7 +95,8 @@ public class StrUtils {
 
     /**
      * 首字母转换小写
-     *  Thus "FooBah" becomes "fooBah" and "X" becomes "x", but "URL" stays as "URL".
+     * Thus "FooBah" becomes "fooBah" and "X" becomes "x", but "URL" stays as "URL".
+     *
      * @param name 需要转换的字符串
      * @return 转换好的字符串
      */
@@ -104,7 +105,7 @@ public class StrUtils {
             return name;
         }
         if (name.length() > 1 && Character.isUpperCase(name.charAt(1)) &&
-                Character.isUpperCase(name.charAt(0))){
+                Character.isUpperCase(name.charAt(0))) {
             return name;
         }
         char[] chars = name.toCharArray();
@@ -112,4 +113,91 @@ public class StrUtils {
         return new String(chars);
     }
 
+    /**
+     * 这个字符串是否是全是数字
+     *
+     * @param str 输入字符串
+     * @return true: 是，false: 不是
+     */
+    public static boolean isNumeric(String str) {
+        if (isBlank(str)) {
+            return false;
+        }
+        for (int i = str.length(); --i >= 0; ) {
+            int chr = str.charAt(i);
+            if (chr < 48 || chr > 57) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 删除字符串中的字符
+     *
+     * @param string     输入字符串
+     * @param deleteChar 需要删除的字符
+     * @return 输出字符串
+     */
+    public static String deleteChar(String string, char deleteChar) {
+        if (isBlank(string)) {
+            return "";
+        }
+        char[] chars = string.toCharArray();
+        StringBuilder sb = new StringBuilder(string.length());
+        for (char ar : chars) {
+            if (ar != deleteChar) {
+                sb.append(ar);
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 判断字符串是否以prefixes其中某一个字符串为开头的
+     *
+     * @param str      输入字符串
+     * @param prefixes 待匹配字符串数组
+     * @return true是，false不是
+     */
+    public static boolean startsWithAny(String str, String... prefixes) {
+        if (isBlank(str) || prefixes == null || prefixes.length == 0) {
+            return false;
+        }
+        for (String prefix : prefixes) {
+            if (str.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断字符串是否以suffixes其中某一个字符串为结尾的
+     *
+     * @param str      输入字符串
+     * @param suffixes 待匹配字符串数组
+     * @return true是，false不是
+     */
+    public static boolean endsWithAny(String str, String... suffixes) {
+        if (isBlank(str) || suffixes == null || suffixes.length == 0) {
+            return false;
+        }
+        for (String suffix : suffixes) {
+            if (str.endsWith(suffix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 去除字符串前后空格，如果字符串为null，则直接返回null
+     *
+     * @param string 输入字符串
+     * @return 输出字符串
+     */
+    public static String trimOrNull(String string) {
+        return string != null ? string.trim() : null;
+    }
 }
