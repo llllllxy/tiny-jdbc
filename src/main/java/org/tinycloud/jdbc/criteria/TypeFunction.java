@@ -12,38 +12,41 @@ import java.util.function.Function;
 
 @FunctionalInterface
 public interface TypeFunction<T, R> extends Serializable, Function<T, R> {
+
     /**
      * 获取列名称
      *
-     * @param lambda lambda表达式
+     * @param getter 函数式接口，如 UploadFile::getFileId
      * @return String 列名称
      */
-    static String getLambdaColumnName(Serializable lambda) {
+    static String getLambdaColumnName(Serializable getter) {
         try {
-            Method method = lambda.getClass().getDeclaredMethod("writeReplace");
+            Method method = getter.getClass().getDeclaredMethod("writeReplace");
             method.setAccessible(Boolean.TRUE);
-            SerializedLambda serializedLambda = (SerializedLambda) method.invoke(lambda);
-            String implClass = serializedLambda.getImplClass();
-            String getter = serializedLambda.getImplMethodName();
-            String fieldName = Introspector.decapitalize(getter.replaceFirst("get", ""));
+            SerializedLambda serializedLambda = (SerializedLambda) method.invoke(getter);
 
-            String cacheKey = implClass + fieldName;
-            if (LambdaCriteria.cache.containsKey(cacheKey)) {
-                return LambdaCriteria.cache.get(cacheKey);
+            String implClass = serializedLambda.getImplClass();
+            String methodName = serializedLambda.getImplMethodName();
+            String fieldName = Introspector.decapitalize(methodName.replaceFirst("get", ""));
+
+            String lambdaCacheKey = implClass + fieldName;
+            if (LambdaCriteria.LAMBDA_CACHE.containsKey(lambdaCacheKey)) {
+                return LambdaCriteria.LAMBDA_CACHE.get(lambdaCacheKey);
             }
 
             // 通过字段名获取字段
             Field field = Class.forName(implClass.replace("/", ".")).getDeclaredField(fieldName);
+            // 获取字段上的注解
             Column annotation = field.getAnnotation(Column.class);
 
             String sqlField;
-            if (annotation == null || annotation.value().isEmpty()) {
+            if (annotation == null || StrUtils.isEmpty(annotation.value())) {
                 sqlField = StrUtils.humpToLine(fieldName);
             } else {
                 sqlField = annotation.value();
             }
 
-            LambdaCriteria.cache.put(cacheKey, sqlField);
+            LambdaCriteria.LAMBDA_CACHE.put(lambdaCacheKey, sqlField);
             return sqlField;
         } catch (ReflectiveOperationException e) {
             throw new IllegalArgumentException(e);

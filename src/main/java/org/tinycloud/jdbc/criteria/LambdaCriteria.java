@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  **/
 public class LambdaCriteria extends AbstractCriteria {
 
-    public static final Map<String, String> cache = new ConcurrentHashMap<>();
+    public static final Map<String, String> LAMBDA_CACHE = new ConcurrentHashMap<>();
 
     public <T, R> LambdaCriteria lt(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
