@@ -13,7 +13,7 @@ import java.util.Map;
  * @author liuxingyu01
  * @since 2023-07-19
  **/
-public interface ISqlSupport<T,ID> {
+public interface ISqlSupport<T, ID> {
 
     /**
      * 使用提供的SQL语句和提供的参数，执行增删改
@@ -76,12 +76,11 @@ public interface ISqlSupport<T,ID> {
      *
      * @param sql    要执行的SQL
      * @param clazz  实体类型
-     * @param pageNumber 当前页
-     * @param pageSize   页大小
-     * @param params     ？参数
+     * @param page   分页参数
+     * @param params ？参数
      * @return Page<F>
      */
-    <F> Page<F> paginate(String sql, Class<F> clazz, Integer pageNumber, Integer pageSize, final Object... params);
+    <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params);
 
     /**
      * 查询给定的SQL和参数列表，结果返回第一条
@@ -149,7 +148,7 @@ public interface ISqlSupport<T,ID> {
      * @param sql 要执行的SQL查询
      * @return T
      */
-    Page<T> paginate(String sql, Integer pageNumber, Integer pageSize);
+    Page<T> paginate(String sql, Page<T> page);
 
     /**
      * 分页查询
@@ -157,7 +156,7 @@ public interface ISqlSupport<T,ID> {
      * @param sql 要执行的SQL查询
      * @return T
      */
-    Page<T> paginate(String sql, Integer pageNumber, Integer pageSize, Object... params);
+    Page<T> paginate(String sql, Page<T> page, Object... params);
 
     /**
      * 使用 in 进行批量操作，比如批量启用，批量禁用，批量删除等 -- 更灵活的就需要自己写了

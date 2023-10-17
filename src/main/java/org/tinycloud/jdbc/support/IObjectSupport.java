@@ -167,6 +167,7 @@ public interface IObjectSupport<T, ID> {
 
     /**
      * 根据ID列表进行批量查询
+     *
      * @param ids 主键id列表
      * @return List<T> 实例列表
      */
@@ -199,32 +200,29 @@ public interface IObjectSupport<T, ID> {
     /**
      * 分页查询给定的实例，返回实例列表
      *
-     * @param entity     实例
-     * @param pageNumber 页码
-     * @param pageSize   页大小
+     * @param entity 实例
+     * @param page   分页参数
      * @return List<T> 实例列表
      */
-    Page<T> paginate(T entity, Integer pageNumber, Integer pageSize);
+    Page<T> paginate(T entity, Page<T> page);
 
     /**
      * 分页查询给定的实例，返回实例列表
      *
-     * @param criteria   条件构造器
-     * @param pageNumber 页码
-     * @param pageSize   页大小
+     * @param criteria 条件构造器
+     * @param page     分页参数
      * @return List<T> 实例列表
      */
-    Page<T> paginate(Criteria criteria, Integer pageNumber, Integer pageSize);
+    Page<T> paginate(Criteria criteria, Page<T> page);
 
     /**
      * 分页查询给定的实例，返回实例列表
      *
      * @param lambdaCriteria 条件构造器(lambda版)
-     * @param pageNumber     页码
-     * @param pageSize       页大小
+     * @param page           分页参数
      * @return List<T> 实例列表
      */
-    Page<T> paginate(LambdaCriteria lambdaCriteria, Integer pageNumber, Integer pageSize);
+    Page<T> paginate(LambdaCriteria lambdaCriteria, Page<T> page);
 
     /**
      * 查询给定的实例，返回一个实例
@@ -286,6 +284,7 @@ public interface IObjectSupport<T, ID> {
 
     /**
      * 查询记录是否存在
+     *
      * @param criteria 条件构造器
      * @return true存在，false不存在
      */
@@ -296,6 +295,7 @@ public interface IObjectSupport<T, ID> {
 
     /**
      * 查询记录是否存在
+     *
      * @param lambdaCriteria 条件构造器(lambda版)
      * @return true存在，false不存在
      */

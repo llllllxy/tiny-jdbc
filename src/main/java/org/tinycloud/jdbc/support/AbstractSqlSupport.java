@@ -143,89 +143,91 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     /**
      * 分页查询
      *
-     * @param sql 要执行的SQL查询
+     * @param sql  要执行的SQL查询
+     * @param page 分页参数
      * @return T
      */
     @Override
-    public Page<T> paginate(String sql, Integer pageNumber, Integer pageSize) {
-        if (pageNumber <= 0) {
+    public Page<T> paginate(String sql, Page<T> page) {
+        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
+            throw new JdbcException("paginate page cannot be null");
+        }
+        if (page.getPageNum() <= 0) {
             throw new JdbcException("当前页数必须大于1");
         }
-        if (pageSize <= 0) {
+        if (page.getPageSize() <= 0) {
             throw new JdbcException("每页大小必须大于1");
         }
-        String selectSql = getPageHandle().handlerPagingSQL(sql, pageNumber, pageSize);
+        String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sql);
         // 查询数据列表
         List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper);
         // 查询总共数量
         int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class);
-
-        Page<T> bean = new Page<>(pageNumber, pageSize);
-        bean.setRecords(resultList);
-        bean.setTotal(totalSize);
-        return bean;
+        page.setRecords(resultList);
+        page.setTotal(totalSize);
+        return page;
     }
 
     /**
      * 分页查询（带参数）
      *
-     * @param sql        要执行的SQL
-     * @param pageNumber 当前页
-     * @param pageSize   页大小
-     * @param params     ？参数
+     * @param sql    要执行的SQL
+     * @param page   分页参数
+     * @param params ？参数
      * @return Page<T>
      */
     @Override
-    public Page<T> paginate(String sql, Integer pageNumber, Integer pageSize, final Object... params) {
-        if (pageNumber <= 0) {
+    public Page<T> paginate(String sql, Page<T> page, final Object... params) {
+        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
+            throw new JdbcException("paginate page cannot be null");
+        }
+        if (page.getPageNum() <= 0) {
             throw new JdbcException("当前页数必须大于1");
         }
-        if (pageSize <= 0) {
+        if (page.getPageSize() <= 0) {
             throw new JdbcException("每页大小必须大于1");
         }
-        String selectSql = getPageHandle().handlerPagingSQL(sql, pageNumber, pageSize);
+        String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sql);
         // 查询数据列表
         List<T> resultList = getJdbcTemplate().query(selectSql, params, rowMapper);
         // 查询总共数量
         int totalSize = getJdbcTemplate().queryForObject(countSql, params, Integer.class);
-
-        Page<T> bean = new Page<>(pageNumber, pageSize);
-        bean.setRecords(resultList);
-        bean.setTotal(totalSize);
-        return bean;
+        page.setRecords(resultList);
+        page.setTotal(totalSize);
+        return page;
     }
 
     /**
      * 分页查询（带参数）
      *
-     * @param sql        要执行的SQL
-     * @param clazz      实体类型
-     * @param pageNumber 当前页
-     * @param pageSize   页大小
-     * @param params     ？参数
+     * @param sql    要执行的SQL
+     * @param clazz  实体类型
+     * @param page   分页参数
+     * @param params ？参数
      * @return Page<F>
      */
     @Override
-    public <F> Page<F> paginate(String sql, Class<F> clazz, Integer pageNumber, Integer pageSize, final Object... params) {
-        if (pageNumber <= 0) {
+    public <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params) {
+        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
+            throw new JdbcException("paginate page cannot be null");
+        }
+        if (page.getPageNum() <= 0) {
             throw new JdbcException("当前页数必须大于1");
         }
-        if (pageSize <= 0) {
+        if (page.getPageSize() <= 0) {
             throw new JdbcException("每页大小必须大于1");
         }
-        String selectSql = getPageHandle().handlerPagingSQL(sql, pageNumber, pageSize);
+        String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sql);
         // 查询数据列表
         List<F> resultList = getJdbcTemplate().query(selectSql, params, new BeanPropertyRowMapper<>(clazz));
         // 查询总共数量
         int totalSize = getJdbcTemplate().queryForObject(countSql, params, Integer.class);
-
-        Page<F> bean = new Page<>(pageNumber, pageSize);
-        bean.setRecords(resultList);
-        bean.setTotal(totalSize);
-        return bean;
+        page.setRecords(resultList);
+        page.setTotal(totalSize);
+        return page;
     }
 
 
@@ -351,72 +353,78 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public Page<T> paginate(T entity, Integer pageNumber, Integer pageSize) {
+    public Page<T> paginate(T entity, Page<T> page) {
         if (entity == null) {
             throw new JdbcException("paginate entity cannot be null");
         }
-        if (pageNumber <= 0) {
+        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
+            throw new JdbcException("paginate page cannot be null");
+        }
+        if (page.getPageNum() <= 0) {
             throw new JdbcException("当前页数必须大于1");
         }
-        if (pageSize <= 0) {
+        if (page.getPageSize() <= 0) {
             throw new JdbcException("每页大小必须大于1");
         }
         SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
-        String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), pageNumber, pageSize);
+        String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
         // 查询数据列表
         List<T> resultList = getJdbcTemplate().query(selectSql, sqlProvider.getParameters().toArray(), rowMapper);
         // 查询总共数量
         int totalSize = getJdbcTemplate().queryForObject(countSql, sqlProvider.getParameters().toArray(), Integer.class);
-        Page<T> page = new Page<>(pageNumber, pageSize);
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
     }
 
     @Override
-    public Page<T> paginate(Criteria criteria, Integer pageNumber, Integer pageSize) {
+    public Page<T> paginate(Criteria criteria, Page<T> page) {
         if (criteria == null) {
             throw new JdbcException("paginate criteria cannot be null");
         }
-        if (pageNumber <= 0) {
+        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
+            throw new JdbcException("paginate page cannot be null");
+        }
+        if (page.getPageNum() <= 0) {
             throw new JdbcException("当前页数必须大于1");
         }
-        if (pageSize <= 0) {
+        if (page.getPageSize() <= 0) {
             throw new JdbcException("每页大小必须大于1");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCriteriaSql(criteria, entityClass);
-        String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), pageNumber, pageSize);
+        String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
         // 查询数据列表
         List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper);
         // 查询总共数量
         int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class);
-        Page<T> page = new Page<>(pageNumber, pageSize);
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
     }
 
     @Override
-    public Page<T> paginate(LambdaCriteria lambdaCriteria, Integer pageNumber, Integer pageSize) {
+    public Page<T> paginate(LambdaCriteria lambdaCriteria, Page<T> page) {
         if (lambdaCriteria == null) {
             throw new JdbcException("paginate lambdaCriteria cannot be null");
         }
-        if (pageNumber <= 0) {
+        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
+            throw new JdbcException("paginate page cannot be null");
+        }
+        if (page.getPageNum() <= 0) {
             throw new JdbcException("当前页数必须大于1");
         }
-        if (pageSize <= 0) {
+        if (page.getPageSize() <= 0) {
             throw new JdbcException("每页大小必须大于1");
         }
         SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
-        String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), pageNumber, pageSize);
+        String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
         // 查询数据列表
         List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper);
         // 查询总共数量
         int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class);
-        Page<T> page = new Page<>(pageNumber, pageSize);
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;

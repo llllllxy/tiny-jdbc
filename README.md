@@ -238,18 +238,18 @@ public class UploadFileService {
 |`List<Map<String, Object>> selectMap(String sql, Object... params);`|根据给定的sql和参数，查询数据库并返回Map<String, Object>列表|
 |`Map<String, Object> selectOneMap(String sql, Object... params);`|根据给定的sql和参数，查询数据并返回一个Map<String, Object>对象|
 |`<T> T selectOneColumn(String sql, Class<T> clazz, Object... params);`|根据给定的sql和实体类型和参数，查询数据并返回一个值（常用于查count）|
-|`Page<T> paginate(String sql, Integer pageNumber, Integer pageSize);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(String sql, Integer pageNumber, Integer pageSize, Object... params);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(String sql, Page<T> page);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(String sql, Page<T> page, Object... params);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
 |`T selectById(Object id);`|根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`List<T> select(T entity);`|实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(T entity, Integer pageNumber, Integer pageSize);`|实体类里面非null的属性作为查询条件，执行分页查询，类型使用的是xxxDao<T>的类型|
 |`T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`List<T> select(Criteria criteria);`|根据条件构造器查询，返回多条，类型使用的是xxxDao<T>的类型|
 |`List<T> select(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`T selectOne(Criteria criteria);`|根据条件构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型|
 |`T selectOne(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(Criteria criteria, Integer pageNumber, Integer pageSize);`|根据条件构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(LambdaCriteria lambdaCriteria, Integer pageNumber, Integer pageSize, Object... params);`|根据条件构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(T entity, Page<T> page);`|实体类里面非null的属性作为查询条件，执行分页查询，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(Criteria criteria, Page<T> page);`|根据条件构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(LambdaCriteria lambdaCriteria, Page<T> page);`|根据条件构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
 |`Long selectCount(Criteria criteria);`|根据条件构造器执行总记录数查询，返回符合条件的总记录数量|
 |`Long selectCount(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)执行总记录数查询，返回符合条件的总记录数量|
 |`boolean exists(Criteria criteria);`|根据条件构造器执行查询记录是否存在，返回true或者false|
@@ -393,7 +393,7 @@ Project project = projectDao.selectOne("select * from t_project_info where id = 
 Integer count = projectDao.selectOneColumn("select count(*) from t_project_info order by created_at desc", Integer.class));
 
 // 分页查询id>100的记录，第一页，每页10个
-Page<Project> page = projectDao.paginate("select * from t_project_info order by created_at desc where id > ?", 1, 10, 100));
+Page<Project> page = projectDao.paginate("select * from t_project_info order by created_at desc where id > ?", new Page<Project>(1, 10), 100));
 
 // 查询id=3的项目信息列表
 Project project = new Project();
@@ -425,11 +425,11 @@ Project project = projectDao.selectOne(criteria);
 // 分页查询id=3的项目信息，第一页，每页10个
 Project project = new Project();
 project.setId(3L);
-Page<Project> page = projectDao.paginate(project, 1, 10);
+Page<Project> page = projectDao.paginate(project, new Page<Project>(1, 10));
 
 // 分页查询id=3的项目信息，第一页，每页10个
 Criteria criteria = new Criteria().eq("id", 3L);
-Page<Project> page = projectDao.paginate(criteria, 1, 10);        
+Page<Project> page = projectDao.paginate(criteria, new Page<Project>(1, 10));        
 
 // 根据条件构造器构建复杂查询条件
 // 等价于SQL: SELECT id AS id,project_name AS projectName,del_flag AS delFlag,created_by AS createdBy,updated_by AS updatedBy,created_at AS createdAt,updated_at AS updatedAt,remark AS remark FROM t_project_info WHERE created_by = 'admin' AND del_flag >= 0 AND id IN (1, 5) OR (remark NOT LIKE '%XXX%') ORDER BY created_at DESC
