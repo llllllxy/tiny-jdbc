@@ -22,10 +22,9 @@ public class PostgreSqlPageHandleImpl implements IPageHandle {
             int offset = (pageNo - 1) * pageSize;
             int limit = pageSize;
             if (offset <= 0) {
-                sql.append(" limit ").append(limit);
+                sql.append(" LIMIT ").append(limit);
             } else {
-                sql.append(" limit ").append(offset).append(",")
-                        .append(limit);
+                sql.append(" LIMIT ").append(limit).append(" OFFSET ").append(offset);
             }
         }
         return sql.toString();
