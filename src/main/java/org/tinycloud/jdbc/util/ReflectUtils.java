@@ -203,6 +203,26 @@ public class ReflectUtils {
     }
 
     /**
+     * 根据对象和属性名称获取一个属性。如果未找到，则返回null
+     * 循环向上转型, 获取对象的DeclaredField, 并强制设置为可访问.
+     *
+     * @param clazz     对象类型
+     * @param fieldName 属性名称
+     */
+    public static Field getAccessibleField(Class<?> clazz, String fieldName) {
+        for (Class<?> superClass = clazz; superClass != Object.class; superClass = superClass.getSuperclass()) {
+            try {
+                Field field = superClass.getDeclaredField(fieldName);
+                makeAccessible(field);
+                return field;
+            } catch (NoSuchFieldException ignored) {
+
+            }
+        }
+        return null;
+    }
+
+    /**
      * 直接读取对象属性值, 无视private/protected修饰符, 不经过setter函数
      *
      * @param obj       对象
