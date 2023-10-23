@@ -38,7 +38,7 @@
     <dependency>
         <groupId>org.tinycloud</groupId>
         <artifactId>tiny-jdbc-boot-starter</artifactId>
-        <version>1.4.4</version>
+        <version>1.4.6</version>
     </dependency>
 ```
 
