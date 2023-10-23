@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.page;
 
 /**
  * 分页查询适配器-PostgreSql
+ *
  * @author liuxingyu01
  * @since 2022-05-10 8:32
  **/
@@ -18,14 +19,12 @@ public class PostgreSqlPageHandleImpl implements IPageHandle {
     @Override
     public String handlerPagingSQL(String oldSQL, int pageNo, int pageSize) {
         StringBuilder sql = new StringBuilder(oldSQL);
-        if (pageSize > 0) {
-            int offset = (pageNo - 1) * pageSize;
-            int limit = pageSize;
-            if (offset <= 0) {
-                sql.append(" LIMIT ").append(limit);
-            } else {
-                sql.append(" LIMIT ").append(limit).append(" OFFSET ").append(offset);
-            }
+        int offset = (pageNo - 1) * pageSize;
+        int limit = pageSize;
+        if (offset <= 0) {
+            sql.append(" LIMIT ").append(limit);
+        } else {
+            sql.append(" LIMIT ").append(limit).append(" OFFSET ").append(offset);
         }
         return sql.toString();
     }
@@ -34,9 +33,9 @@ public class PostgreSqlPageHandleImpl implements IPageHandle {
     @Override
     public String handlerCountSQL(String oldSQL) {
         StringBuilder newSql = new StringBuilder();
-        newSql.append("select count(*) from ( ");
+        newSql.append("SELECT COUNT(*) FROM ( ");
         newSql.append(oldSQL);
-        newSql.append(" ) temp");
+        newSql.append(" ) TEMP");
         return newSql.toString();
     }
 }

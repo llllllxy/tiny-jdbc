@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.page;
 
 /**
  * 分页查询适配器-h2数据库
+ *
  * @author liuxingyu01
  * @since 2023-08-03
  **/
@@ -18,15 +19,13 @@ public class H2PageHandleImpl implements IPageHandle {
     @Override
     public String handlerPagingSQL(String oldSQL, int pageNo, int pageSize) {
         StringBuilder sql = new StringBuilder(oldSQL);
-        if (pageSize > 0) {
-            int offset = (pageNo - 1) * pageSize;
-            int limit = pageSize;
-            if (offset <= 0) {
-                sql.append(" limit ").append(limit);
-            } else {
-                sql.append(" limit ").append(offset).append(",")
-                        .append(limit);
-            }
+        int offset = (pageNo - 1) * pageSize;
+        int limit = pageSize;
+        if (limit > 0) {
+            sql.append("\n LIMIT ").append(limit);
+        }
+        if (offset > 0) {
+            sql.append("\n OFFSET ").append(offset);
         }
         return sql.toString();
     }

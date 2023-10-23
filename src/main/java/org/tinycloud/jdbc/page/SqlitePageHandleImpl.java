@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.page;
 
 /**
  * 分页查询适配器-sqlite
+ *
  * @author liuxingyu01
  * @since 2023-08-03
  **/
@@ -18,15 +19,14 @@ public class SqlitePageHandleImpl implements IPageHandle {
     @Override
     public String handlerPagingSQL(String oldSQL, int pageNo, int pageSize) {
         StringBuilder sql = new StringBuilder(oldSQL);
-        if (pageSize > 0) {
-            int offset = (pageNo - 1) * pageSize;
-            int limit = pageSize;
-            if (offset <= 0) {
-                sql.append(" limit ").append(limit);
-            } else {
-                sql.append(" limit ").append(offset).append(",")
-                        .append(limit);
-            }
+
+        int offset = (pageNo - 1) * pageSize;
+        int limit = pageSize;
+        if (limit > 0) {
+            sql.append("\n LIMIT ").append(limit);
+        }
+        if (offset > 0) {
+            sql.append("\n OFFSET ").append(offset);
         }
         return sql.toString();
     }
@@ -34,9 +34,9 @@ public class SqlitePageHandleImpl implements IPageHandle {
     @Override
     public String handlerCountSQL(String oldSQL) {
         StringBuilder newSql = new StringBuilder();
-        newSql.append("select count(*) from ( ");
+        newSql.append("SELECT COUNT(*) FROM ( ");
         newSql.append(oldSQL);
-        newSql.append(" ) temp");
+        newSql.append(" ) TEMP");
         return newSql.toString();
     }
 }
