@@ -61,7 +61,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
      */
     @Override
     public List<T> select(String sql, Object... params) {
-        List<T> resultList = null;
+        List<T> resultList;
         if (params != null && params.length > 0) {
             resultList = getJdbcTemplate().query(sql, params, rowMapper);
         } else {
@@ -82,7 +82,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
      */
     @Override
     public <F> List<F> select(String sql, Class<F> clazz, Object... params) {
-        List<F> resultList = null;
+        List<F> resultList;
         if (params != null && params.length > 0) {
             resultList = getJdbcTemplate().query(sql, params, new BeanPropertyRowMapper<>(clazz));
         } else {
