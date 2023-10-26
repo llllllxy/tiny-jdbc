@@ -1,12 +1,24 @@
 <h1 align="center">tiny-jdbc-boot-starter</h1>
 
 <p align="center">
-	<a target="_blank" href="https://www.apache.org/licenses/LICENSE-2.0">
-		<img src="https://img.shields.io/badge/license-Apache%202-green.svg" />
-	</a>
+    <a href="https://github.com/llllllxy/tiny-jdbc-boot-starter/blob/master/LICENSE">
+        <img src="https://img.shields.io/github/license/llllllxy/tiny-jdbc-boot-starter.svg?style=flat-square">
+    </a>
 	<a target="_blank" href="https://www.oracle.com/technetwork/java/javase/downloads/index.html">
 		<img src="https://img.shields.io/badge/JDK-8+-blue.svg" />
 	</a>
+    <a href="https://github.com/llllllxy/tiny-jdbc-boot-starter/stargazers">
+        <img src="https://img.shields.io/github/stars/llllllxy/tiny-jdbc-boot-starter?style=flat-square&logo=GitHub">
+    </a>
+    <a href="https://github.com/llllllxy/tiny-jdbc-boot-starter/network/members">
+        <img src="https://img.shields.io/github/forks/llllllxy/tiny-jdbc-boot-starter?style=flat-square&logo=GitHub">
+    </a>
+    <a href="https://github.com/llllllxy/tiny-jdbc-boot-starter/watchers">
+        <img src="https://img.shields.io/github/watchers/llllllxy/tiny-jdbc-boot-starter?style=flat-square&logo=GitHub">
+    </a>
+    <a href="https://github.com/llllllxy/tiny-jdbc-boot-starter/issues">
+        <img src="https://img.shields.io/github/issues/llllllxy/tiny-jdbc-boot-starter.svg?style=flat-square&logo=GitHub">
+    </a>
     <a href='https://gitee.com/leisureLXY/tiny-security-boot-starter'>
         <img src='https://gitee.com/leisureLXY/tiny-jdbc-boot-starter/badge/star.svg?theme=dark' alt='star' />
     </a>
