@@ -6,6 +6,7 @@ import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.criteria.Criteria;
 import org.tinycloud.jdbc.criteria.LambdaCriteria;
 import org.tinycloud.jdbc.exception.JdbcException;
+import org.tinycloud.jdbc.annotation.IdType;
 import org.tinycloud.jdbc.id.IdUtils;
 import org.tinycloud.jdbc.util.ReflectUtils;
 import org.tinycloud.jdbc.util.Triple;
@@ -48,46 +49,39 @@ public class SqlGenerator {
             }
             String column = columnAnnotation.value();
             boolean primaryKey = columnAnnotation.primaryKey();
-            boolean autoIncrement = columnAnnotation.autoIncrement();
-            // 如果是自增主键，那么直接跳过，无需后面的逻辑了
-            if (primaryKey && autoIncrement) {
-                continue;
-            }
-
-            boolean assignId = columnAnnotation.assignId();
-            boolean uuid = columnAnnotation.uuid();
-            boolean objectId = columnAnnotation.objectId();
-
-            // 如果是其他主键策略，设置完主键后，塞回到实体类里，这样可以方便插入后获取主键值
-            /* 雪花ID */
-            if (primaryKey && assignId) {
-                Class<?> type = field.getType();
-                Object fieldValue = (type == java.lang.String.class) ? IdUtils.nextId() : IdUtils.nextLongId();
-                try {
-                    field.set(object, fieldValue);
-                } catch (IllegalArgumentException | IllegalAccessException e) {
-                    throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String or Long when assignId!");
+            if (primaryKey) {
+                IdType idType = columnAnnotation.idType();
+                if (idType == IdType.AUTO_INCREMENT) {
+                    // 自增主键直接跳过，无需处理
+                    continue;
+                }
+                // 如果是其他主键策略，设置完主键后，塞回到实体类里，这样可以方便插入后获取主键值
+                if (idType == IdType.OBJECT_ID) {
+                    Object fieldValue = IdUtils.objectId();
+                    try {
+                        field.set(object, fieldValue);
+                    } catch (IllegalArgumentException | IllegalAccessException e) {
+                        throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String when objectId!");
+                    }
+                }
+                if (idType == IdType.ASSIGN_ID) {
+                    Class<?> type = field.getType();
+                    Object fieldValue = (type == java.lang.String.class) ? IdUtils.nextId() : IdUtils.nextLongId();
+                    try {
+                        field.set(object, fieldValue);
+                    } catch (IllegalArgumentException | IllegalAccessException e) {
+                        throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String or Long when assignId!");
+                    }
+                }
+                if (idType == IdType.UUID) {
+                    Object fieldValue = IdUtils.simpleUUID();
+                    try {
+                        field.set(object, fieldValue);
+                    } catch (IllegalArgumentException | IllegalAccessException e) {
+                        throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String when uuid!");
+                    }
                 }
             }
-            /* UUID */
-            if (primaryKey && uuid) {
-                Object fieldValue = IdUtils.simpleUUID();
-                try {
-                    field.set(object, fieldValue);
-                } catch (IllegalArgumentException | IllegalAccessException e) {
-                    throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String when uuid!");
-                }
-            }
-            /* objectId */
-            if (primaryKey && objectId) {
-                Object fieldValue = IdUtils.objectId();
-                try {
-                    field.set(object, fieldValue);
-                } catch (IllegalArgumentException | IllegalAccessException e) {
-                    throw new RuntimeException("inject field value fail : " + field.getName() + ", field type must be String when objectId!");
-                }
-            }
-
             Object fieldValue = null;
             try {
                 fieldValue = field.get(object);

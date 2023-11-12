@@ -23,22 +23,7 @@ public @interface Column {
     boolean primaryKey() default false;
 
     /**
-     * 标记自增主键
+     * 标记主键策略类型
      */
-    boolean autoIncrement() default false;
-
-    /**
-     * 标记雪花id
-     */
-    boolean assignId() default false;
-
-    /**
-     * 标记UUID
-     */
-    boolean uuid() default false;
-
-    /**
-     * 标记MongoDB中的ObjectId
-     */
-    boolean objectId() default false;
+    IdType idType() default IdType.INPUT;
 }

@@ -54,20 +54,25 @@
     </dependency>
 ```
 
-### 定义Entity实体类，对应数据库的一张表
+### 定义Entity实体类，对应数据库的一张表，如下
 ```java
 @Table("b_upload_file")
 public class UploadFile implements Serializable {
     private static final long serialVersionUID = -1L;
 
     /**
-     * 表的主键
-     * 注意，如果设置为自增主键的话，则此字段必须为Long
-     * 如果设置为uuid的话，则此字段必须为String
-     * 如果设置为objectId的话，则此字段必须为String
-     * 如果设置为assignId的话，则此字段必须为String或者Long
+     * 表的主键，暂时只支持单主键
+     * 
+     * value: 字段名
+     * primaryKey: 标记是否为主键，true是，false不是
+     * idType: 主键ID策略，目前支持以下五种 AUTO_INCREMENT、INPUT、OBJECT_ID、ASSIGN_ID、UUID
+     * 注意！
+     * 如果设置为 自增主键 的话，则此字段必须为Long
+     * 如果设置为 uuid 的话，则此字段必须为String
+     * 如果设置为 objectId 的话，则此字段必须为String
+     * 如果设置为 assignId 的话，则此字段必须为String或者Long
      */
-    @Column(value = "id", primaryKey = true, assignId = true)
+    @Column(value = "id", primaryKey = true, idType = IdType.AUTO_INCREMENT)
     private Long id;
 
     /**
@@ -176,6 +181,10 @@ public class UploadFile implements Serializable {
 >     ...
 > }
 > ```
+> |属性|类型|必须指定|默认值|描述|
+> |---|---|---|---|---|
+> | value  | String  |  是 | ""    | 对应数据库表名  |
+> 
 > ##### @Column
 > - 描述：字段注解
 > - 使用位置：实体类
@@ -184,31 +193,29 @@ public class UploadFile implements Serializable {
 > public class UploadFile implements Serializable {
 >     private static final long serialVersionUID = -1L;
 >
->     /**
->      * 表的主键，四种主键策略互斥，只能选择其中一种
->      * 注意，如果设置为数据库自增主键的话，则此字段必须为Long
->      * 如果设置为uuid的话，则此字段必须为String
->      * 如果设置为objectId的话，则此字段必须为String
->      * 如果设置为assignId的话，则此字段必须为String或者Long
->      */
->     @Column(value = "id", primaryKey = true, assignId = true)
+>     @Column(value = "id", primaryKey = true, idType = IdType.AUTO_INCREMENT)
 >     private Long id;
 >     
 >     @Column("file_id")
 >     private String fileId;
-> 
->     @Column("file_name_old")
->    private String fileNameOld;
+>
 > }
 > ```
 > |属性|类型|必须指定|默认值|描述|
 > |---|---|---|---|---|
 > | value         | String  |  是 | ""    | 对应数据库字段名  |
 > | primaryKey    | boolean |  否 | false | 是否为主键  |
-> | autoIncrement | boolean |  否 | false | 主键策略：自增主键，四种主键策略互斥，只能选择其一 |
-> | assignId      | boolean |  否 | false | 主键策略：雪花ID，四种主键策略互斥，只能选择其一  |
-> | uuid          | boolean |  否 | false | 主键策略：UUID，四种主键策略互斥，只能选择其一 |
-> | objectId      | boolean |  否 | false | 主键策略：MongoDB ObjectId，四种主键策略互斥，只能选择其一 |
+> | idType        | IdType  |  否 | false | 主键策略 |
+> 
+> ##### IdType主键策略说明
+> 
+> |值|描述|
+> |---|---|
+> | INPUT            | insert 前自行 set 主键值  |  
+> | AUTO_INCREMENT   | 数据库 ID 自增 |  
+> | OBJECT_ID        | 自动设置 MongoDb objectId 作为主键值 |  
+> | ASSIGN_ID        | 自动设置 雪花ID 作为主键值 |  
+> | UUID             | 自动设置 UUID 作为主键值 |  
 
 ### 定义Dao类，继承自BaseDao，泛型一为对应实体类，泛型二实体类主键类型
 ```java
