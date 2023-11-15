@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 /**
+ * 分页对象，支持pageNum-pageSize模式
  * @author liuxingyu01
- * @date 2022-05-10 9:17
- * @description 分页对象，支持pageNum-pageSize模式
+ * @since  2022-05-10 9:17
  **/
 public class Page<T> implements Serializable {
     private static final long serialVersionUID = 1L;
