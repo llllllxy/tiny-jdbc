@@ -48,7 +48,7 @@
         <artifactId>spring-boot-starter-jdbc</artifactId>
     </dependency>
     <dependency>
-        <groupId>io.github.llllllxy</groupId>
+        <groupId>top.lxyccc</groupId>
         <artifactId>tiny-jdbc-boot-starter</artifactId>
         <version>1.4.7</version>
     </dependency>
