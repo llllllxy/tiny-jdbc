@@ -224,6 +224,7 @@ public class SqlGenerator {
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
+        parameters.addAll(criteria.getParameters());
         so.setParameters(parameters);
         return so;
     }
@@ -281,6 +282,7 @@ public class SqlGenerator {
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
+        parameters.addAll(criteria.getParameters());
         so.setParameters(parameters);
         return so;
     }
@@ -347,6 +349,7 @@ public class SqlGenerator {
         if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new JdbcException("SqlGenerator deleteCriteriaSql criteria can not null or empty!");
         }
+        List<Object> parameters = criteria.getParameters();
 
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
@@ -358,6 +361,7 @@ public class SqlGenerator {
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
+        so.setParameters(parameters);
         return so;
     }
 
@@ -372,7 +376,7 @@ public class SqlGenerator {
         if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new JdbcException("SqlGenerator deleteLambdaCriteriaSql criteria can not null or empty!");
         }
-
+        List<Object> parameters = criteria.getParameters();
         Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
         Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
@@ -383,6 +387,7 @@ public class SqlGenerator {
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
+        so.setParameters(parameters);
         return so;
     }
 
@@ -681,6 +686,7 @@ public class SqlGenerator {
         }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
         String criteriaSql = criteria.generateSql();
+        List<Object> parameters = criteria.getParameters();
 
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableAnnotation.value())
@@ -688,6 +694,7 @@ public class SqlGenerator {
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
+        so.setParameters(parameters);
         return so;
     }
 
@@ -725,13 +732,14 @@ public class SqlGenerator {
         }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
         String criteriaSql = lambdaCriteria.generateSql();
-
+        List<Object> parameters = lambdaCriteria.getParameters();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableAnnotation.value())
                 .append(criteriaSql);
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
+        so.setParameters(parameters);
         return so;
     }
 
@@ -753,6 +761,7 @@ public class SqlGenerator {
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
+        so.setParameters(criteria.getParameters());
         return so;
     }
 
@@ -774,6 +783,7 @@ public class SqlGenerator {
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
+        so.setParameters(lambdaCriteria.getParameters());
         return so;
     }
 }

@@ -340,7 +340,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCriteriaSql(criteria, entityClass);
-        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper);
+        return getJdbcTemplate().query(sqlProvider.getSql(), sqlProvider.getParameters().toArray(), rowMapper);
     }
 
     @Override
@@ -349,7 +349,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
-        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper);
+        return getJdbcTemplate().query(sqlProvider.getSql(), sqlProvider.getParameters().toArray(), rowMapper);
     }
 
     @Override
@@ -396,9 +396,9 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
         // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper);
+        List<T> resultList = getJdbcTemplate().query(selectSql, sqlProvider.getParameters().toArray(), rowMapper);
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class);
+        int totalSize = getJdbcTemplate().queryForObject(countSql, sqlProvider.getParameters().toArray(), Integer.class);
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -422,9 +422,9 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
         // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper);
+        List<T> resultList = getJdbcTemplate().query(selectSql, sqlProvider.getParameters().toArray(), rowMapper);
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class);
+        int totalSize = getJdbcTemplate().queryForObject(countSql, sqlProvider.getParameters().toArray(), Integer.class);
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -436,7 +436,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCountCriteriaSql(criteria, entityClass);
-        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), Long.class);
+        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), sqlProvider.getParameters().toArray(), Long.class);
     }
 
     @Override
@@ -445,7 +445,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCountLambdaCriteriaSql(lambdaCriteria, entityClass);
-        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), Long.class);
+        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), sqlProvider.getParameters().toArray(), Long.class);
     }
 
     @Override
@@ -577,7 +577,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("delete lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.deleteLambdaCriteriaSql(criteria, entityClass);
-        return execute(sqlProvider.getSql());
+        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -586,7 +586,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("delete criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.deleteCriteriaSql(criteria, entityClass);
-        return execute(sqlProvider.getSql());
+        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override

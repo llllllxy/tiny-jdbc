@@ -1,13 +1,10 @@
 package org.tinycloud.jdbc.criteria;
 
-import org.springframework.format.datetime.DateFormatter;
+
 import org.tinycloud.jdbc.exception.JdbcException;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * 条件构造器抽象类，抽象了一些公共的方法
@@ -21,9 +18,14 @@ public abstract class AbstractCriteria {
     private static final String timestampPattern = "yyyy-MM-dd HH:mm:ss:SSS";
 
     /**
-     * 查询条件
+     * 查询条件-键
      */
     protected final List<String> conditions;
+
+    /**
+     * 查询条件-值
+     */
+    protected final List<Object> parameters;
 
     /**
      * 排序的条件
@@ -36,28 +38,16 @@ public abstract class AbstractCriteria {
     public AbstractCriteria() {
         this.conditions = new ArrayList<>();
         this.orderBy = new ArrayList<>();
+        this.parameters = new ArrayList<>();
     }
 
     /**
-     * 格式化sql参数值
+     * 获取所有的参数值
      *
-     * @param value 值
-     * @return 格式化之后的值
+     * @return 参数列表
      */
-    protected String formatValue(Object value) {
-        if (value instanceof String) {
-            return "'" + value + "'";
-        } else if (value instanceof java.util.Date) {
-            DateFormatter dateFormatter = new DateFormatter(datetimePattern);
-            String datetime = dateFormatter.print((java.util.Date) value, Locale.getDefault());
-            return "'" + datetime + "'";
-        } else if (value instanceof java.time.LocalDateTime) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datetimePattern);
-            String datetime = ((LocalDateTime) value).format(formatter);
-            return "'" + datetime + "'";
-        } else {
-            return String.valueOf(value);
-        }
+    public List<Object> getParameters() {
+        return parameters;
     }
 
     /**
@@ -96,6 +86,7 @@ public abstract class AbstractCriteria {
 
     /**
      * 用于子构造器SQL的生成
+     *
      * @return 条件SQL
      */
     public String children() {

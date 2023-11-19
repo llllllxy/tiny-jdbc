@@ -11,74 +11,86 @@ import java.util.List;
 public class Criteria extends AbstractCriteria {
 
     public <R> Criteria lt(String field, R value) {
-        String condition = " AND " + field + " < " + formatValue(value);
+        String condition = " AND " + field + " < " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
     public <R> Criteria orLt(String field, R value) {
-        String condition = " OR " + field + " < " + formatValue(value);
+        String condition = " OR " + field + " < " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
     public <R> Criteria lte(String field, R value) {
-        String condition = " AND " + field + " <= " + formatValue(value);
+        String condition = " AND " + field + " <= " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
     public <R> Criteria orLte(String field, R value) {
-        String condition = " OR " + field + " <= " + formatValue(value);
+        String condition = " OR " + field + " <= " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
     public <R> Criteria gt(String field, R value) {
-        String condition = " AND " + field + " > " + formatValue(value);
+        String condition = " AND " + field + " > " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
     public <R> Criteria orGt(String field, R value) {
-        String condition = " OR " + field + " > " + formatValue(value);
+        String condition = " OR " + field + " > " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
     public <R> Criteria gte(String field, R value) {
-        String condition = " AND " + field + " >= " + formatValue(value);
+        String condition = " AND " + field + " >= " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
     public <R> Criteria orGte(String field, R value) {
-        String condition = " OR " + field + " >= " + formatValue(value);
+        String condition = " OR " + field + " >= " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
     public <R> Criteria eq(String field, R value) {
-        String condition = " AND " + field + " = " + formatValue(value);
+        String condition = " AND " + field + " = " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
     public <R> Criteria orEq(String field, R value) {
-        String condition = " OR " + field + " = " + formatValue(value);
+        String condition = " OR " + field + " = " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
     public <R> Criteria notEq(String field, R value) {
-        String condition = " AND " + field + " <> " + formatValue(value);
+        String condition = " AND " + field + " <> " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
     public <R> Criteria orNotEq(String field, R value) {
-        String condition = " OR " + field + " = " + formatValue(value);
+        String condition = " OR " + field + " = " + "?";
         conditions.add(condition);
+        parameters.add(value);
         return this;
     }
 
@@ -113,10 +125,11 @@ public class Criteria extends AbstractCriteria {
             if (i > 0) {
                 condition.append(", ");
             }
-            condition.append(formatValue(values.get(i)));
+            condition.append("?");
         }
         condition.append(")");
         conditions.add(condition.toString());
+        parameters.addAll(values);
         return this;
     }
 
@@ -127,10 +140,11 @@ public class Criteria extends AbstractCriteria {
             if (i > 0) {
                 condition.append(", ");
             }
-            condition.append(formatValue(values.get(i)));
+            condition.append("?");
         }
         condition.append(")");
         conditions.add(condition.toString());
+        parameters.addAll(values);
         return this;
     }
 
@@ -141,10 +155,11 @@ public class Criteria extends AbstractCriteria {
             if (i > 0) {
                 condition.append(", ");
             }
-            condition.append(formatValue(values.get(i)));
+            condition.append("?");
         }
         condition.append(")");
         conditions.add(condition.toString());
+        parameters.addAll(values);
         return this;
     }
 
@@ -155,130 +170,153 @@ public class Criteria extends AbstractCriteria {
             if (i > 0) {
                 condition.append(", ");
             }
-            condition.append(formatValue(values.get(i)));
+            condition.append("?");
         }
         condition.append(")");
         conditions.add(condition.toString());
+        parameters.addAll(values);
         return this;
     }
 
     public <R> Criteria like(String field, R value) {
-        String condition = " AND " + field + " LIKE '%" + value + "%'";
+        String condition = " AND " + field + " LIKE ?";
         conditions.add(condition);
+        parameters.add("%" + value + "%");
         return this;
     }
 
     public <R> Criteria orLike(String field, R value) {
-        String condition = " OR " + field + " LIKE '%" + value + "%'";
+        String condition = " OR " + field + " LIKE ?";
         conditions.add(condition);
+        parameters.add("%" + value + "%");
         return this;
     }
 
     public <R> Criteria notLike(String field, R value) {
-        String condition = " AND " + field + " NOT LIKE '%" + value + "%'";
+        String condition = " AND " + field + " NOT LIKE ?";
         conditions.add(condition);
+        parameters.add("%" + value + "%");
         return this;
     }
 
     public <R> Criteria orNotLike(String field, R value) {
-        String condition = " OR " + field + " NOT LIKE '%" + value + "%'";
+        String condition = " OR " + field + " NOT LIKE ?";
         conditions.add(condition);
+        parameters.add("%" + value + "%");
         return this;
     }
 
     public <R> Criteria leftLike(String field, R value) {
-        String condition = " AND " + field + " LIKE '%" + value + "'";
+        String condition = " AND " + field + " LIKE ?";
         conditions.add(condition);
+        parameters.add("%" + value);
         return this;
     }
 
     public <R> Criteria orLeftLike(String field, R value) {
-        String condition = " OR " + field + " LIKE '%" + value + "'";
+        String condition = " OR " + field + " LIKE ?";
         conditions.add(condition);
+        parameters.add("%" + value);
         return this;
     }
 
     public <R> Criteria notLeftLike(String field, R value) {
-        String condition = " AND " + field + " NOT LIKE '%" + value + "'";
+        String condition = " AND " + field + " NOT LIKE ?";
         conditions.add(condition);
+        parameters.add("%" + value);
         return this;
     }
 
     public <R> Criteria orNotLeftLike(String field, R value) {
-        String condition = " OR " + field + " NOT LIKE '%" + value + "'";
+        String condition = " OR " + field + " NOT LIKE ?";
         conditions.add(condition);
+        parameters.add("%" + value);
         return this;
     }
 
     public <R> Criteria rightLike(String field, R value) {
-        String condition = " AND " + field + " LIKE '%" + value + "'";
+        String condition = " AND " + field + " LIKE ?";
         conditions.add(condition);
+        parameters.add(value + "%");
         return this;
     }
 
     public <R> Criteria orRightLike(String field, R value) {
-        String condition = " OR " + field + " LIKE '%" + value + "'";
+        String condition = " OR " + field + " LIKE ?";
         conditions.add(condition);
+        parameters.add(value + "%");
         return this;
     }
 
     public <R> Criteria notRightLike(String field, R value) {
-        String condition = " AND " + field + " NOT LIKE '%" + value + "'";
+        String condition = " AND " + field + " NOT LIKE ?";
         conditions.add(condition);
+        parameters.add(value + "%");
         return this;
     }
 
     public <R> Criteria orNotRightLike(String field, R value) {
-        String condition = " OR " + field + " NOT LIKE '%" + value + "'";
+        String condition = " OR " + field + " NOT LIKE ?";
         conditions.add(condition);
+        parameters.add(value + "%");
         return this;
     }
 
     public <R> Criteria between(String field, R start, R end) {
         String condition = " AND " + "(" + field + " BETWEEN " +
-                formatValue(start) +
+                "?" +
                 " AND " +
-                formatValue(end) + ")";
+                "?" + ")";
         conditions.add(condition);
+        parameters.add(start);
+        parameters.add(end);
         return this;
     }
 
     public <R> Criteria orBetween(String field, R start, R end) {
         String condition = " OR " + "(" + field + " BETWEEN " +
-                formatValue(start) +
+                "?" +
                 " AND " +
-                formatValue(end) + ")";
+                "?" + ")";
         conditions.add(condition);
+        parameters.add(start);
+        parameters.add(end);
         return this;
     }
 
     public <R> Criteria notBetween(String field, R start, R end) {
         String condition = " AND " + "(" + field + " NOT BETWEEN " +
-                formatValue(start) +
+                "?" +
                 " AND " +
-                formatValue(end) + ")";
+                "?" + ")";
         conditions.add(condition);
+        parameters.add(start);
+        parameters.add(end);
         return this;
     }
 
     public <R> Criteria orNotBetween(String field, R start, R end) {
         String condition = " OR " + "(" + field + " NOT BETWEEN " +
-                formatValue(start) +
+                "?" +
                 " AND " +
-                formatValue(end) + ")";
+                "?" + ")";
         conditions.add(condition);
+        parameters.add(start);
+        parameters.add(end);
         return this;
     }
 
     public <R> Criteria and(Criteria criteria) {
         String condition = " AND " + criteria.children();
         conditions.add(condition);
+        parameters.addAll(criteria.parameters);
         return this;
     }
 
     public <R> Criteria or(Criteria criteria) {
         String condition = " OR " + criteria.children();
         conditions.add(condition);
+        parameters.addAll(criteria.parameters);
         return this;
     }
 
