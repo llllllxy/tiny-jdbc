@@ -6,7 +6,7 @@
 
     <groupId>top.lxyccc</groupId>
     <artifactId>tiny-jdbc-boot-starter</artifactId>
-    <version>1.4.8</version>
+    <version>1.4.9</version>
     <packaging>jar</packaging>
 
     <name>tiny-jdbc-boot-starter</name>
@@ -38,10 +38,9 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-
-        <springboot.version>2.3.12.RELEASE</springboot.version>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+        <springboot.version>2.7.14</springboot.version>
     </properties>
-
 
     <dependencies>
         <dependency>
@@ -50,7 +49,6 @@
             <version>${springboot.version}</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
