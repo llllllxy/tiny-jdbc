@@ -1,5 +1,7 @@
 package org.tinycloud.jdbc.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.exception.JdbcException;
 
@@ -10,6 +12,8 @@ import java.sql.SQLException;
 import java.util.regex.Pattern;
 
 public class DbTypeUtils {
+    private static final Logger logger = LoggerFactory.getLogger(DbTypeUtils.class);
+
     private DbTypeUtils() {
     }
 
@@ -66,6 +70,9 @@ public class DbTypeUtils {
      * @return 返回数据库类型
      */
     public static DbType parseDbType(String jdbcUrl) {
+        if (StringUtils.isEmpty(jdbcUrl)) {
+            throw new IllegalStateException("The jdbcUrl is null, cannot parse DialectEnum!");
+        }
         jdbcUrl = jdbcUrl.toLowerCase();
         if (jdbcUrl.contains(":mysql:") || jdbcUrl.contains(":cobar:")) {
             return DbType.MYSQL;
@@ -142,6 +149,7 @@ public class DbTypeUtils {
         } else if (jdbcUrl.contains(":greenplum:")) {
             return DbType.GREENPLUM;
         } else {
+            logger.warn("The jdbcUrl " + jdbcUrl + ", cannot parse DialectEnum or the database is not supported!");
             return DbType.OTHER;
         }
     }
