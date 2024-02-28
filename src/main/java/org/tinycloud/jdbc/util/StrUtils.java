@@ -21,7 +21,7 @@ public class StrUtils {
      * @return 如果字符串序列是 null 或者全是空白，返回 true
      */
     public static boolean isBlank(CharSequence cs) {
-        if (cs != null) {
+        if (!isEmpty(cs)) {
             int length = cs.length();
             for (int i = 0; i < length; i++) {
                 if (!Character.isWhitespace(cs.charAt(i))) {
