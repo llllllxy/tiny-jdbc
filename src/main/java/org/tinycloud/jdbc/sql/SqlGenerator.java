@@ -3,17 +3,21 @@ package org.tinycloud.jdbc.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+import org.tinycloud.jdbc.TinyJdbcAutoConfiguration;
 import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.criteria.Criteria;
 import org.tinycloud.jdbc.criteria.LambdaCriteria;
 import org.tinycloud.jdbc.exception.JdbcException;
 import org.tinycloud.jdbc.annotation.IdType;
+import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.IdUtils;
 import org.tinycloud.jdbc.util.ReflectUtils;
 import org.tinycloud.jdbc.util.Triple;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,7 +74,7 @@ public class SqlGenerator {
                 }
                 if (idType == IdType.ASSIGN_ID) {
                     Class<?> type = field.getType();
-                    Object fieldValue = (type == java.lang.String.class) ? IdUtils.nextId() : IdUtils.nextLongId();
+                    Object fieldValue = (type == String.class) ? IdUtils.nextId() : IdUtils.nextLongId();
                     try {
                         field.set(object, fieldValue);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
@@ -83,6 +87,30 @@ public class SqlGenerator {
                         field.set(object, fieldValue);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
                         throw new JdbcException("inject field value fail : " + field.getName() + ", field type must be String when uuid!");
+                    }
+                }
+                if (idType == IdType.CUSTOM) {
+                    IdGeneratorInterface idGeneratorInterface = TinyJdbcAutoConfiguration.getIdGenerator();
+                    Class<?> keyType = field.getType();
+                    Object fieldValue;
+                    Object id = idGeneratorInterface.nextId(object);
+                    if (keyType == id.getClass()) {
+                        fieldValue = id;
+                    } else if (Integer.class == keyType) {
+                        fieldValue = Integer.parseInt(id.toString());
+                    } else if (Long.class == keyType) {
+                        fieldValue = Long.parseLong(id.toString());
+                    } else if (BigDecimal.class == keyType) {
+                        fieldValue = new BigDecimal(id.toString());
+                    } else if (BigInteger.class == keyType) {
+                        fieldValue = new BigInteger(id.toString());
+                    } else {
+                        fieldValue = id;
+                    }
+                    try {
+                        field.set(object, fieldValue);
+                    } catch (IllegalArgumentException | IllegalAccessException e) {
+                        throw new JdbcException("inject field value fail : " + field.getName() + ", please verify if the return data type of idGeneratorInterface.nextId() method matches the data type of the primary key!");
                     }
                 }
             }
