@@ -215,7 +215,7 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider updateByCriteriaSql(Object object, boolean ignoreNulls, Criteria criteria) {
-        String criteriaSql = criteria.generateSql();
+        String criteriaSql = criteria.whereSql();
         if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new JdbcException("SqlGenerator updateByCriteriaSql criteria can not null or empty!");
         }
@@ -273,7 +273,7 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider updateByLambdaCriteriaSql(Object object, boolean ignoreNulls, LambdaCriteria criteria) {
-        String criteriaSql = criteria.generateSql();
+        String criteriaSql = criteria.whereSql();
         if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new JdbcException("SqlGenerator updateByLambdaCriteriaSql criteria can not null or empty!");
         }
@@ -382,7 +382,7 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteCriteriaSql(Criteria criteria, Class<?> clazz) {
-        String criteriaSql = criteria.generateSql();
+        String criteriaSql = criteria.whereSql();
         if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new JdbcException("SqlGenerator deleteCriteriaSql criteria can not null or empty!");
         }
@@ -408,7 +408,7 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteLambdaCriteriaSql(LambdaCriteria criteria, Class<?> clazz) {
-        String criteriaSql = criteria.generateSql();
+        String criteriaSql = criteria.whereSql();
         if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new JdbcException("SqlGenerator deleteLambdaCriteriaSql criteria can not null or empty!");
         }
@@ -716,7 +716,7 @@ public class SqlGenerator {
                     .append(",");
         }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        String criteriaSql = criteria.generateSql();
+        String criteriaSql = criteria.whereSql();
         List<Object> parameters = criteria.getParameters();
 
         StringBuilder sql = new StringBuilder();
@@ -761,7 +761,7 @@ public class SqlGenerator {
                     .append(",");
         }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        String criteriaSql = lambdaCriteria.generateSql();
+        String criteriaSql = lambdaCriteria.whereSql();
         List<Object> parameters = lambdaCriteria.getParameters();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableAnnotation.value())
@@ -786,7 +786,7 @@ public class SqlGenerator {
         Table tableAnnotation = triple.getThird();
 
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT COUNT(*) FROM ").append(tableAnnotation.value()).append(criteria.generateSql());
+        sql.append("SELECT COUNT(*) FROM ").append(tableAnnotation.value()).append(criteria.whereSql());
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
@@ -807,7 +807,7 @@ public class SqlGenerator {
         Table tableAnnotation = triple.getThird();
 
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT COUNT(*) FROM ").append(tableAnnotation.value()).append(lambdaCriteria.generateSql());
+        sql.append("SELECT COUNT(*) FROM ").append(tableAnnotation.value()).append(lambdaCriteria.whereSql());
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());

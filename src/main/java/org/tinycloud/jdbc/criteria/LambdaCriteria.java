@@ -16,6 +16,12 @@ public class LambdaCriteria extends AbstractCriteria {
 
     public static final Map<String, String> LAMBDA_CACHE = new ConcurrentHashMap<>();
 
+    public <T, R> LambdaCriteria select(TypeFunction<T, R> field) {
+        String columnName = getColumnName(field);
+        selectFields.add(columnName);
+        return this;
+    }
+
     public <T, R> LambdaCriteria lt(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " < " + "?";

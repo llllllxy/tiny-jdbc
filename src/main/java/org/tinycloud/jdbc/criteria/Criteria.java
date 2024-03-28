@@ -10,6 +10,11 @@ import java.util.List;
  **/
 public class Criteria extends AbstractCriteria {
 
+    public <R> Criteria select(String field) {
+        selectFields.add(field);
+        return this;
+    }
+
     public <R> Criteria lt(String field, R value) {
         String condition = " AND " + field + " < " + "?";
         conditions.add(condition);

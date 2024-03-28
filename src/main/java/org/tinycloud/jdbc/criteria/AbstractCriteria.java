@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.criteria;
 
 
 import org.tinycloud.jdbc.exception.JdbcException;
+import org.tinycloud.jdbc.util.StrUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,9 +14,11 @@ import java.util.List;
  * @since 2023-08-02
  **/
 public abstract class AbstractCriteria {
-    private static final String datetimePattern = "yyyy-MM-dd HH:mm:ss";
 
-    private static final String timestampPattern = "yyyy-MM-dd HH:mm:ss:SSS";
+    /**
+     * 查询字段-键
+     */
+    protected final List<String> selectFields;
 
     /**
      * 查询条件-键
@@ -36,6 +39,7 @@ public abstract class AbstractCriteria {
      * 构造方法
      */
     public AbstractCriteria() {
+        this.selectFields = new ArrayList<>();
         this.conditions = new ArrayList<>();
         this.orderBy = new ArrayList<>();
         this.parameters = new ArrayList<>();
@@ -47,7 +51,35 @@ public abstract class AbstractCriteria {
      * @return 参数列表
      */
     public List<Object> getParameters() {
-        return parameters;
+        return this.parameters;
+    }
+
+    /**
+     * 根据条件生成对应的查询SQL
+     * <pre>
+     *  如： id AS id, create_time AS createTime
+     * <pre>
+     * @return 查询SQL
+     */
+    public String selectSql() {
+        StringBuilder select = new StringBuilder();
+        if (!this.selectFields.isEmpty()) {
+            for (int i = 0; i < this.selectFields.size(); i++) {
+                String column = this.selectFields.get(i);
+                String fieldName = StrUtils.lineToHump(column);
+                if (i == this.selectFields.size() - 1) {
+                    select.append(column)
+                            .append(" AS ")
+                            .append(fieldName);
+                } else {
+                    select.append(column)
+                            .append(" AS ")
+                            .append(fieldName)
+                            .append(",");
+                }
+            }
+        }
+        return select.toString();
     }
 
     /**
@@ -57,7 +89,7 @@ public abstract class AbstractCriteria {
      * <pre>
      * @return 条件SQL
      */
-    public String generateSql() {
+    public String whereSql() {
         StringBuilder sql = new StringBuilder();
         if (!conditions.isEmpty()) {
             sql.append(" WHERE ");
