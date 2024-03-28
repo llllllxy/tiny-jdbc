@@ -388,9 +388,8 @@ public class SqlGenerator {
         }
         List<Object> parameters = criteria.getParameters();
 
-        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(clazz);
         Table tableAnnotation = triple.getThird();
 
         StringBuilder sql = new StringBuilder();
@@ -414,9 +413,8 @@ public class SqlGenerator {
             throw new JdbcException("SqlGenerator deleteLambdaCriteriaSql criteria can not null or empty!");
         }
         List<Object> parameters = criteria.getParameters();
-        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(clazz);
         Table tableAnnotation = triple.getThird();
 
         StringBuilder sql = new StringBuilder();
@@ -506,9 +504,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectByIdSql(Object id, Class<?> clazz) {
-        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(clazz);
 
         Table tableAnnotation = triple.getThird();
         Field[] fields = ReflectUtils.getFields(clazz);
@@ -560,9 +557,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectByIdsSql(Class<?> clazz) {
-        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(clazz);
 
         Table tableAnnotation = triple.getThird();
         Field[] fields = ReflectUtils.getFields(clazz);
@@ -610,9 +606,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteByIdSql(Object id, Class<?> clazz) {
-        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(clazz);
         Table tableAnnotation = triple.getThird();
         Field[] fields = triple.getSecond();
 
@@ -655,9 +650,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteByIdsSql(Class<?> clazz) {
-        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(clazz);
         Field[] fields = triple.getSecond();
         Table tableAnnotation = triple.getThird();
 
@@ -698,9 +692,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectCriteriaSql(Criteria criteria, Class<?> clazz) {
-        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(clazz);
         Field[] fields = triple.getSecond();
         Table tableAnnotation = triple.getThird();
 
@@ -744,9 +737,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectLambdaCriteriaSql(LambdaCriteria lambdaCriteria, Class<?> clazz) {
-        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(clazz);
         Field[] fields = triple.getSecond();
         Table tableAnnotation = triple.getThird();
 
@@ -789,9 +781,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectCountCriteriaSql(Criteria criteria, Class<?> clazz) {
-        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(clazz);
         Table tableAnnotation = triple.getThird();
 
         StringBuilder sql = new StringBuilder();
@@ -811,9 +802,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectCountLambdaCriteriaSql(LambdaCriteria lambdaCriteria, Class<?> clazz) {
-        Object object = ReflectUtils.createInstance(clazz);
         // 对象检验
-        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
+        Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(clazz);
         Table tableAnnotation = triple.getThird();
 
         StringBuilder sql = new StringBuilder();

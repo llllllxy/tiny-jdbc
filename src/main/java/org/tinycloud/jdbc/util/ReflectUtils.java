@@ -36,6 +36,16 @@ public class ReflectUtils {
             throw new JdbcException("SqlGenerator entity cannot be null");
         }
         Class<?> clazz = entity.getClass();
+        return validateTargetClass(clazz);
+    }
+
+    /**
+     * 校验clazz的合法性
+     *
+     * @param clazz 实体类对象类型
+     * @param <T>   泛型
+     */
+    public static <T> Triple<Class<?>, Field[], Table> validateTargetClass(Class<?> clazz) {
         Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
         if (tableAnnotation == null) {
             throw new JdbcException("SqlGenerator " + clazz + "no @Table defined");
