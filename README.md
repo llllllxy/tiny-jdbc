@@ -324,16 +324,16 @@ public class UploadFileService {
 
 ```java
     List<Integer> ids=new ArrayList<Integer>(){{
-        add(1);
-        add(2);
-        add(3);
-        }};
+            add(1);
+            add(2);
+            add(3);
+    }};
 
-        Criteria criteria=new Criteria()
-        .lt("age",28)
-        .eq("created_at",new java.util.Date())
-        .in("id",ids)
-        .orderBy("age",true);
+    Criteria criteria=new Criteria()
+    .lt("age",28)
+    .eq("created_at",new java.util.Date())
+    .in("id",ids)
+    .orderBy("age",true);
 
 // 等价于  WHERE age < 28 AND created_at = '2023-08-05 17:31:26' AND id IN (1,2,3) ORDER BY age DESC
 ```
@@ -341,18 +341,17 @@ public class UploadFileService {
 ### LambdaCriteria示例
 
 ```java
-public static void main(String[]args){
-        List<Long> ids=new ArrayList<Long>(){{
+    List<Long> ids=new ArrayList<Long>(){{
         add(1L);
         add(2L);
         add(3L);
-        }};
+    }};
 
-        LambdaCriteria criteria=new LambdaCriteria()
-        .lt(UploadFile::getFileId,"1000")
-        .eq(UploadFile::getFileMd5,"b8394b15e02c50b508b3e46cc120f0f5")
-        .in(UploadFile::getId,ids)
-        .orderBy(UploadFile::getCreatedAt,true);
+    LambdaCriteria criteria=new LambdaCriteria()
+    .lt(UploadFile::getFileId,"1000")
+    .eq(UploadFile::getFileMd5,"b8394b15e02c50b508b3e46cc120f0f5")
+    .in(UploadFile::getId,ids)
+    .orderBy(UploadFile::getCreatedAt,true);
 
 // 等价于  WHERE fileId < '1000' AND file_md5 = 'b8394b15e02c50b508b3e46cc120f0f5' AND id IN (1,2,3) ORDER BY created_at DESC
 ```
@@ -405,7 +404,7 @@ public static void main(String[]args){
 |orderBy    |排序，false=asc| orderBy("name") ---> ORDER BY name | orderBy(User::getName) ---> ORDER BY name |
 |or         |OR 嵌套| or(new Criteria().eq("name", "张三").lt("age", 18)) ---> OR (name = '张三' AND age < 18) | or(new LambdaCriteria().eq(User::getName, "张三").lt(User::getAge, 18)) ---> OR (name = '张三' AND age < 18) |
 |and        |AND 嵌套| and(new Criteria().eq("name", "张三").lt("age", 18)) ---> AND (name = '张三' AND age < 18) | and(new LambdaCriteria().eq(User::getName, "张三").lt(User::getAge, 18)) ---> AND (name = '张三' AND age < 18) |
-
+|select    |设置查询字段，false=asc| select("name", "age") ---> SELECT name,age | orderBy(User::getName, User::getAge) ---> SELECT name,age |
 ## 5、自定义ID生成器
 
 需要实现 IdGeneratorInterface 接口，并且声明为 Bean 供 Spring 扫描注入
