@@ -63,7 +63,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     public List<T> select(String sql, Object... params) {
         List<T> resultList;
         if (params != null && params.length > 0) {
-            resultList = getJdbcTemplate().query(sql, params, rowMapper);
+            resultList = getJdbcTemplate().query(sql, rowMapper, params);
         } else {
             // BeanPropertyRowMapper是自动映射实体类的
             resultList = getJdbcTemplate().query(sql, rowMapper);
@@ -84,7 +84,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     public <F> List<F> select(String sql, Class<F> clazz, Object... params) {
         List<F> resultList;
         if (params != null && params.length > 0) {
-            resultList = getJdbcTemplate().query(sql, params, new BeanPropertyRowMapper<>(clazz));
+            resultList = getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz), params);
         } else {
             // BeanPropertyRowMapper是自动映射实体类的
             resultList = getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz));
@@ -135,7 +135,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (params == null || params.length == 0) {
             result = getJdbcTemplate().queryForObject(sql, clazz);
         } else {
-            result = getJdbcTemplate().queryForObject(sql, params, clazz);
+            result = getJdbcTemplate().queryForObject(sql, clazz, params);
         }
         return result;
     }
@@ -191,9 +191,9 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sql);
         // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(selectSql, params, rowMapper);
+        List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, params);
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, params, Integer.class);
+        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class, params);
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -222,9 +222,9 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sql);
         // 查询数据列表
-        List<F> resultList = getJdbcTemplate().query(selectSql, params, new BeanPropertyRowMapper<>(clazz));
+        List<F> resultList = getJdbcTemplate().query(selectSql, new BeanPropertyRowMapper<>(clazz), params);
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, params, Integer.class);
+        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class, params);
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -309,7 +309,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("selectById id cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectByIdSql(id, entityClass);
-        List<T> list = getJdbcTemplate().query(sqlProvider.getSql(), sqlProvider.getParameters().toArray(), rowMapper);
+        List<T> list = getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
         if (!CollectionUtils.isEmpty(list)) {
             return list.get(0);
         }
@@ -331,7 +331,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("select entity cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
-        return getJdbcTemplate().query(sqlProvider.getSql(), sqlProvider.getParameters().toArray(), rowMapper);
+        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -340,7 +340,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCriteriaSql(criteria, entityClass);
-        return getJdbcTemplate().query(sqlProvider.getSql(), sqlProvider.getParameters().toArray(), rowMapper);
+        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -349,7 +349,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
-        return getJdbcTemplate().query(sqlProvider.getSql(), sqlProvider.getParameters().toArray(), rowMapper);
+        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -370,9 +370,9 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
         // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(selectSql, sqlProvider.getParameters().toArray(), rowMapper);
+        List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, sqlProvider.getParameters().toArray());
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, sqlProvider.getParameters().toArray(), Integer.class);
+        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class, sqlProvider.getParameters().toArray());
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -396,9 +396,9 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
         // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(selectSql, sqlProvider.getParameters().toArray(), rowMapper);
+        List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, sqlProvider.getParameters().toArray());
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, sqlProvider.getParameters().toArray(), Integer.class);
+        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class, sqlProvider.getParameters().toArray());
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -422,9 +422,9 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
         // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(selectSql, sqlProvider.getParameters().toArray(), rowMapper);
+        List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, sqlProvider.getParameters().toArray());
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, sqlProvider.getParameters().toArray(), Integer.class);
+        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class, sqlProvider.getParameters().toArray());
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -436,7 +436,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCountCriteriaSql(criteria, entityClass);
-        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), sqlProvider.getParameters().toArray(), Long.class);
+        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -445,7 +445,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new JdbcException("lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCountLambdaCriteriaSql(lambdaCriteria, entityClass);
-        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), sqlProvider.getParameters().toArray(), Long.class);
+        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -680,5 +680,4 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         row = getJdbcTemplate().batchUpdate(sql, batchArgs);
         return row;
     }
-
 }
