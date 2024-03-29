@@ -14,11 +14,11 @@ public class Triple<F, S, T> implements Serializable {
     private static final long serialVersionUID = -1L;
 
     /**
-     * 第一个属性 (一般为key)
+     * 第一个属性
      */
     private F first;
     /**
-     * 第二个属性 (一般为value)
+     * 第二个属性
      */
     private S second;
     /**
@@ -57,5 +57,18 @@ public class Triple<F, S, T> implements Serializable {
         this.first = first;
         this.second = second;
         this.third = third;
+    }
+
+    public static <F, S, T> Triple<F, S, T> of(F first, S second, T third) {
+        return new Triple<>(first, second, third);
+    }
+
+    @Override
+    public String toString() {
+        return "Triple{" +
+                "first=" + first +
+                ", second=" + second +
+                ", third=" + third +
+                '}';
     }
 }
