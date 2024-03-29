@@ -471,8 +471,6 @@ public class SqlGenerator {
                 parameters.add(filedValue);
             }
             columns.append(column)
-                    .append(" AS ")
-                    .append(field.getName())
                     .append(",");
         }
         // 截去columns的最后一个字符
@@ -519,7 +517,6 @@ public class SqlGenerator {
             if (columnAnnotation == null) {
                 continue;
             }
-            String fieldName = field.getName();
             String column = columnAnnotation.value();
             if (StringUtils.isEmpty(column)) {
                 continue;
@@ -529,8 +526,6 @@ public class SqlGenerator {
                 whereColumns.append(column);
             }
             columns.append(column)
-                    .append(" AS ")
-                    .append(fieldName)
                     .append(",");
         }
 
@@ -571,7 +566,6 @@ public class SqlGenerator {
             if (columnAnnotation == null) {
                 continue;
             }
-            String fieldName = field.getName();
             String column = columnAnnotation.value();
             if (StringUtils.isEmpty(column)) {
                 continue;
@@ -581,8 +575,6 @@ public class SqlGenerator {
                 whereColumns.append(column);
             }
             columns.append(column)
-                    .append(" AS ")
-                    .append(fieldName)
                     .append(",");
         }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
@@ -705,14 +697,11 @@ public class SqlGenerator {
             if (columnAnnotation == null) {
                 continue;
             }
-            String fieldName = field.getName();
             String column = columnAnnotation.value();
             if (StringUtils.isEmpty(column)) {
                 continue;
             }
             columns.append(column)
-                    .append(" AS ")
-                    .append(fieldName)
                     .append(",");
         }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
@@ -750,14 +739,11 @@ public class SqlGenerator {
             if (columnAnnotation == null) {
                 continue;
             }
-            String fieldName = field.getName();
             String column = columnAnnotation.value();
             if (StringUtils.isEmpty(column)) {
                 continue;
             }
             columns.append(column)
-                    .append(" AS ")
-                    .append(fieldName)
                     .append(",");
         }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
