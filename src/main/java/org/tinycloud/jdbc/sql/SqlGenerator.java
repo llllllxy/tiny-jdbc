@@ -2,7 +2,6 @@ package org.tinycloud.jdbc.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.TinyJdbcAutoConfiguration;
 import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Table;
@@ -13,6 +12,7 @@ import org.tinycloud.jdbc.annotation.IdType;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.IdUtils;
 import org.tinycloud.jdbc.util.ReflectUtils;
+import org.tinycloud.jdbc.util.StrUtils;
 import org.tinycloud.jdbc.util.Triple;
 
 import java.lang.reflect.Field;
@@ -166,7 +166,7 @@ public class SqlGenerator {
                 continue;
             }
             String column = columnAnnotation.value();
-            if (StringUtils.isEmpty(column)) {
+            if (StrUtils.isEmpty(column)) {
                 continue;
             }
             Object filedValue = null;
@@ -216,7 +216,7 @@ public class SqlGenerator {
      */
     public static SqlProvider updateByCriteriaSql(Object object, boolean ignoreNulls, Criteria criteria) {
         String criteriaSql = criteria.whereSql();
-        if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
+        if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new JdbcException("SqlGenerator updateByCriteriaSql criteria can not null or empty!");
         }
 
@@ -235,7 +235,7 @@ public class SqlGenerator {
                 continue;
             }
             String column = columnAnnotation.value();
-            if (StringUtils.isEmpty(column)) {
+            if (StrUtils.isEmpty(column)) {
                 continue;
             }
             Object filedValue = null;
@@ -274,7 +274,7 @@ public class SqlGenerator {
      */
     public static SqlProvider updateByLambdaCriteriaSql(Object object, boolean ignoreNulls, LambdaCriteria criteria) {
         String criteriaSql = criteria.whereSql();
-        if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
+        if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new JdbcException("SqlGenerator updateByLambdaCriteriaSql criteria can not null or empty!");
         }
 
@@ -294,7 +294,7 @@ public class SqlGenerator {
                 continue;
             }
             String column = columnAnnotation.value();
-            if (StringUtils.isEmpty(column)) {
+            if (StrUtils.isEmpty(column)) {
                 continue;
             }
             Object filedValue = null;
@@ -345,7 +345,7 @@ public class SqlGenerator {
                 continue;
             }
             String column = columnAnnotation.value();
-            if (StringUtils.isEmpty(column)) {
+            if (StrUtils.isEmpty(column)) {
                 continue;
             }
             Object filedValue = null;
@@ -361,7 +361,7 @@ public class SqlGenerator {
             whereColumns.append("AND ").append(column).append("=? ");
             parameters.add(filedValue);
         }
-        if (StringUtils.isEmpty(whereColumns.toString())) {
+        if (StrUtils.isEmpty(whereColumns.toString())) {
             throw new JdbcException("SqlGenerator deleteSql whereColumns can not null!");
         }
         sql.append("DELETE FROM ");
@@ -383,7 +383,7 @@ public class SqlGenerator {
      */
     public static SqlProvider deleteCriteriaSql(Criteria criteria, Class<?> clazz) {
         String criteriaSql = criteria.whereSql();
-        if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
+        if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new JdbcException("SqlGenerator deleteCriteriaSql criteria can not null or empty!");
         }
         List<Object> parameters = criteria.getParameters();
@@ -409,7 +409,7 @@ public class SqlGenerator {
      */
     public static SqlProvider deleteLambdaCriteriaSql(LambdaCriteria criteria, Class<?> clazz) {
         String criteriaSql = criteria.whereSql();
-        if (StringUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
+        if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new JdbcException("SqlGenerator deleteLambdaCriteriaSql criteria can not null or empty!");
         }
         List<Object> parameters = criteria.getParameters();
@@ -449,7 +449,7 @@ public class SqlGenerator {
                 continue;
             }
             String column = columnAnnotation.value();
-            if (StringUtils.isEmpty(column)) {
+            if (StrUtils.isEmpty(column)) {
                 continue;
             }
             boolean primaryKey = columnAnnotation.primaryKey();
@@ -481,10 +481,10 @@ public class SqlGenerator {
                 .append(tableColumn)
                 .append(" FROM ")
                 .append(tableAnnotation.value());
-        if (StringUtils.hasLength(whereColumns.toString())) {
+        if (StrUtils.isNotEmpty(whereColumns.toString())) {
             sql.append(" WHERE ").append(whereColumns.toString().replaceFirst("AND", ""));
         }
-        if (StringUtils.hasLength(primaryKeyColumn)) {
+        if (StrUtils.isNotEmpty(primaryKeyColumn)) {
             sql.append(" ORDER BY ").append(primaryKeyColumn).append(" DESC");
         }
         SqlProvider so = new SqlProvider();
@@ -518,7 +518,7 @@ public class SqlGenerator {
                 continue;
             }
             String column = columnAnnotation.value();
-            if (StringUtils.isEmpty(column)) {
+            if (StrUtils.isEmpty(column)) {
                 continue;
             }
             boolean primaryKey = columnAnnotation.primaryKey();
@@ -567,7 +567,7 @@ public class SqlGenerator {
                 continue;
             }
             String column = columnAnnotation.value();
-            if (StringUtils.isEmpty(column)) {
+            if (StrUtils.isEmpty(column)) {
                 continue;
             }
             boolean primaryKey = columnAnnotation.primaryKey();
@@ -613,7 +613,7 @@ public class SqlGenerator {
                 continue;
             }
             String column = columnAnnotation.value();
-            if (StringUtils.isEmpty(column)) {
+            if (StrUtils.isEmpty(column)) {
                 continue;
             }
             boolean primaryKey = columnAnnotation.primaryKey();
@@ -656,7 +656,7 @@ public class SqlGenerator {
                 continue;
             }
             String column = columnAnnotation.value();
-            if (StringUtils.isEmpty(column)) {
+            if (StrUtils.isEmpty(column)) {
                 continue;
             }
             boolean primaryKey = columnAnnotation.primaryKey();
@@ -692,7 +692,7 @@ public class SqlGenerator {
         StringBuilder columns = new StringBuilder();
         String selectSql = criteria.selectSql();
         String tableColumn;
-        if (StringUtils.isEmpty(selectSql)) {
+        if (StrUtils.isEmpty(selectSql)) {
             for (Field field : fields) {
                 ReflectUtils.makeAccessible(field);
                 Column columnAnnotation = field.getAnnotation(Column.class);
@@ -700,7 +700,7 @@ public class SqlGenerator {
                     continue;
                 }
                 String column = columnAnnotation.value();
-                if (StringUtils.isEmpty(column)) {
+                if (StrUtils.isEmpty(column)) {
                     continue;
                 }
                 columns.append(column)
@@ -740,7 +740,7 @@ public class SqlGenerator {
         StringBuilder columns = new StringBuilder();
         String selectSql = lambdaCriteria.selectSql();
         String tableColumn;
-        if (StringUtils.isEmpty(selectSql)) {
+        if (StrUtils.isEmpty(selectSql)) {
             for (Field field : fields) {
                 ReflectUtils.makeAccessible(field);
                 Column columnAnnotation = field.getAnnotation(Column.class);
@@ -748,7 +748,7 @@ public class SqlGenerator {
                     continue;
                 }
                 String column = columnAnnotation.value();
-                if (StringUtils.isEmpty(column)) {
+                if (StrUtils.isEmpty(column)) {
                     continue;
                 }
                 columns.append(column)

@@ -2,7 +2,6 @@ package org.tinycloud.jdbc.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.exception.JdbcException;
 
 import javax.sql.DataSource;
@@ -23,7 +22,7 @@ public class DbTypeUtils {
      */
     public static DbType getDbType(DataSource dataSource) {
         String jdbcUrl = getJdbcUrl(dataSource);
-        if (!StringUtils.isEmpty(jdbcUrl)) {
+        if (!StrUtils.isEmpty(jdbcUrl)) {
             return parseDbType(jdbcUrl);
         }
         throw new IllegalStateException("Can not get dataSource jdbcUrl: " + dataSource.getClass().getName());
@@ -70,7 +69,7 @@ public class DbTypeUtils {
      * @return 返回数据库类型
      */
     public static DbType parseDbType(String jdbcUrl) {
-        if (StringUtils.isEmpty(jdbcUrl)) {
+        if (StrUtils.isEmpty(jdbcUrl)) {
             throw new IllegalStateException("The jdbcUrl is null, cannot parse DialectEnum!");
         }
         jdbcUrl = jdbcUrl.toLowerCase();

@@ -1,6 +1,5 @@
 package org.tinycloud.jdbc.util;
 
-import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.exception.JdbcException;
 
@@ -51,7 +50,7 @@ public class ReflectUtils {
             throw new JdbcException("SqlGenerator " + clazz + "no @Table defined");
         }
         String table = tableAnnotation.value();
-        if (StringUtils.isEmpty(table)) {
+        if (StrUtils.isEmpty(table)) {
             throw new JdbcException("SqlGenerator " + clazz + "@Table value cannot be null");
         }
         Field[] fields = getFields(clazz);
@@ -136,7 +135,7 @@ public class ReflectUtils {
     public static void invokeSetter(Object o, String fieldName, Object fieldValue) {
         Method[] declaredMethods = getMethods(o.getClass());
         for (Method declaredMethod : declaredMethods) {
-            if (declaredMethod.getName().equalsIgnoreCase("set" + StringUtils.capitalize(fieldName))) {
+            if (declaredMethod.getName().equalsIgnoreCase("set" + StrUtils.capitalize(fieldName))) {
                 try {
                     declaredMethod.invoke(o, fieldValue);
                 } catch (IllegalAccessException | InvocationTargetException e) {
@@ -158,7 +157,7 @@ public class ReflectUtils {
         Object object = o;
         Method[] declaredMethods = getMethods(o.getClass());
         for (Method declaredMethod : declaredMethods) {
-            if (declaredMethod.getName().equalsIgnoreCase("get" + StringUtils.capitalize(fieldName))) {
+            if (declaredMethod.getName().equalsIgnoreCase("get" + StrUtils.capitalize(fieldName))) {
                 try {
                     object = declaredMethod.invoke(o);
                 } catch (IllegalAccessException | InvocationTargetException e) {

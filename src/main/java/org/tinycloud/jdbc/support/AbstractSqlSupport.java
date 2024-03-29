@@ -5,7 +5,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.criteria.Criteria;
 import org.tinycloud.jdbc.criteria.LambdaCriteria;
 import org.tinycloud.jdbc.exception.JdbcException;
@@ -13,6 +12,7 @@ import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
 import org.tinycloud.jdbc.sql.SqlGenerator;
 import org.tinycloud.jdbc.sql.SqlProvider;
+import org.tinycloud.jdbc.util.StrUtils;
 
 import java.lang.reflect.ParameterizedType;
 import java.sql.Connection;
@@ -623,7 +623,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         String sql = "";
         for (T t : collection) {
             SqlProvider sqlProvider = SqlGenerator.updateByIdSql(t, true);
-            if (StringUtils.isEmpty(sql)) {
+            if (StrUtils.isEmpty(sql)) {
                 sql = sqlProvider.getSql();
             }
             batchArgs.add(sqlProvider.getParameters().toArray());
@@ -646,7 +646,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         String sql = "";
         for (T t : collection) {
             SqlProvider sqlProvider = SqlGenerator.insertSql(t, true);
-            if (StringUtils.isEmpty(sql)) {
+            if (StrUtils.isEmpty(sql)) {
                 sql = sqlProvider.getSql();
             }
             batchArgs.add(sqlProvider.getParameters().toArray());
@@ -669,7 +669,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         String sql = "";
         for (T t : collection) {
             SqlProvider sqlProvider = SqlGenerator.deleteSql(t);
-            if (StringUtils.isEmpty(sql)) {
+            if (StrUtils.isEmpty(sql)) {
                 sql = sqlProvider.getSql();
             }
             batchArgs.add(sqlProvider.getParameters().toArray());

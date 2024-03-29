@@ -114,6 +114,29 @@ public class StrUtils {
     }
 
     /**
+     * 首字母转换大写
+     * @param str 需要转换的字符串
+     * @return 转换好的字符串
+     */
+    public static String capitalize(String str) {
+        if (isEmpty(str)) {
+            return str;
+        } else {
+            char baseChar = str.charAt(0);
+            char updatedChar;
+            updatedChar = Character.toUpperCase(baseChar);
+            if (baseChar == updatedChar) {
+                return str;
+            } else {
+                char[] chars = str.toCharArray();
+                chars[0] = updatedChar;
+                return new String(chars);
+            }
+        }
+    }
+
+
+    /**
      * 这个字符串是否是全是数字
      *
      * @param str 输入字符串
