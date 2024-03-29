@@ -690,27 +690,33 @@ public class SqlGenerator {
         Table tableAnnotation = triple.getThird();
 
         StringBuilder columns = new StringBuilder();
-
-        for (Field field : fields) {
-            ReflectUtils.makeAccessible(field);
-            Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
+        String selectSql = criteria.selectSql();
+        String tableColumn;
+        if (StringUtils.isEmpty(selectSql)) {
+            for (Field field : fields) {
+                ReflectUtils.makeAccessible(field);
+                Column columnAnnotation = field.getAnnotation(Column.class);
+                if (columnAnnotation == null) {
+                    continue;
+                }
+                String column = columnAnnotation.value();
+                if (StringUtils.isEmpty(column)) {
+                    continue;
+                }
+                columns.append(column)
+                        .append(",");
             }
-            String column = columnAnnotation.value();
-            if (StringUtils.isEmpty(column)) {
-                continue;
-            }
-            columns.append(column)
-                    .append(",");
+            tableColumn = columns.subSequence(0, columns.length() - 1).toString();
+        } else {
+            columns.append(selectSql);
+            tableColumn = columns.toString();
         }
-        String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        String criteriaSql = criteria.whereSql();
+        String whereSql = criteria.whereSql();
         List<Object> parameters = criteria.getParameters();
 
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableAnnotation.value())
-                .append(criteriaSql);
+                .append(whereSql);
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
@@ -732,21 +738,28 @@ public class SqlGenerator {
         Table tableAnnotation = triple.getThird();
 
         StringBuilder columns = new StringBuilder();
-
-        for (Field field : fields) {
-            ReflectUtils.makeAccessible(field);
-            Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
+        String selectSql = lambdaCriteria.selectSql();
+        String tableColumn;
+        if (StringUtils.isEmpty(selectSql)) {
+            for (Field field : fields) {
+                ReflectUtils.makeAccessible(field);
+                Column columnAnnotation = field.getAnnotation(Column.class);
+                if (columnAnnotation == null) {
+                    continue;
+                }
+                String column = columnAnnotation.value();
+                if (StringUtils.isEmpty(column)) {
+                    continue;
+                }
+                columns.append(column)
+                        .append(",");
             }
-            String column = columnAnnotation.value();
-            if (StringUtils.isEmpty(column)) {
-                continue;
-            }
-            columns.append(column)
-                    .append(",");
+            tableColumn = columns.subSequence(0, columns.length() - 1).toString();
+        } else {
+            columns.append(selectSql);
+            tableColumn = columns.toString();
         }
-        String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
+
         String criteriaSql = lambdaCriteria.whereSql();
         List<Object> parameters = lambdaCriteria.getParameters();
         StringBuilder sql = new StringBuilder();

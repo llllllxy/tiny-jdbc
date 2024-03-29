@@ -1,5 +1,8 @@
 package org.tinycloud.jdbc.criteria;
 
+import org.springframework.util.ObjectUtils;
+
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -10,8 +13,10 @@ import java.util.List;
  **/
 public class Criteria extends AbstractCriteria {
 
-    public <R> Criteria select(String field) {
-        selectFields.add(field);
+    public <R> Criteria select(String... field) {
+        if (!ObjectUtils.isEmpty(field)) {
+            selectFields.addAll(Arrays.asList(field));
+        }
         return this;
     }
 

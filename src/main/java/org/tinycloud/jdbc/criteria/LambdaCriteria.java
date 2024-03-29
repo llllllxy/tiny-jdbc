@@ -1,6 +1,8 @@
 package org.tinycloud.jdbc.criteria;
 
 
+import org.springframework.util.ObjectUtils;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,9 +18,14 @@ public class LambdaCriteria extends AbstractCriteria {
 
     public static final Map<String, String> LAMBDA_CACHE = new ConcurrentHashMap<>();
 
-    public <T, R> LambdaCriteria select(TypeFunction<T, R> field) {
-        String columnName = getColumnName(field);
-        selectFields.add(columnName);
+    @SafeVarargs
+    public final <T, R> LambdaCriteria select(TypeFunction<T, R>... field) {
+        if (!ObjectUtils.isEmpty(field)) {
+            for (TypeFunction<T, R> f : field) {
+                String columnName = getColumnName(f);
+                selectFields.add(columnName);
+            }
+        }
         return this;
     }
 

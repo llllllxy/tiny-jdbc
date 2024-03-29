@@ -57,7 +57,7 @@ public abstract class AbstractCriteria {
     /**
      * 根据条件生成对应的查询SQL
      * <pre>
-     *  如： id AS id, create_time AS createTime
+     *  如： id , create_time
      * <pre>
      * @return 查询SQL
      */
@@ -66,15 +66,10 @@ public abstract class AbstractCriteria {
         if (!this.selectFields.isEmpty()) {
             for (int i = 0; i < this.selectFields.size(); i++) {
                 String column = this.selectFields.get(i);
-                String fieldName = StrUtils.lineToHump(column);
                 if (i == this.selectFields.size() - 1) {
-                    select.append(column)
-                            .append(" AS ")
-                            .append(fieldName);
+                    select.append(column);
                 } else {
                     select.append(column)
-                            .append(" AS ")
-                            .append(fieldName)
                             .append(",");
                 }
             }
