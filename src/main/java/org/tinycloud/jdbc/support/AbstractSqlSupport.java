@@ -318,6 +318,9 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
 
     @Override
     public List<T> selectByIds(List<ID> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new JdbcException("selectByIds ids cannot be null or empty");
+        }
         SqlProvider sqlProvider = SqlGenerator.selectByIdsSql(entityClass);
         NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(getJdbcTemplate());
         Map<String, Object> param = new HashMap<>();

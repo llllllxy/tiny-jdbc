@@ -1,10 +1,13 @@
 package org.tinycloud.jdbc.support;
 
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.criteria.Criteria;
 import org.tinycloud.jdbc.criteria.LambdaCriteria;
+import org.tinycloud.jdbc.exception.JdbcException;
 import org.tinycloud.jdbc.page.Page;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -129,9 +132,23 @@ public interface IObjectSupport<T, ID> {
      * 根据ID列表进行批量删除
      *
      * @param ids 主键id列表
-     * @return T 对象
+     * @return int 删除数量
      */
     int deleteByIds(List<ID> ids);
+
+    /**
+     * 根据ID列表进行批量删除
+     *
+     * @param id 主键id列表
+     * @return int 删除数量
+     */
+    default int deleteByIds(ID... id) {
+        if (ObjectUtils.isEmpty(id)) {
+            throw new JdbcException("deleteByIds ids cannot be null or empty");
+        }
+        List<ID> ids = Arrays.asList(id);
+        return this.deleteByIds(ids);
+    }
 
     /**
      * 批量持久化更新给定的实例
@@ -172,6 +189,20 @@ public interface IObjectSupport<T, ID> {
      * @return List<T> 实例列表
      */
     List<T> selectByIds(List<ID> ids);
+
+    /**
+     * 根据ID列表进行批量查询
+     *
+     * @param id 主键id列表
+     * @return List<T> 实例列表
+     */
+    default List<T> selectByIds(ID... id) {
+        if (ObjectUtils.isEmpty(id)) {
+            throw new JdbcException("selectByIds ids cannot be null or empty");
+        }
+        List<ID> ids = Arrays.asList(id);
+        return this.selectByIds(ids);
+    }
 
     /**
      * 查询给定的实例，返回实例列表
