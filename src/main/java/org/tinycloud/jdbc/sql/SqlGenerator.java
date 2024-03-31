@@ -50,7 +50,6 @@ public class SqlGenerator {
         StringBuilder values = new StringBuilder();
         for (Field field : fields) {
             ReflectUtils.makeAccessible(field);
-            ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
             if (columnAnnotation == null) {
                 continue;
