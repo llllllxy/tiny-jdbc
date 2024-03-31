@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc.support;
 
 import org.tinycloud.jdbc.page.Page;
+import org.tinycloud.jdbc.util.DataAccessUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -91,10 +92,7 @@ public interface ISqlSupport<T, ID> {
      */
     default T selectOne(String sql, Object... params) {
         List<T> resultList = this.select(sql, params);
-        if (resultList != null && !resultList.isEmpty()) {
-            return resultList.get(0);
-        }
-        return null;
+        return DataAccessUtils.singleResult(resultList);
     }
 
     /**
@@ -107,10 +105,7 @@ public interface ISqlSupport<T, ID> {
      */
     default <F> F selectOne(String sql, Class<F> clazz, Object... params) {
         List<F> resultList = this.select(sql, clazz, params);
-        if (resultList != null && !resultList.isEmpty()) {
-            return resultList.get(0);
-        }
-        return null;
+        return DataAccessUtils.singleResult(resultList);
     }
 
     /**

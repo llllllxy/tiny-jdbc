@@ -1,11 +1,11 @@
 package org.tinycloud.jdbc.support;
 
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.criteria.Criteria;
 import org.tinycloud.jdbc.criteria.LambdaCriteria;
 import org.tinycloud.jdbc.exception.JdbcException;
 import org.tinycloud.jdbc.page.Page;
+import org.tinycloud.jdbc.util.DataAccessUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -263,10 +263,7 @@ public interface IObjectSupport<T, ID> {
      */
     default T selectOne(T entity) {
         List<T> list = this.select(entity);
-        if (!CollectionUtils.isEmpty(list)) {
-            return list.get(0);
-        }
-        return null;
+        return DataAccessUtils.singleResult(list);
     }
 
     /**
@@ -277,10 +274,7 @@ public interface IObjectSupport<T, ID> {
      */
     default T selectOne(Criteria criteria) {
         List<T> list = this.select(criteria);
-        if (!CollectionUtils.isEmpty(list)) {
-            return list.get(0);
-        }
-        return null;
+        return DataAccessUtils.singleResult(list);
     }
 
     /**
@@ -291,10 +285,7 @@ public interface IObjectSupport<T, ID> {
      */
     default T selectOne(LambdaCriteria lambdaCriteria) {
         List<T> list = this.select(lambdaCriteria);
-        if (!CollectionUtils.isEmpty(list)) {
-            return list.get(0);
-        }
-        return null;
+        return DataAccessUtils.singleResult(list);
     }
 
     /**

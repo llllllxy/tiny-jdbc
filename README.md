@@ -294,8 +294,8 @@ public class UploadFileService {
 |方法|说明|
 |---|---|
 |`int insert(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行插入|
-|`int insert(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，如果主键策略为assignId、uuid或objectId，那将在entity里返回生成的主键值|
-|`int insert(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里属性值为null的属性，如果主键策略为assignId、uuid或objectId，那将在entity里返回生成的主键值|
+|`int insert(T entity);`|插入entity里的数据，忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值|
+|`int insert(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值|
 |`Long insertReturnAutoIncrement(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，并且返回自增的主键|
 
 ### 更新操作
@@ -303,18 +303,22 @@ public class UploadFileService {
 |方法|说明|
 |---|---|
 |`int update(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行修改|
-|`int update(T entity, Criteria criteria);`|根据entity里的值和条件构造器，执行修改|
-|`int update(T entity, LambdaCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改|
-|`int updateById(T entity);`|根据主键值作为条件更新数据，将忽略entity里属性值为null的属性|
-|`int updateById(T entity, boolean ignoreNulls);`|根据主键值更新数据，可选择是否忽略entity里属性值为null的属性|
+|`int update(T entity, Criteria criteria);`|根据entity里的值和条件构造器，执行修改，默认忽略entity里值为null的属性|
+|`int update(T entity, LambdaCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改，默认忽略entity里值为null的属性|
+|`int update(T entity, boolean ignoreNulls, Criteria criteria);`|根据entity里的值和条件构造器，执行修改，可选择是否忽略entity里值为null的属性|
+|`int update(T entity, boolean ignoreNulls, LambdaCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改，可选择是否忽略entity里值为null的属性|
+|`int updateById(T entity);`|根据主键值作为条件更新数据，默认忽略entity里值为null的属性|
+|`int updateById(T entity, boolean ignoreNulls);`|根据主键值更新数据，可选择是否忽略entity里值为null的属性|
 
 #### 删除操作
 
 |方法|说明|
 |---|---|
 |`int delete(String sql, final Object... params);` | 根据提供的SQL语句和提供的参数，执行删除 |
-|`int deleteById(Object id);` | 根据主键ID进行删除，类型使用的是xxxDao<T>的类型 |
-|`int delete(T entity);`| 根据entity里的属性值进行删除，entity里不为null的属性，将作为参数 |
+|`int deleteById(ID id);` | 根据主键ID进行删除，类型使用的是xxxDao<T, ID>的类型 |
+|`int deleteByIds(List<ID> ids);` | 根据主键ID列表进行删除，类型使用的是xxxDao<T, ID>的类型 |
+|`int deleteByIds(ID... ids);` | 根据主键ID数组进行删除，类型使用的是xxxDao<T, ID>的类型 |
+|`int delete(T entity);`| 根据entity里的属性值进行删除，entity里不为null的属性，将作为where参数 |
 |`int delete(Criteria criteria);`| 根据条件构造器，将作为where参数 |
 |`int delete(LambdaCriteria criteria);`| 根据条件构造器（lambda），将作为where参数 |
 
@@ -341,7 +345,7 @@ public class UploadFileService {
 ### LambdaCriteria示例
 
 ```java
-    List<Long> ids=new ArrayList<Long>(){{
+    List<Long> ids = new ArrayList<Long>(){{
         add(1L);
         add(2L);
         add(3L);

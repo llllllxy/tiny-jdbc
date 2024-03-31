@@ -12,6 +12,7 @@ import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
 import org.tinycloud.jdbc.sql.SqlGenerator;
 import org.tinycloud.jdbc.sql.SqlProvider;
+import org.tinycloud.jdbc.util.DataAccessUtils;
 import org.tinycloud.jdbc.util.StrUtils;
 
 import java.lang.reflect.ParameterizedType;
@@ -114,10 +115,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     @Override
     public Map<String, Object> selectOneMap(String sql, final Object... params) {
         List<Map<String, Object>> resultList = getJdbcTemplate().queryForList(sql, params);
-        if (!CollectionUtils.isEmpty(resultList)) {
-            return resultList.get(0);
-        }
-        return null;
+        return DataAccessUtils.singleResult(resultList);
     }
 
     /**
