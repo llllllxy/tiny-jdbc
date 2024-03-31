@@ -16,22 +16,22 @@ public class OffsetPage<T> implements Serializable {
     /**
      * 偏移位置（offset = (pageNo - 1) * pageSize;）
      */
-    private Integer offset;
+    private Long offset;
 
     /**
      * 偏移量（等价于pageSize）
      */
-    private Integer limit;
+    private Long limit;
 
     /**
      * 总记录数
      */
-    private Integer total;
+    private Long total;
 
     /**
      * 总页数
      */
-    private Integer pages;
+    private Long pages;
 
     /**
      * 分页后的数据
@@ -41,12 +41,12 @@ public class OffsetPage<T> implements Serializable {
     public OffsetPage() {
     }
 
-    public OffsetPage(Integer offset, Integer limit) {
+    public OffsetPage(Long offset, Long limit) {
         this.offset = offset;
         this.limit = limit;
     }
 
-    public OffsetPage(Collection<T> records, int total, Integer offset, Integer limit) {
+    public OffsetPage(Collection<T> records, Long total, Long offset, Long limit) {
         this.records = (records == null ? new ArrayList<T>(0) : records);
         this.total = total;
         this.offset = offset;
@@ -54,23 +54,23 @@ public class OffsetPage<T> implements Serializable {
         this.pages = (total + limit - 1) / limit;
     }
 
-    public Integer getOffset() {
+    public Long getOffset() {
         return offset;
     }
 
-    public void setOffset(Integer offset) {
+    public void setOffset(Long offset) {
         this.offset = offset;
     }
 
-    public Integer getLimit() {
+    public Long getLimit() {
         return limit;
     }
 
-    public void setLimit(Integer limit) {
+    public void setLimit(Long limit) {
         this.limit = limit;
     }
 
-    public void setPages(Integer pages) {
+    public void setPages(Long pages) {
         this.pages = pages;
     }
 
@@ -82,11 +82,11 @@ public class OffsetPage<T> implements Serializable {
         this.records = records;
     }
 
-    public Integer getTotal() {
+    public Long getTotal() {
         return total;
     }
 
-    public void setTotal(Integer total) {
+    public void setTotal(Long total) {
         this.total = total;
         this.pages = (total + limit - 1) / limit;
     }

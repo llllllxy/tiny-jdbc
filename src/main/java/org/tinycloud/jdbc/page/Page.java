@@ -15,22 +15,22 @@ public class Page<T> implements Serializable {
     /**
      * 当前页（pageNo = offset / limit + 1;）
      */
-    private Integer pageNum;
+    private Long pageNum;
 
     /**
      * 分页大小（等价于limit）
      */
-    private Integer pageSize;
+    private Long pageSize;
 
     /**
      * 总记录数
      */
-    private Integer total;
+    private Long total;
 
     /**
      * 总页数
      */
-    private Integer pages;
+    private Long pages;
 
     /**
      * 分页后的数据
@@ -41,12 +41,12 @@ public class Page<T> implements Serializable {
 
     }
 
-    public Page(Integer pageNum, Integer pageSize) {
+    public Page(Long pageNum, Long pageSize) {
         this.pageSize = pageSize;
         this.pageNum = pageNum;
     }
 
-    public Page(Collection<T> records, int total, Integer pageNum, Integer pageSize) {
+    public Page(Collection<T> records, Long total, Long pageNum, Long pageSize) {
         this.records = (records == null ? new ArrayList<T>(0) : records);
         this.total = total;
         this.pageSize = pageSize;
@@ -54,27 +54,27 @@ public class Page<T> implements Serializable {
         this.pages = (total + pageSize - 1) / pageSize;
     }
 
-    public Integer getPageNum() {
+    public Long getPageNum() {
         return pageNum;
     }
 
-    public void setPageNum(Integer pageNum) {
+    public void setPageNum(Long pageNum) {
         this.pageNum = pageNum;
     }
 
-    public Integer getPageSize() {
+    public Long getPageSize() {
         return pageSize;
     }
 
-    public void setPageSize(Integer pageSize) {
+    public void setPageSize(Long pageSize) {
         this.pageSize = pageSize;
     }
 
-    public Integer getPages() {
+    public Long getPages() {
         return pages;
     }
 
-    public void setPages(Integer pages) {
+    public void setPages(Long pages) {
         this.pages = pages;
     }
 
@@ -86,11 +86,11 @@ public class Page<T> implements Serializable {
         this.records = records;
     }
 
-    public Integer getTotal() {
+    public Long getTotal() {
         return total;
     }
 
-    public void setTotal(Integer total) {
+    public void setTotal(Long total) {
         this.total = total;
         this.pages = (total + pageSize - 1) / pageSize;
     }

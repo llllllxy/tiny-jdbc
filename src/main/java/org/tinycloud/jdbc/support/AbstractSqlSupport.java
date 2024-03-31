@@ -163,7 +163,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         // 查询数据列表
         List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper);
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class);
+        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class);
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -193,7 +193,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         // 查询数据列表
         List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, params);
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class, params);
+        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, params);
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -224,7 +224,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         // 查询数据列表
         List<F> resultList = getJdbcTemplate().query(selectSql, new BeanPropertyRowMapper<>(clazz), params);
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class, params);
+        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, params);
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -372,7 +372,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         // 查询数据列表
         List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, sqlProvider.getParameters().toArray());
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class, sqlProvider.getParameters().toArray());
+        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, sqlProvider.getParameters().toArray());
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -398,7 +398,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         // 查询数据列表
         List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, sqlProvider.getParameters().toArray());
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class, sqlProvider.getParameters().toArray());
+        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, sqlProvider.getParameters().toArray());
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -424,7 +424,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         // 查询数据列表
         List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, sqlProvider.getParameters().toArray());
         // 查询总共数量
-        int totalSize = getJdbcTemplate().queryForObject(countSql, Integer.class, sqlProvider.getParameters().toArray());
+        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, sqlProvider.getParameters().toArray());
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;

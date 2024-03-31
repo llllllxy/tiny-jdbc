@@ -13,7 +13,7 @@ public interface IPageHandle {
      * @param pageNo pageNo 第几页，用来计算first 这个值由（pageNo-1）*pageSize
      * @param pageSize pageSize 每页数量
      * */
-    String handlerPagingSQL(String sql, int pageNo, int pageSize);
+    String handlerPagingSQL(String sql, long pageNo, long pageSize);
 
 
     /**

@@ -2,9 +2,9 @@ package org.tinycloud.jdbc.page;
 
 
 /**
+ * 分页查询适配器-DB2
  * @author liuxingyu01
- * @date 2022-05-14 16:23
- * @description 分页查询适配器-DB2
+ * @since  2022-05-14 16:23
  **/
 public class DB2PageHandleImpl implements IPageHandle {
 
@@ -17,11 +17,11 @@ public class DB2PageHandleImpl implements IPageHandle {
      * @return
      */
     @Override
-    public String handlerPagingSQL(String oldSQL, int pageNo, int pageSize) {
+    public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         StringBuilder sql = new StringBuilder("SELECT * FROM ( SELECT B.*, ROWNUMBER() OVER() AS RN FROM ( ");
         sql.append(oldSQL);
-        int pageStart = (pageNo - 1) * pageSize + 1;
-        int pageEnd = pageStart + pageSize - 1;
+        long pageStart = (pageNo - 1) * pageSize + 1;
+        long pageEnd = pageStart + pageSize - 1;
         sql.append(" ) AS B ) AS A WHERE A.RN BETWEEN ").append(pageStart).append(" AND ")
                 .append(pageEnd);
         return sql.toString();

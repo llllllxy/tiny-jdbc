@@ -17,10 +17,10 @@ public class MysqlPageHandleImpl implements IPageHandle {
      * @return 处理过后的sql
      */
     @Override
-    public String handlerPagingSQL(String oldSQL, int pageNo, int pageSize) {
+    public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         StringBuilder sql = new StringBuilder(oldSQL);
-        int offset = (pageNo - 1) * pageSize;
-        int limit = pageSize;
+        long offset = (pageNo - 1) * pageSize;
+        long limit = pageSize;
         if (offset <= 0) {
             sql.append(" LIMIT ").append(limit);
         } else {
