@@ -3,7 +3,7 @@ package org.tinycloud.jdbc.support;
 import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.criteria.Criteria;
 import org.tinycloud.jdbc.criteria.LambdaCriteria;
-import org.tinycloud.jdbc.exception.JdbcException;
+import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.Page;
 import org.tinycloud.jdbc.util.DataAccessUtils;
 
@@ -144,7 +144,7 @@ public interface IObjectSupport<T, ID> {
      */
     default int deleteByIds(ID... id) {
         if (ObjectUtils.isEmpty(id)) {
-            throw new JdbcException("deleteByIds ids cannot be null or empty");
+            throw new TinyJdbcException("deleteByIds ids cannot be null or empty");
         }
         List<ID> ids = Arrays.asList(id);
         return this.deleteByIds(ids);
@@ -198,7 +198,7 @@ public interface IObjectSupport<T, ID> {
      */
     default List<T> selectByIds(ID... id) {
         if (ObjectUtils.isEmpty(id)) {
-            throw new JdbcException("selectByIds ids cannot be null or empty");
+            throw new TinyJdbcException("selectByIds ids cannot be null or empty");
         }
         List<ID> ids = Arrays.asList(id);
         return this.selectByIds(ids);

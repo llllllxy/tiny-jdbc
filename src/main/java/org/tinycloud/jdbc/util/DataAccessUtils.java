@@ -1,6 +1,6 @@
 package org.tinycloud.jdbc.util;
 
-import org.tinycloud.jdbc.exception.JdbcException;
+import org.tinycloud.jdbc.exception.TinyJdbcException;
 
 import java.util.Collection;
 
@@ -15,21 +15,21 @@ public class DataAccessUtils {
     public DataAccessUtils() {
     }
 
-    public static <T> T singleResult(Collection<T> results) throws JdbcException {
+    public static <T> T singleResult(Collection<T> results) throws TinyJdbcException {
         if (results == null || results.isEmpty()) {
             return null;
         } else if (results.size() > 1) {
-            throw new JdbcException("Expected one result (or null) to be returned , but found " + results.size() + " records");
+            throw new TinyJdbcException("Expected one result (or null) to be returned , but found " + results.size() + " records");
         } else {
             return results.iterator().next();
         }
     }
 
-    public static <T> T requiredSingleResult(Collection<T> results) throws JdbcException {
+    public static <T> T requiredSingleResult(Collection<T> results) throws TinyJdbcException {
         if (results == null || results.isEmpty()) {
-            throw new JdbcException("Expected one result to be returned , but not found");
+            throw new TinyJdbcException("Expected one result to be returned , but not found");
         } else if (results.size() > 1) {
-            throw new JdbcException("Expected one result to be returned , but found " + results.size() + " records");
+            throw new TinyJdbcException("Expected one result to be returned , but found " + results.size() + " records");
         } else {
             return results.iterator().next();
         }

@@ -1,8 +1,7 @@
 package org.tinycloud.jdbc.criteria;
 
 
-import org.tinycloud.jdbc.exception.JdbcException;
-import org.tinycloud.jdbc.util.StrUtils;
+import org.tinycloud.jdbc.exception.TinyJdbcException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,7 +90,7 @@ public abstract class AbstractCriteria {
             for (int i = 0; i < conditions.size(); i++) {
                 if (i == 0) {
                     if (conditions.get(i).startsWith(" OR ")) {
-                        throw new JdbcException("Criteria can not start with a function orXXX!");
+                        throw new TinyJdbcException("Criteria can not start with a function orXXX!");
                     }
                     sql.append(conditions.get(i).replace(" AND ", ""));
                 } else {
@@ -123,7 +122,7 @@ public abstract class AbstractCriteria {
             for (int i = 0; i < conditions.size(); i++) {
                 if (i == 0) {
                     if (conditions.get(i).startsWith(" OR ")) {
-                        throw new JdbcException("Criteria can not start with a function orXXX!");
+                        throw new TinyJdbcException("Criteria can not start with a function orXXX!");
                     }
                     sql.append(conditions.get(i).replace(" AND ", ""));
                 } else {

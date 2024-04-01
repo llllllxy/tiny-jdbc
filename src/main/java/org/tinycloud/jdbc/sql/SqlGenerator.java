@@ -7,7 +7,7 @@ import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.criteria.Criteria;
 import org.tinycloud.jdbc.criteria.LambdaCriteria;
-import org.tinycloud.jdbc.exception.JdbcException;
+import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.annotation.IdType;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.IdUtils;
@@ -68,7 +68,7 @@ public class SqlGenerator {
                     try {
                         field.set(object, fieldValue);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new JdbcException("inject field value fail : " + field.getName() + ", field type must be String when objectId!");
+                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String when objectId!");
                     }
                 }
                 if (idType == IdType.ASSIGN_ID) {
@@ -77,7 +77,7 @@ public class SqlGenerator {
                     try {
                         field.set(object, fieldValue);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new JdbcException("inject field value fail : " + field.getName() + ", field type must be String or Long when assignId!");
+                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String or Long when assignId!");
                     }
                 }
                 if (idType == IdType.UUID) {
@@ -85,7 +85,7 @@ public class SqlGenerator {
                     try {
                         field.set(object, fieldValue);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new JdbcException("inject field value fail : " + field.getName() + ", field type must be String when uuid!");
+                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String when uuid!");
                     }
                 }
                 if (idType == IdType.CUSTOM) {
@@ -109,7 +109,7 @@ public class SqlGenerator {
                     try {
                         field.set(object, fieldValue);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new JdbcException("inject field value fail : " + field.getName() + ", please verify if the return data type of idGeneratorInterface.nextId() method matches the data type of the primary key!");
+                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", please verify if the return data type of idGeneratorInterface.nextId() method matches the data type of the primary key!");
                     }
                 }
             }
@@ -118,7 +118,7 @@ public class SqlGenerator {
                 fieldValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 logger.error("get field value failed : " + field.getName() + "", e);
-                throw new JdbcException("get field value failed: " + field.getName(), e);
+                throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             // 是否忽略null
             if (ignoreNulls && fieldValue == null) {
@@ -173,7 +173,7 @@ public class SqlGenerator {
                 filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 logger.error("get field value failed : " + field.getName() + "", e);
-                throw new JdbcException("get field value failed: " + field.getName(), e);
+                throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             boolean primaryKey = columnAnnotation.primaryKey();
             if (primaryKey) {
@@ -189,7 +189,7 @@ public class SqlGenerator {
             parameters.add(filedValue);
         }
         if (whereValues == null) {
-            throw new JdbcException("SqlGenerator updateByIdSql primaryKeyId can not null!");
+            throw new TinyJdbcException("SqlGenerator updateByIdSql primaryKeyId can not null!");
         }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
         sql.append("UPDATE ").append(tableAnnotation.value()).append(" SET ").append(tableColumn);
@@ -216,7 +216,7 @@ public class SqlGenerator {
     public static SqlProvider updateByCriteriaSql(Object object, boolean ignoreNulls, Criteria criteria) {
         String criteriaSql = criteria.whereSql();
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
-            throw new JdbcException("SqlGenerator updateByCriteriaSql criteria can not null or empty!");
+            throw new TinyJdbcException("SqlGenerator updateByCriteriaSql criteria can not null or empty!");
         }
 
         Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
@@ -242,7 +242,7 @@ public class SqlGenerator {
                 filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 logger.error("get field value failed : " + field.getName() + "", e);
-                throw new JdbcException("get field value failed: " + field.getName(), e);
+                throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             // 是否忽略null
             if (ignoreNulls && filedValue == null) {
@@ -274,7 +274,7 @@ public class SqlGenerator {
     public static SqlProvider updateByLambdaCriteriaSql(Object object, boolean ignoreNulls, LambdaCriteria criteria) {
         String criteriaSql = criteria.whereSql();
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
-            throw new JdbcException("SqlGenerator updateByLambdaCriteriaSql criteria can not null or empty!");
+            throw new TinyJdbcException("SqlGenerator updateByLambdaCriteriaSql criteria can not null or empty!");
         }
 
         Triple<Class<?>, Field[], Table> triple = ReflectUtils.validateTargetClass(object);
@@ -301,7 +301,7 @@ public class SqlGenerator {
                 filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 logger.error("get field value failed : " + field.getName() + "", e);
-                throw new JdbcException("get field value failed: " + field.getName(), e);
+                throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             // 是否忽略null
             if (ignoreNulls && filedValue == null) {
@@ -352,7 +352,7 @@ public class SqlGenerator {
                 filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 logger.error("get field value failed : " + field.getName() + "", e);
-                throw new JdbcException("get field value failed: " + field.getName(), e);
+                throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             if (filedValue == null) {
                 continue;
@@ -361,7 +361,7 @@ public class SqlGenerator {
             parameters.add(filedValue);
         }
         if (StrUtils.isEmpty(whereColumns.toString())) {
-            throw new JdbcException("SqlGenerator deleteSql whereColumns can not null!");
+            throw new TinyJdbcException("SqlGenerator deleteSql whereColumns can not null!");
         }
         sql.append("DELETE FROM ");
         sql.append(tableAnnotation.value());
@@ -383,7 +383,7 @@ public class SqlGenerator {
     public static SqlProvider deleteCriteriaSql(Criteria criteria, Class<?> clazz) {
         String criteriaSql = criteria.whereSql();
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
-            throw new JdbcException("SqlGenerator deleteCriteriaSql criteria can not null or empty!");
+            throw new TinyJdbcException("SqlGenerator deleteCriteriaSql criteria can not null or empty!");
         }
         List<Object> parameters = criteria.getParameters();
 
@@ -409,7 +409,7 @@ public class SqlGenerator {
     public static SqlProvider deleteLambdaCriteriaSql(LambdaCriteria criteria, Class<?> clazz) {
         String criteriaSql = criteria.whereSql();
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
-            throw new JdbcException("SqlGenerator deleteLambdaCriteriaSql criteria can not null or empty!");
+            throw new TinyJdbcException("SqlGenerator deleteLambdaCriteriaSql criteria can not null or empty!");
         }
         List<Object> parameters = criteria.getParameters();
         // 对象检验
@@ -461,7 +461,7 @@ public class SqlGenerator {
                 filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 logger.error("get field value failed : " + field.getName() + "", e);
-                throw new JdbcException("get field value failed: " + field.getName(), e);
+                throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             if (filedValue != null) {
                 whereColumns.append("AND ")

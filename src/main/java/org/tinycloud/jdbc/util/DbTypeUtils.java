@@ -2,7 +2,7 @@ package org.tinycloud.jdbc.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tinycloud.jdbc.exception.JdbcException;
+import org.tinycloud.jdbc.exception.TinyJdbcException;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Method;
@@ -50,7 +50,7 @@ public class DbTypeUtils {
             connection = dataSource.getConnection();
             return connection.getMetaData().getURL();
         } catch (Exception e) {
-            throw new JdbcException("Can not get the dataSource jdbcUrl!");
+            throw new TinyJdbcException("Can not get the dataSource jdbcUrl!");
         } finally {
             if (connection != null) {
                 try {

@@ -1,7 +1,7 @@
 package org.tinycloud.jdbc.util;
 
 import org.tinycloud.jdbc.annotation.Table;
-import org.tinycloud.jdbc.exception.JdbcException;
+import org.tinycloud.jdbc.exception.TinyJdbcException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -32,7 +32,7 @@ public class ReflectUtils {
      */
     public static <T> Triple<Class<?>, Field[], Table> validateTargetClass(T entity) {
         if (entity == null) {
-            throw new JdbcException("SqlGenerator entity cannot be null");
+            throw new TinyJdbcException("SqlGenerator entity cannot be null");
         }
         Class<?> clazz = entity.getClass();
         return validateTargetClass(clazz);
@@ -47,15 +47,15 @@ public class ReflectUtils {
     public static <T> Triple<Class<?>, Field[], Table> validateTargetClass(Class<?> clazz) {
         Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
         if (tableAnnotation == null) {
-            throw new JdbcException("SqlGenerator " + clazz + "no @Table defined");
+            throw new TinyJdbcException("SqlGenerator " + clazz + "no @Table defined");
         }
         String table = tableAnnotation.value();
         if (StrUtils.isEmpty(table)) {
-            throw new JdbcException("SqlGenerator " + clazz + "@Table value cannot be null");
+            throw new TinyJdbcException("SqlGenerator " + clazz + "@Table value cannot be null");
         }
         Field[] fields = getFields(clazz);
         if (fields == null || fields.length == 0) {
-            throw new JdbcException("SqlGenerator " + clazz + " no field defined");
+            throw new TinyJdbcException("SqlGenerator " + clazz + " no field defined");
         }
         Triple<Class<?>, Field[], Table> triple = new Triple<>();
         triple.setFirst(clazz);

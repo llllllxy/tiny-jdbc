@@ -3,10 +3,11 @@ package org.tinycloud.jdbc.exception;
 
 /**
  * 自定义异常类
+ *
  * @author liuxingyu01
- * @since  2023-07-26-16:49
+ * @since 2023-07-26-16:49
  **/
-public class JdbcException extends RuntimeException {
+public class TinyJdbcException extends RuntimeException {
     private static final long serialVersionUID = 5423027429182629901L;
 
     /**
@@ -14,7 +15,7 @@ public class JdbcException extends RuntimeException {
      * message. The cause is not initialized, and may subsequently be
      * initialized by a call to {@link #initCause}.
      */
-    public JdbcException() {
+    public TinyJdbcException() {
         super();
     }
 
@@ -23,11 +24,10 @@ public class JdbcException extends RuntimeException {
      * cause is not initialized, and may subsequently be initialized by a call
      * to {@link #initCause}.
      *
-     * @param message
-     *            the detail message. The detail message is saved for later
-     *            retrieval by the {@link #getMessage()} method.
+     * @param message the detail message. The detail message is saved for later
+     *                retrieval by the {@link #getMessage()} method.
      */
-    public JdbcException(String message) {
+    public TinyJdbcException(String message) {
         super(message);
     }
 
@@ -38,17 +38,15 @@ public class JdbcException extends RuntimeException {
      * Note that the detail message associated with {@code cause} is <i>not</i>
      * automatically incorporated in this runtime exception's detail message.
      *
-     * @param message
-     *            the detail message (which is saved for later retrieval by the
-     *            {@link #getMessage()} method).
-     * @param cause
-     *            the cause (which is saved for later retrieval by the
-     *            {@link #getCause()} method). (A <tt>null</tt> value is
-     *            permitted, and indicates that the cause is nonexistent or
-     *            unknown.)
+     * @param message the detail message (which is saved for later retrieval by the
+     *                {@link #getMessage()} method).
+     * @param cause   the cause (which is saved for later retrieval by the
+     *                {@link #getCause()} method). (A <tt>null</tt> value is
+     *                permitted, and indicates that the cause is nonexistent or
+     *                unknown.)
      * @since 1.4
      */
-    public JdbcException(String message, Throwable cause) {
+    public TinyJdbcException(String message, Throwable cause) {
         super(message, cause);
     }
 
@@ -59,14 +57,13 @@ public class JdbcException extends RuntimeException {
      * constructor is useful for runtime exceptions that are little more than
      * wrappers for other throwables.
      *
-     * @param cause
-     *            the cause (which is saved for later retrieval by the
-     *            {@link #getCause()} method). (A <tt>null</tt> value is
-     *            permitted, and indicates that the cause is nonexistent or
-     *            unknown.)
+     * @param cause the cause (which is saved for later retrieval by the
+     *              {@link #getCause()} method). (A <tt>null</tt> value is
+     *              permitted, and indicates that the cause is nonexistent or
+     *              unknown.)
      * @since 1.4
      */
-    public JdbcException(Throwable cause) {
+    public TinyJdbcException(Throwable cause) {
         super(cause);
     }
 }

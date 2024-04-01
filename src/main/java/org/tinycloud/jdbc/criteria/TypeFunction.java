@@ -1,9 +1,9 @@
 package org.tinycloud.jdbc.criteria;
 
 import org.tinycloud.jdbc.annotation.Column;
+import org.tinycloud.jdbc.util.PropertyNamer;
 import org.tinycloud.jdbc.util.StrUtils;
 
-import java.beans.Introspector;
 import java.io.Serializable;
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Field;
@@ -27,7 +27,7 @@ public interface TypeFunction<T, R> extends Serializable, Function<T, R> {
 
             String implClass = serializedLambda.getImplClass();
             String methodName = serializedLambda.getImplMethodName();
-            String fieldName = Introspector.decapitalize(methodName.replaceFirst("get", ""));
+            String fieldName = PropertyNamer.methodToProperty(methodName);
 
             String lambdaCacheKey = implClass + fieldName;
             if (LambdaCriteria.LAMBDA_CACHE.containsKey(lambdaCacheKey)) {
