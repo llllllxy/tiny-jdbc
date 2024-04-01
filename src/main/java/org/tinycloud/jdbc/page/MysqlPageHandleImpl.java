@@ -2,9 +2,10 @@ package org.tinycloud.jdbc.page;
 
 
 /**
+ * 分页查询适配器-MySQL
+ *
  * @author liuxingyu01
- * @date 2022-05-10 8:32
- * @description 分页查询适配器-MySQL
+ * @since 2022-05-10 8:32
  **/
 public class MysqlPageHandleImpl implements IPageHandle {
 

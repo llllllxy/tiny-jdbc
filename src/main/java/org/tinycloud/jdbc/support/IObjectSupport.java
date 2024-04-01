@@ -142,6 +142,7 @@ public interface IObjectSupport<T, ID> {
      * @param id 主键id列表
      * @return int 删除数量
      */
+    @SuppressWarnings("unchecked")
     default int deleteByIds(ID... id) {
         if (ObjectUtils.isEmpty(id)) {
             throw new TinyJdbcException("deleteByIds ids cannot be null or empty");
@@ -196,6 +197,7 @@ public interface IObjectSupport<T, ID> {
      * @param id 主键id列表
      * @return List<T> 实例列表
      */
+    @SuppressWarnings("unchecked")
     default List<T> selectByIds(ID... id) {
         if (ObjectUtils.isEmpty(id)) {
             throw new TinyJdbcException("selectByIds ids cannot be null or empty");

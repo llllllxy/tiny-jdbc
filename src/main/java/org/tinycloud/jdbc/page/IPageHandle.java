@@ -2,8 +2,7 @@ package org.tinycloud.jdbc.page;
 
 /**
  * @author liuxingyu01
- * @date 2022-05-10 8:31
- * @description
+ * @since 2022-05-10 8:31
  **/
 public interface IPageHandle {
     /**

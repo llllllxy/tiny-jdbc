@@ -15,7 +15,7 @@ public class OraclePageHandleImpl implements IPageHandle {
      * @param oldSQL   需要改造为分页查询的SQL
      * @param pageNo   pageNo 第几页，用来计算first 这个值由（pageNo-1）*pageSize
      * @param pageSize pageSize 每页数量
-     * @return
+     * @return 处理过后的sql
      */
     @Override
     public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
