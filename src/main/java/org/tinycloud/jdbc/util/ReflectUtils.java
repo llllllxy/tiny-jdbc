@@ -1,5 +1,6 @@
 package org.tinycloud.jdbc.util;
 
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 
@@ -8,7 +9,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * java反射工具类
@@ -21,8 +24,15 @@ public class ReflectUtils {
     private static final Method[] EMPTY_METHOD_ARRAY = new Method[0];
     private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
 
-    private static final Map<String, Method[]> declaredMethodsCache = new ConcurrentHashMap<>();
-    private static final Map<String, Field[]> declaredFieldsCache = new ConcurrentHashMap<>();
+    /**
+     * Cache for {@link Class#getDeclaredMethods()} plus equivalent default methods
+     */
+    private static final Map<Class<?>, Method[]> declaredMethodsCache = new ConcurrentReferenceHashMap<>(256);
+
+    /**
+     * Cache for {@link Class#getDeclaredFields()}, allowing for fast iteration.
+     */
+    private static final Map<Class<?>, Field[]> declaredFieldsCache = new ConcurrentReferenceHashMap<>(256);
 
     /**
      * 校验Entity对象的合法性
@@ -88,24 +98,57 @@ public class ReflectUtils {
      * @return 字段数组
      */
     public static Field[] getFields(Class<?> clazz) {
-        String className = clazz.getName();
-        Field[] result = declaredFieldsCache.get(className);
+        Field[] result = declaredFieldsCache.get(clazz);
         if (result != null) {
             return result;
         }
-        List<Field> list = new ArrayList<>();
-        // 遍历类及其父类的所有字段并获取属性名称
-        while (clazz != null && !"java.lang.Object".equals(clazz.getName())) {
-            Field[] fields = clazz.getDeclaredFields();
-            list.addAll(Arrays.asList(fields));
-            clazz = clazz.getSuperclass();
-        }
-        result = list.toArray(new Field[0]);
+        // 先获取本类的所有字段
+        Field[] fields = clazz.getDeclaredFields();
 
-        declaredFieldsCache.put(className, result.length == 0 ? EMPTY_FIELD_ARRAY : result);
+        List<Field> superFieldList = new ArrayList<>();
+
+        // 再遍历其父类的所有字段
+        Class<?> superClazz = clazz.getSuperclass();
+        while (superClazz != null && !"java.lang.Object".equals(superClazz.getName())) {
+            Field[] declaredFields = superClazz.getDeclaredFields();
+            Collections.addAll(superFieldList, declaredFields);
+            superClazz = superClazz.getSuperclass();
+        }
+
+        /* 排除重载属性 */
+        Map<String, Field> fieldMap = excludeOverrideSuperField(fields, superFieldList);
+
+        /* 去除和父类相同名字的属性 */
+        result = fieldMap.values().stream()
+                /* 过滤静态属性 */
+                .filter(f -> !Modifier.isStatic(f.getModifiers()))
+                /* 过滤 transient关键字修饰的属性 */
+                .filter(f -> !Modifier.isTransient(f.getModifiers())).toArray(Field[]::new);
+
+        declaredFieldsCache.put(clazz, result.length == 0 ? EMPTY_FIELD_ARRAY : result);
         return result;
     }
 
+    /**
+     * <p>
+     * 排序后。重置覆盖掉父类同名属性
+     * </p>
+     *
+     * @param fields         子类属性
+     * @param superFieldList 父类属性
+     * @return 重置后的所有字段组成的Map
+     */
+    private static Map<String, Field> excludeOverrideSuperField(Field[] fields, List<Field> superFieldList) {
+        // 子类属性
+        Map<String, Field> fieldMap = Stream.of(fields).collect(Collectors.toMap(Field::getName, Function.identity(),
+                (u, v) -> {
+                    throw new IllegalStateException(String.format("Duplicate key %s", u));
+                },
+                LinkedHashMap::new));
+        superFieldList.stream().filter(field -> !fieldMap.containsKey(field.getName()))
+                .forEach(f -> fieldMap.put(f.getName(), f));
+        return fieldMap;
+    }
 
     /**
      * 根据类对象获取其方法列表
@@ -114,13 +157,12 @@ public class ReflectUtils {
      * @return 字段数组
      */
     public static Method[] getMethods(Class<?> clazz) {
-        String className = clazz.getName();
-        Method[] result = declaredMethodsCache.get(className);
+        Method[] result = declaredMethodsCache.get(clazz);
         if (result != null) {
             return result;
         }
         result = clazz.getDeclaredMethods();
-        declaredMethodsCache.put(className, result.length == 0 ? EMPTY_METHOD_ARRAY : result);
+        declaredMethodsCache.put(clazz, result.length == 0 ? EMPTY_METHOD_ARRAY : result);
         return result;
     }
 
