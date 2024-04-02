@@ -2,10 +2,9 @@ package org.tinycloud.jdbc.criteria;
 
 
 import org.springframework.util.ObjectUtils;
+import org.tinycloud.jdbc.util.LambdaUtils;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -15,8 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 2023-08-02
  **/
 public class LambdaCriteria extends AbstractCriteria {
-
-    public static final Map<String, String> LAMBDA_CACHE = new ConcurrentHashMap<>();
 
     @SafeVarargs
     public final <T, R> LambdaCriteria select(TypeFunction<T, R>... field) {
@@ -391,7 +388,7 @@ public class LambdaCriteria extends AbstractCriteria {
     }
 
     private <T, R> String getColumnName(TypeFunction<T, R> field) {
-        String fieldName = TypeFunction.getLambdaColumnName(field);
+        String fieldName = LambdaUtils.getLambdaColumnName(field);
         return fieldName;
     }
 }
