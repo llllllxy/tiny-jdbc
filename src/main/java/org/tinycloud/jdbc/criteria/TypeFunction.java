@@ -10,6 +10,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.function.Function;
 
+/**
+ * 支持序列化的 Function
+ *
+ * @author liuxingyu01
+ * @since 2023-08-02
+ **/
 @FunctionalInterface
 public interface TypeFunction<T, R> extends Serializable, Function<T, R> {
 
