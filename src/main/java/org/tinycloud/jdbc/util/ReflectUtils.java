@@ -40,38 +40,33 @@ public class ReflectUtils {
      * @param entity 实体类对象
      * @param <T>    泛型
      */
-    public static <T> Triple<Class<?>, Field[], Table> validateTargetClass(T entity) {
+    public static <T> Triple<Class<?>, Field[], String> resolveByEntity(T entity) {
         if (entity == null) {
             throw new TinyJdbcException("SqlGenerator entity cannot be null");
         }
         Class<?> clazz = entity.getClass();
-        return validateTargetClass(clazz);
+        return resolveByClass(clazz);
     }
 
     /**
      * 校验clazz的合法性
      *
      * @param clazz 实体类对象类型
-     * @param <T>   泛型
      */
-    public static <T> Triple<Class<?>, Field[], Table> validateTargetClass(Class<?> clazz) {
+    public static Triple<Class<?>, Field[], String> resolveByClass(Class<?> clazz) {
         Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
         if (tableAnnotation == null) {
             throw new TinyJdbcException("SqlGenerator " + clazz + "no @Table defined");
         }
-        String table = tableAnnotation.value();
-        if (StrUtils.isEmpty(table)) {
+        String tableName = tableAnnotation.value();
+        if (StrUtils.isEmpty(tableName)) {
             throw new TinyJdbcException("SqlGenerator " + clazz + "@Table value cannot be null");
         }
         Field[] fields = getFields(clazz);
         if (fields == null || fields.length == 0) {
             throw new TinyJdbcException("SqlGenerator " + clazz + " no field defined");
         }
-        Triple<Class<?>, Field[], Table> triple = new Triple<>();
-        triple.setFirst(clazz);
-        triple.setSecond(fields);
-        triple.setThird(tableAnnotation);
-        return triple;
+        return Triple.of(clazz, fields, tableName);
     }
 
     /**
@@ -105,9 +100,8 @@ public class ReflectUtils {
         // 先获取本类的所有字段
         Field[] fields = clazz.getDeclaredFields();
 
-        List<Field> superFieldList = new ArrayList<>();
-
         // 再遍历其父类的所有字段
+        List<Field> superFieldList = new ArrayList<>();
         Class<?> superClazz = clazz.getSuperclass();
         while (superClazz != null && !"java.lang.Object".equals(superClazz.getName())) {
             Field[] declaredFields = superClazz.getDeclaredFields();
@@ -123,7 +117,8 @@ public class ReflectUtils {
                 /* 过滤静态属性 */
                 .filter(f -> !Modifier.isStatic(f.getModifiers()))
                 /* 过滤 transient关键字修饰的属性 */
-                .filter(f -> !Modifier.isTransient(f.getModifiers())).toArray(Field[]::new);
+                .filter(f -> !Modifier.isTransient(f.getModifiers()))
+                .toArray(Field[]::new);
 
         declaredFieldsCache.put(clazz, result.length == 0 ? EMPTY_FIELD_ARRAY : result);
         return result;
