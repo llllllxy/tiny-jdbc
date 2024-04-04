@@ -1,156 +1,150 @@
 package org.tinycloud.jdbc.criteria;
 
-
-import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.util.LambdaUtils;
 
 import java.util.List;
 
-
 /**
- * 条件构造器（Lambda版）
+ * <p>
+ *     查询条件构造器-抽象类（lambda版）
+ * </p>
  *
  * @author liuxingyu01
- * @since 2023-08-02
- **/
-public class LambdaCriteria extends AbstractCriteria {
+ * @since 2024-04-03 14:40
+ */
+@SuppressWarnings({"unchecked"})
+public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCriteria<Children>> extends Criteria {
 
-    @SafeVarargs
-    public final <T, R> LambdaCriteria select(TypeFunction<T, R>... field) {
-        if (!ObjectUtils.isEmpty(field)) {
-            for (TypeFunction<T, R> f : field) {
-                String columnName = getColumnName(f);
-                selectFields.add(columnName);
-            }
-        }
-        return this;
-    }
+    /**
+     * 占位符
+     */
+    protected final Children typedThis = (Children) this;
 
-    public <T, R> LambdaCriteria lt(TypeFunction<T, R> field, R value) {
+    public <T, R> Children lt(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " < " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orLt(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orLt(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " < " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria lte(TypeFunction<T, R> field, R value) {
+    public <T, R> Children lte(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " <= " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orLte(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orLte(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " <= " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria gt(TypeFunction<T, R> field, R value) {
+    public <T, R> Children gt(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " > " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orGt(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orGt(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " > " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria gte(TypeFunction<T, R> field, R value) {
+    public <T, R> Children gte(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " >= " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orGte(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orGte(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " >= " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria eq(TypeFunction<T, R> field, R value) {
+    public <T, R> Children eq(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " = " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orEq(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orEq(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " = " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria notEq(TypeFunction<T, R> field, R value) {
+    public <T, R> Children notEq(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " <> " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orNotEq(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orNotEq(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " <> " + "?";
         conditions.add(condition);
         parameters.add(value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria isNull(TypeFunction<T, R> field) {
+    public <T, R> Children isNull(TypeFunction<T, R> field) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " IS NULL";
         conditions.add(condition);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orIsNull(TypeFunction<T, R> field) {
+    public <T, R> Children orIsNull(TypeFunction<T, R> field) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " IS NULL";
         conditions.add(condition);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria isNotNull(TypeFunction<T, R> field) {
+    public <T, R> Children isNotNull(TypeFunction<T, R> field) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " IS NOT NULL";
         conditions.add(condition);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orIsNotNull(TypeFunction<T, R> field) {
+    public <T, R> Children orIsNotNull(TypeFunction<T, R> field) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " IS NOT NULL";
         conditions.add(condition);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria in(TypeFunction<T, R> field, List<R> values) {
+    public <T, R> Children in(TypeFunction<T, R> field, List<R> values) {
         String columnName = getColumnName(field);
         StringBuilder condition = new StringBuilder();
         condition.append(" AND ").append(columnName).append(" IN (");
@@ -163,10 +157,10 @@ public class LambdaCriteria extends AbstractCriteria {
         condition.append(")");
         conditions.add(condition.toString());
         parameters.addAll(values);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orIn(TypeFunction<T, R> field, List<R> values) {
+    public <T, R> Children orIn(TypeFunction<T, R> field, List<R> values) {
         String columnName = getColumnName(field);
         StringBuilder condition = new StringBuilder();
         condition.append(" OR ").append(columnName).append(" IN (");
@@ -179,10 +173,10 @@ public class LambdaCriteria extends AbstractCriteria {
         condition.append(")");
         conditions.add(condition.toString());
         parameters.addAll(values);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria notIn(TypeFunction<T, R> field, List<R> values) {
+    public <T, R> Children notIn(TypeFunction<T, R> field, List<R> values) {
         String columnName = getColumnName(field);
         StringBuilder condition = new StringBuilder();
         condition.append(" AND ").append(columnName).append(" NOT IN (");
@@ -195,10 +189,10 @@ public class LambdaCriteria extends AbstractCriteria {
         condition.append(")");
         conditions.add(condition.toString());
         parameters.addAll(values);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orNotIn(TypeFunction<T, R> field, List<R> values) {
+    public <T, R> Children orNotIn(TypeFunction<T, R> field, List<R> values) {
         String columnName = getColumnName(field);
         StringBuilder condition = new StringBuilder();
         condition.append(" OR ").append(columnName).append(" NOT IN (");
@@ -211,106 +205,106 @@ public class LambdaCriteria extends AbstractCriteria {
         condition.append(")");
         conditions.add(condition.toString());
         parameters.addAll(values);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria like(TypeFunction<T, R> field, R value) {
+    public <T, R> Children like(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " LIKE ?";
         conditions.add(condition);
         parameters.add("%" + value + "%");
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orLike(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orLike(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " LIKE ?";
         conditions.add(condition);
         parameters.add("%" + value + "%");
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria notLike(TypeFunction<T, R> field, R value) {
+    public <T, R> Children notLike(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " NOT LIKE ?";
         conditions.add(condition);
         parameters.add("%" + value + "%");
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orNotLike(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orNotLike(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " NOT LIKE ?";
         conditions.add(condition);
         parameters.add("%" + value + "%");
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria leftLike(TypeFunction<T, R> field, R value) {
+    public <T, R> Children leftLike(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " LIKE ?";
         conditions.add(condition);
         parameters.add("%" + value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orLeftLike(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orLeftLike(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " LIKE ?";
         conditions.add(condition);
         parameters.add("%" + value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria notLeftLike(TypeFunction<T, R> field, R value) {
+    public <T, R> Children notLeftLike(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " NOT LIKE ?";
         conditions.add(condition);
         parameters.add("%" + value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orNotLeftLike(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orNotLeftLike(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " NOT LIKE ?";
         conditions.add(condition);
         parameters.add("%" + value);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria rightLike(TypeFunction<T, R> field, R value) {
+    public <T, R> Children rightLike(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " LIKE ?";
         conditions.add(condition);
         parameters.add(value + "%");
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orRightLike(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orRightLike(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " LIKE ?";
         conditions.add(condition);
         parameters.add(value + "%");
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria notRightLike(TypeFunction<T, R> field, R value) {
+    public <T, R> Children notRightLike(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " NOT LIKE ?";
         conditions.add(condition);
         parameters.add(value + "%");
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orNotRightLike(TypeFunction<T, R> field, R value) {
+    public <T, R> Children orNotRightLike(TypeFunction<T, R> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " NOT LIKE ?";
         conditions.add(condition);
         parameters.add(value + "%");
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria between(TypeFunction<T, R> field, R start, R end) {
+    public <T, R> Children between(TypeFunction<T, R> field, R start, R end) {
         String columnName = getColumnName(field);
         String condition = " AND " + "(" + columnName + " BETWEEN " +
                 "?" +
@@ -319,10 +313,10 @@ public class LambdaCriteria extends AbstractCriteria {
         conditions.add(condition);
         parameters.add(start);
         parameters.add(end);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orBetween(TypeFunction<T, R> field, R start, R end) {
+    public <T, R> Children orBetween(TypeFunction<T, R> field, R start, R end) {
         String columnName = getColumnName(field);
         String condition = " OR " + "(" + columnName + " BETWEEN " +
                 "?" +
@@ -331,10 +325,10 @@ public class LambdaCriteria extends AbstractCriteria {
         conditions.add(condition);
         parameters.add(start);
         parameters.add(end);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria notBetween(TypeFunction<T, R> field, R start, R end) {
+    public <T, R> Children notBetween(TypeFunction<T, R> field, R start, R end) {
         String columnName = getColumnName(field);
         String condition = " AND " + "(" + columnName + " NOT BETWEEN " +
                 "?" +
@@ -343,10 +337,10 @@ public class LambdaCriteria extends AbstractCriteria {
         conditions.add(condition);
         parameters.add(start);
         parameters.add(end);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orNotBetween(TypeFunction<T, R> field, R start, R end) {
+    public <T, R> Children orNotBetween(TypeFunction<T, R> field, R start, R end) {
         String columnName = getColumnName(field);
         String condition = " OR " + "(" + columnName + " NOT BETWEEN " +
                 "?" +
@@ -355,39 +349,24 @@ public class LambdaCriteria extends AbstractCriteria {
         conditions.add(condition);
         parameters.add(start);
         parameters.add(end);
-        return this;
+        return typedThis;
     }
 
-    public <R> LambdaCriteria and(LambdaCriteria criteria) {
+    public <R> Children and(Children criteria) {
         String condition = " AND " + criteria.children();
         conditions.add(condition);
         parameters.addAll(criteria.parameters);
-        return this;
+        return typedThis;
     }
 
-    public <R> LambdaCriteria or(LambdaCriteria criteria) {
+    public <R> Children or(Children criteria) {
         String condition = " OR " + criteria.children();
         conditions.add(condition);
         parameters.addAll(criteria.parameters);
-        return this;
+        return typedThis;
     }
 
-    public <T, R> LambdaCriteria orderBy(TypeFunction<T, R> field, boolean desc) {
-        String columnName = getColumnName(field);
-        if (desc) {
-            columnName += " DESC";
-        }
-        orderBy.add(columnName);
-        return this;
-    }
-
-    public <T, R> LambdaCriteria orderBy(TypeFunction<T, R> field) {
-        String columnName = getColumnName(field);
-        orderBy.add(columnName);
-        return this;
-    }
-
-    private <T, R> String getColumnName(TypeFunction<T, R> field) {
+    public <T, R> String getColumnName(TypeFunction<T, R> field) {
         String fieldName = LambdaUtils.getLambdaColumnName(field);
         return fieldName;
     }

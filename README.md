@@ -54,9 +54,9 @@
     <artifactId>spring-boot-starter-jdbc</artifactId>
 </dependency>
 <dependency>
-<groupId>top.lxyccc</groupId>
-<artifactId>tiny-jdbc-boot-starter</artifactId>
-<version>1.5.3</version>
+    <groupId>top.lxyccc</groupId>
+    <artifactId>tiny-jdbc-boot-starter</artifactId>
+    <version>1.5.3</version>
 </dependency>
 ```
 
@@ -259,7 +259,7 @@ public class UploadFileService {
 }
 ```
 
-## 3、BaseDao接口说明
+## 3、BaseDao CRUD接口说明
 
 ### 查询操作
 
@@ -277,17 +277,17 @@ public class UploadFileService {
 |`T selectById(Object id);`|根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`List<T> select(T entity);`|实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
 |`T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
-|`List<T> select(Criteria criteria);`|根据条件构造器查询，返回多条，类型使用的是xxxDao<T>的类型|
-|`List<T> select(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
-|`T selectOne(Criteria criteria);`|根据条件构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型|
-|`T selectOne(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(T entity, Page<T> page);`|实体类里面非null的属性作为查询条件，执行分页查询，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(Criteria criteria, Page<T> page);`|根据条件构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(LambdaCriteria lambdaCriteria, Page<T> page);`|根据条件构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
-|`Long selectCount(Criteria criteria);`|根据条件构造器执行总记录数查询，返回符合条件的总记录数量|
-|`Long selectCount(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)执行总记录数查询，返回符合条件的总记录数量|
-|`boolean exists(Criteria criteria);`|根据条件构造器执行查询记录是否存在，返回true或者false|
-|`boolean exists(LambdaCriteria lambdaCriteria);`|根据条件构造器(lambda)执行查询记录是否存在，返回true或者false|
+|`List<T> select(QueryCriteria criteria);`|根据查询构造器查询，返回多条，类型使用的是xxxDao<T>的类型|
+|`List<T> select(LambdaQueryCriteria lambdaCriteria);`|根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
+|`T selectOne(QueryCriteria criteria);`|根据查询构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型|
+|`T selectOne(LambdaQueryCriteria lambdaCriteria);`|根据查询构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(T entity, Page<T> page);`|根据实体类里面非null的属性作为查询条件，执行分页查询，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(QueryCriteria criteria, Page<T> page);`|根据查询构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(LambdaQueryCriteria lambdaCriteria, Page<T> page);`|根据查询构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Long selectCount(QueryCriteria criteria);`|根据查询构造器执行总记录数查询，返回符合条件的总记录数量|
+|`Long selectCount(LambdaQueryCriteria lambdaCriteria);`|根据查询构造器(lambda)执行总记录数查询，返回符合条件的总记录数量|
+|`boolean exists(QueryCriteria criteria);`|根据查询构造器执行查询记录是否存在，返回true或者false|
+|`boolean exists(LambdaQueryCriteria lambdaCriteria);`|根据查询构造器(lambda)执行查询记录是否存在，返回true或者false|
 
 ### 插入操作
 
@@ -303,12 +303,15 @@ public class UploadFileService {
 |方法|说明|
 |---|---|
 |`int update(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行修改|
-|`int update(T entity, Criteria criteria);`|根据entity里的值和条件构造器，执行修改，默认忽略entity里值为null的属性|
-|`int update(T entity, LambdaCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改，默认忽略entity里值为null的属性|
-|`int update(T entity, boolean ignoreNulls, Criteria criteria);`|根据entity里的值和条件构造器，执行修改，可选择是否忽略entity里值为null的属性|
-|`int update(T entity, boolean ignoreNulls, LambdaCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改，可选择是否忽略entity里值为null的属性|
-|`int updateById(T entity);`|根据主键值作为条件更新数据，默认忽略entity里值为null的属性|
-|`int updateById(T entity, boolean ignoreNulls);`|根据主键值更新数据，可选择是否忽略entity里值为null的属性|
+|`int update(T entity, UpdateCriteria criteria);`|根据entity里的值和条件构造器，执行修改，默认忽略entity里值为null的属性|
+|`int update(T entity, LambdaUpdateCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改，默认忽略entity里值为null的属性|
+|`int update(T entity, boolean ignoreNulls, UpdateCriteria criteria);`|根据entity里的值和条件构造器，执行修改，可选择是否忽略entity里值为null的属性|
+|`int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改，可选择是否忽略entity里值为null的属性|
+|`int updateById(T entity);`|根据entity内的主键值作为条件更新数据，默认忽略entity里值为null的属性|
+|`int updateById(T entity, boolean ignoreNulls);`|根据entity内的主键值更新数据，可选择是否忽略entity里值为null的属性|
+|`int update(UpdateCriteria criteria);`|只根据条件构造器来更新数据，配合.set方法来使用|
+|`int update(LambdaUpdateCriteria criteria);`|只根据条件构造器（lambda）来更新数据，配合.set方法来使用|
+
 
 #### 删除操作
 
@@ -319,50 +322,19 @@ public class UploadFileService {
 |`int deleteByIds(List<ID> ids);` | 根据主键ID列表进行删除，类型使用的是xxxDao<T, ID>的类型 |
 |`int deleteByIds(ID... ids);` | 根据主键ID数组进行删除，类型使用的是xxxDao<T, ID>的类型 |
 |`int delete(T entity);`| 根据entity里的属性值进行删除，entity里不为null的属性，将作为where参数 |
-|`int delete(Criteria criteria);`| 根据条件构造器，将作为where参数 |
-|`int delete(LambdaCriteria criteria);`| 根据条件构造器（lambda），将作为where参数 |
+|`int delete(UpdateCriteria criteria);`| 根据条件构造器，将作为where参数 |
+|`int delete(LambdaUpdateCriteria criteria);`| 根据条件构造器（lambda），将作为where参数 |
 
 ## 4、条件构造器
 
-### Criteria示例
+### 使用说明
 
-```java
-    List<Integer> ids=new ArrayList<Integer>(){{
-            add(1);
-            add(2);
-            add(3);
-    }};
 
-    Criteria criteria=new Criteria()
-    .lt("age",28)
-    .eq("created_at",new java.util.Date())
-    .in("id",ids)
-    .orderBy("age",true);
+#### 条件构造器(AbstractCriteria & AbstractLambdaCriteria)
+> QueryCriteria(LambdaQueryCriteria) 和 UpdateCriteria(LambdaUpdateCriteria) 的父类
+> 用于生成 sql 的 where 条件
 
-// 等价于  WHERE age < 28 AND created_at = '2023-08-05 17:31:26' AND id IN (1,2,3) ORDER BY age DESC
-```
-
-### LambdaCriteria示例
-
-```java
-    List<Long> ids = new ArrayList<Long>(){{
-        add(1L);
-        add(2L);
-        add(3L);
-    }};
-
-    LambdaCriteria criteria=new LambdaCriteria()
-    .lt(UploadFile::getFileId,"1000")
-    .eq(UploadFile::getFileMd5,"b8394b15e02c50b508b3e46cc120f0f5")
-    .in(UploadFile::getId,ids)
-    .orderBy(UploadFile::getCreatedAt,true);
-
-// 等价于  WHERE fileId < '1000' AND file_md5 = 'b8394b15e02c50b508b3e46cc120f0f5' AND id IN (1,2,3) ORDER BY created_at DESC
-```
-
-### 说明
-
-|方法|说明|示例|lambda实例|
+|方法|说明|示例|lambda示例|
 |---|---|---|---|
 |eq        | 等于 =      | eq("name", "张三") ---> AND name = '张三' | eq(User::getName, "张三") ---> AND name = '张三' |
 |orEq      | 等于 =      | orEq("name", "张三") ---> OR name = '张三' | orEq(User::getName, "张三") ---> OR name = '张三' |
@@ -404,11 +376,76 @@ public class UploadFileService {
 |orRightLike  | LIKE '值%'     | orRightLike("name", "张三") ---> OR name LIKE '张三%'  | orRightLike(User::getName, "张三") ---> OR name LIKE '张三%' |
 |notRightLike | NOT LIKE '值%' | notRightLike("name", "张三") ---> AND name NOT LIKE '张三%'  | notRightLike(User::getName, "张三") ---> AND name NOT LIKE '张三%' |
 |orNotRightLike | NOT LIKE '值%' | orNotRightLike("name", "张三") ---> OR name NOT LIKE '张三%'  | orNotRightLike(User::getName, "张三") ---> OR name NOT LIKE '张三%' |
-|orderBy    |排序，true=desc| orderBy("name", true) ---> ORDER BY name DESC  | orderBy(User::getName, true) ---> ORDER BY name DESC|
-|orderBy    |排序，false=asc| orderBy("name") ---> ORDER BY name | orderBy(User::getName) ---> ORDER BY name |
 |or         |OR 嵌套| or(new Criteria().eq("name", "张三").lt("age", 18)) ---> OR (name = '张三' AND age < 18) | or(new LambdaCriteria().eq(User::getName, "张三").lt(User::getAge, 18)) ---> OR (name = '张三' AND age < 18) |
 |and        |AND 嵌套| and(new Criteria().eq("name", "张三").lt("age", 18)) ---> AND (name = '张三' AND age < 18) | and(new LambdaCriteria().eq(User::getName, "张三").lt(User::getAge, 18)) ---> AND (name = '张三' AND age < 18) |
-|select    |设置查询字段，false=asc| select("name", "age") ---> SELECT name,age | orderBy(User::getName, User::getAge) ---> SELECT name,age |
+
+#### 查询构造器(QueryCriteria & LambdaQueryCriteria)
+> 继承自条件构造器，可额外自定义查询的排序和字段内容，查询接口适用
+
+|方法|说明|示例|lambda示例|
+|---|---|---|---|
+|orderBy    |排序，true=desc| orderBy("name", true) ---> ORDER BY name DESC  | orderBy(User::getName, true) ---> ORDER BY name DESC|
+|orderBy    |排序，false=asc| orderBy("name") ---> ORDER BY name | orderBy(User::getName) ---> ORDER BY name |
+|select     |设置查询字段| select("name", "age") ---> SELECT name,age | select(User::getName, User::getAge) ---> SELECT name,age |
+
+#### 更新构造器(UpdateCriteria & LambdaUpdateCriteria)
+> 继承自条件构造器，可额外自定义更新的字段内容和值，更新接口适用
+
+|方法|说明|示例|lambda示例|
+|---|---|---|---|
+|set    |设置更新字段| set("name", "张三") ---> set name = '张三' | set(User::getName, "张三") ---> set name = '张三' |
+
+### QueryCriteria示例
+
+```java
+    List<Integer> ids = new ArrayList<Integer>(){{
+        add(1);
+        add(2);
+        add(3);
+    }};
+
+    QueryCriteria criteria = new QueryCriteria()
+    .lt("age",28)
+    .eq("created_at", new java.util.Date())
+    .in("id", ids)
+    .orderBy("age", true);
+// 等价于 WHERE age < 28 AND created_at = '2023-08-05 17:31:26' AND id IN (1,2,3) ORDER BY age DESC
+
+    QueryCriteria criteria = new QueryCriteria()
+    .select("id", "name")
+    .lt("age",28);
+// 等价于 SELECT id,name FROM xxxx WHERE age < 28
+```
+
+### LambdaQueryCriteria示例
+
+```java
+    List<Long> ids = new ArrayList<Long>(){{
+        add(1L);
+        add(2L);
+        add(3L);
+    }};
+
+  LambdaQueryCriteria criteria = new LambdaQueryCriteria()
+    .lt(UploadFile::getFileId, "1000")
+    .eq(UploadFile::getFileMd5, "b8394b15e02c50b508b3e46cc120f0f5")
+    .in(UploadFile::getId, ids)
+    .orderBy(UploadFile::getCreatedAt, true);
+
+// 等价于  WHERE file_id < '1000' AND file_md5 = 'b8394b15e02c50b508b3e46cc120f0f5' AND id IN (1,2,3) ORDER BY created_at DESC
+
+  LambdaQueryCriteria criteria = new LambdaQueryCriteria()
+    .select(UploadFile::getFileId, UploadFile::getFileMd5)
+    .lt(UploadFile::getFileId, "1000");
+// 等价于 SELECT file_id,file_md5 FROM xxxx WHERE file_id < '1000'
+```
+
+### UpdateCriteria示例
+
+
+### LambdaUpdateCriteria示例
+
+
 ## 5、自定义ID生成器
 
 需要实现 IdGeneratorInterface 接口，并且声明为 Bean 供 Spring 扫描注入
@@ -435,7 +472,6 @@ public class CustomIdGeneratorInterface implements IdGeneratorInterface {
         return id;
     }
 }
-
 ```
 
 ### 方式二：在@Configuration配置类中注册
@@ -443,8 +479,8 @@ public class CustomIdGeneratorInterface implements IdGeneratorInterface {
 ```java
 @Bean
 public CustomIdGeneratorInterface idGenerator(){
-        return new CustomIdGeneratorInterface();
-        }
+    return new CustomIdGeneratorInterface();
+}
 ```
 
 ## 6、一些示例
@@ -606,27 +642,31 @@ private ProjectDao projectDao;
 private ProjectDao projectDao;
 
 // 使用sql删除一条数据
-        int result=projectDao.delete(""delete from t_project_info where id=?"",new Object[]{1});
+int result=projectDao.delete(""delete from t_project_info where id=?"",new Object[]{1});
 
-// 根据实体类作为查询条件删除一条数据
-        Project project=new Project();
-        project.setId(1);
-        int result=baseDao.delete(project);
-
-// 根据主键id删除一条数据
-        int result=baseDao.deleteById(1L);
+// 根据实体类非null内容作为where条件删除一条数据
+Project project=new Project();
+project.setId(1);
+int result = baseDao.delete(project);
 
 // 根据主键id删除一条数据
-        List<Long> ids=new ArrayList<Long>();
-        ids.add(1L);
-        ids.add(5L);
-        int result=baseDao.deleteByIds(ids);
+int result = baseDao.deleteById(1L);
+
+// 根据主键id列表删除多条数据
+List<Long> ids=new ArrayList<Long>();
+ids.add(1L);
+ids.add(5L);
+int result=baseDao.deleteByIds(ids);
+
+// 根据主键id数组删除多条数据
+List<Long> ids=new ArrayList<Long>();
+int result=baseDao.deleteByIds(1L, 5L);
 
 // 根据条件构造器（Lambda）作为查询条件删除一条数据
-        LambdaCriteria criteria=new LambdaCriteria().eq(Project::getId(),1L)
-        int result=baseDao.delete(criteria);
+LambdaUpdateCriteria criteria = new LambdaUpdateCriteria().eq(Project::getId(), 1L)
+int result = baseDao.delete(criteria);
 
 // 根据条件构造器作为查询条件删除一条数据
-        Criteria criteria=new Criteria().eq("id",1L)
-        int result=baseDao.delete(criteria);
+UpdateCriteria criteria = new UpdateCriteria().eq("id", 1L)
+int result = baseDao.delete(criteria);
 ``` 

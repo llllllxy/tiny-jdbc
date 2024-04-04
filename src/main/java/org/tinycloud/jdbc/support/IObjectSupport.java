@@ -1,8 +1,10 @@
 package org.tinycloud.jdbc.support;
 
 import org.springframework.util.ObjectUtils;
-import org.tinycloud.jdbc.criteria.Criteria;
-import org.tinycloud.jdbc.criteria.LambdaCriteria;
+import org.tinycloud.jdbc.criteria.query.QueryCriteria;
+import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
+import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
+import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.Page;
 import org.tinycloud.jdbc.util.DataAccessUtils;
@@ -70,7 +72,7 @@ public interface IObjectSupport<T, ID> {
      * @param criteria 条件构造器
      * @return int 受影响的行数
      */
-    int update(T entity, boolean ignoreNulls, Criteria criteria);
+    int update(T entity, boolean ignoreNulls, UpdateCriteria criteria);
 
     /**
      * 持久化更新给定的实例（默认忽略null值）
@@ -78,7 +80,7 @@ public interface IObjectSupport<T, ID> {
      * @param lambdaCriteria 条件构造器(lambda版)
      * @return int 受影响的行数
      */
-    int update(T entity, boolean ignoreNulls, LambdaCriteria lambdaCriteria);
+    int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria lambdaCriteria);
 
     /**
      * 持久化更新给定的实例（默认忽略null值）
@@ -86,7 +88,7 @@ public interface IObjectSupport<T, ID> {
      * @param criteria 条件构造器
      * @return int 受影响的行数
      */
-    int update(T entity, Criteria criteria);
+    int update(T entity, UpdateCriteria criteria);
 
     /**
      * 持久化更新给定的实例（默认忽略null值）
@@ -94,7 +96,23 @@ public interface IObjectSupport<T, ID> {
      * @param lambdaCriteria 条件构造器(lambda版)
      * @return int 受影响的行数
      */
-    int update(T entity, LambdaCriteria lambdaCriteria);
+    int update(T entity, LambdaUpdateCriteria lambdaCriteria);
+
+    /**
+     * 持久化更新给定的实例（完全使用构造器）
+     *
+     * @param criteria 条件构造器
+     * @return int 受影响的行数
+     */
+    int update(UpdateCriteria criteria);
+
+    /**
+     * 持久化更新给定的实例（完全使用构造器）
+     *
+     * @param lambdaCriteria 条件构造器(lambda版)
+     * @return int 受影响的行数
+     */
+    int update(LambdaUpdateCriteria lambdaCriteria);
 
     /**
      * 持久化删除给定的实例
@@ -110,7 +128,7 @@ public interface IObjectSupport<T, ID> {
      * @param criteria 条件构造器
      * @return int 受影响的行数
      */
-    int delete(Criteria criteria);
+    int delete(UpdateCriteria criteria);
 
     /**
      * 持久化删除给定的实例
@@ -118,7 +136,7 @@ public interface IObjectSupport<T, ID> {
      * @param criteria 条件构造器(lambda版)
      * @return int 受影响的行数
      */
-    int delete(LambdaCriteria criteria);
+    int delete(LambdaUpdateCriteria criteria);
 
     /**
      * 根据ID进行删除
@@ -220,7 +238,7 @@ public interface IObjectSupport<T, ID> {
      * @param criteria 条件构造器
      * @return List<T> 实例列表
      */
-    List<T> select(Criteria criteria);
+    List<T> select(QueryCriteria criteria);
 
     /**
      * 查询给定的实例，返回实例列表
@@ -228,7 +246,7 @@ public interface IObjectSupport<T, ID> {
      * @param lambdaCriteria 条件构造器(lambda版)
      * @return List<T> 实例列表
      */
-    List<T> select(LambdaCriteria lambdaCriteria);
+    List<T> select(LambdaQueryCriteria lambdaCriteria);
 
     /**
      * 分页查询给定的实例，返回实例列表
@@ -246,7 +264,7 @@ public interface IObjectSupport<T, ID> {
      * @param page     分页参数
      * @return List<T> 实例列表
      */
-    Page<T> paginate(Criteria criteria, Page<T> page);
+    Page<T> paginate(QueryCriteria criteria, Page<T> page);
 
     /**
      * 分页查询给定的实例，返回实例列表
@@ -255,7 +273,7 @@ public interface IObjectSupport<T, ID> {
      * @param page           分页参数
      * @return List<T> 实例列表
      */
-    Page<T> paginate(LambdaCriteria lambdaCriteria, Page<T> page);
+    Page<T> paginate(LambdaQueryCriteria lambdaCriteria, Page<T> page);
 
     /**
      * 查询给定的实例，返回一个实例
@@ -274,7 +292,7 @@ public interface IObjectSupport<T, ID> {
      * @param criteria 条件构造器
      * @return T 实例
      */
-    default T selectOne(Criteria criteria) {
+    default T selectOne(QueryCriteria criteria) {
         List<T> list = this.select(criteria);
         return DataAccessUtils.singleResult(list);
     }
@@ -285,7 +303,7 @@ public interface IObjectSupport<T, ID> {
      * @param lambdaCriteria 条件构造器(lambda版)
      * @return T 实例
      */
-    default T selectOne(LambdaCriteria lambdaCriteria) {
+    default T selectOne(LambdaQueryCriteria lambdaCriteria) {
         List<T> list = this.select(lambdaCriteria);
         return DataAccessUtils.singleResult(list);
     }
@@ -296,7 +314,7 @@ public interface IObjectSupport<T, ID> {
      * @param criteria 条件构造器
      * @return 总记录数
      */
-    Long selectCount(Criteria criteria);
+    Long selectCount(QueryCriteria criteria);
 
     /**
      * 根据 criteria 条件，查询总记录数
@@ -304,7 +322,7 @@ public interface IObjectSupport<T, ID> {
      * @param lambdaCriteria 条件构造器(lambda版)
      * @return 总记录数
      */
-    Long selectCount(LambdaCriteria lambdaCriteria);
+    Long selectCount(LambdaQueryCriteria lambdaCriteria);
 
     /**
      * 查询记录是否存在
@@ -312,7 +330,7 @@ public interface IObjectSupport<T, ID> {
      * @param criteria 条件构造器
      * @return true存在，false不存在
      */
-    default boolean exists(Criteria criteria) {
+    default boolean exists(QueryCriteria criteria) {
         Long count = this.selectCount(criteria);
         return null != count && count > 0L;
     }
@@ -323,7 +341,7 @@ public interface IObjectSupport<T, ID> {
      * @param lambdaCriteria 条件构造器(lambda版)
      * @return true存在，false不存在
      */
-    default boolean exists(LambdaCriteria lambdaCriteria) {
+    default boolean exists(LambdaQueryCriteria lambdaCriteria) {
         Long count = this.selectCount(lambdaCriteria);
         return null != count && count > 0L;
     }

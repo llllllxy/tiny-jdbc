@@ -1,136 +1,331 @@
 package org.tinycloud.jdbc.criteria;
 
 
-import org.tinycloud.jdbc.exception.TinyJdbcException;
-
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 条件构造器抽象类，抽象了一些公共的方法
+ * <p>
+ *     查询条件构造器-抽象类
+ * </p>
  *
  * @author liuxingyu01
- * @since 2023-08-02
- **/
-public abstract class AbstractCriteria {
+ * @since 2024-04-03 14:39
+ */
+@SuppressWarnings({"unchecked"})
+public abstract class AbstractCriteria<Children extends AbstractCriteria<Children>> extends Criteria {
 
     /**
-     * 查询字段-键
+     * 占位符
      */
-    protected final List<String> selectFields;
+    protected final Children typedThis = (Children) this;
 
-    /**
-     * 查询条件-键
-     */
-    protected final List<String> conditions;
-
-    /**
-     * 查询条件-值
-     */
-    protected final List<Object> parameters;
-
-    /**
-     * 排序的条件
-     */
-    protected final List<String> orderBy;
-
-    /**
-     * 构造方法
-     */
-    public AbstractCriteria() {
-        this.selectFields = new ArrayList<>();
-        this.conditions = new ArrayList<>();
-        this.orderBy = new ArrayList<>();
-        this.parameters = new ArrayList<>();
+    public <R> Children lt(String field, R value) {
+        String condition = " AND " + field + " < " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
     }
 
-    /**
-     * 获取所有的参数值
-     *
-     * @return 参数列表
-     */
-    public List<Object> getParameters() {
-        return this.parameters;
+    public <R> Children orLt(String field, R value) {
+        String condition = " OR " + field + " < " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
     }
 
-    /**
-     * 根据条件生成对应的查询SQL
-     * <pre>
-     *  如： id , create_time
-     * <pre>
-     * @return 查询SQL
-     */
-    public String selectSql() {
-        StringBuilder select = new StringBuilder();
-        if (!this.selectFields.isEmpty()) {
-            for (int i = 0; i < this.selectFields.size(); i++) {
-                String column = this.selectFields.get(i);
-                if (i == this.selectFields.size() - 1) {
-                    select.append(column);
-                } else {
-                    select.append(column)
-                            .append(",");
-                }
-            }
-        }
-        return select.toString();
+    public <R> Children lte(String field, R value) {
+        String condition = " AND " + field + " <= " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
     }
 
-    /**
-     * 根据条件生成对应的条件SQL
-     * <pre>
-     *  如： WHERE age < 28 AND name IN ('Bob', 'John') AND created_at = '2023-08-05 16:08:11' ORDER BY age DESC
-     * <pre>
-     * @return 条件SQL
-     */
-    public String whereSql() {
-        StringBuilder sql = new StringBuilder();
-        if (!conditions.isEmpty()) {
-            sql.append(" WHERE ");
-            for (int i = 0; i < conditions.size(); i++) {
-                if (i == 0) {
-                    if (conditions.get(i).startsWith(" OR ")) {
-                        throw new TinyJdbcException("Criteria can not start with a function orXXX!");
-                    }
-                    sql.append(conditions.get(i).replace(" AND ", ""));
-                } else {
-                    sql.append(conditions.get(i));
-                }
-            }
-        }
-        if (!orderBy.isEmpty()) {
-            sql.append(" ORDER BY ");
-            for (int i = 0; i < orderBy.size(); i++) {
-                if (i > 0) {
-                    sql.append(",");
-                }
-                sql.append(orderBy.get(i));
-            }
-        }
-        return sql.toString();
+    public <R> Children orLte(String field, R value) {
+        String condition = " OR " + field + " <= " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
     }
 
-    /**
-     * 用于子构造器SQL的生成
-     *
-     * @return 条件SQL
-     */
-    public String children() {
-        StringBuilder sql = new StringBuilder();
-        if (!conditions.isEmpty()) {
-            sql.append("(");
-            for (int i = 0; i < conditions.size(); i++) {
-                if (i == 0) {
-                    if (conditions.get(i).startsWith(" OR ")) {
-                        throw new TinyJdbcException("Criteria can not start with a function orXXX!");
-                    }
-                    sql.append(conditions.get(i).replace(" AND ", ""));
-                } else {
-                    sql.append(conditions.get(i));
-                }
+    public <R> Children gt(String field, R value) {
+        String condition = " AND " + field + " > " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
+    }
+
+    public <R> Children orGt(String field, R value) {
+        String condition = " OR " + field + " > " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
+    }
+
+    public <R> Children gte(String field, R value) {
+        String condition = " AND " + field + " >= " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
+    }
+
+    public <R> Children orGte(String field, R value) {
+        String condition = " OR " + field + " >= " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
+    }
+
+    public <R> Children eq(String field, R value) {
+        String condition = " AND " + field + " = " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
+    }
+
+    public <R> Children orEq(String field, R value) {
+        String condition = " OR " + field + " = " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
+    }
+
+    public <R> Children notEq(String field, R value) {
+        String condition = " AND " + field + " <> " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
+    }
+
+    public <R> Children orNotEq(String field, R value) {
+        String condition = " OR " + field + " = " + "?";
+        conditions.add(condition);
+        parameters.add(value);
+        return typedThis;
+    }
+
+    public <R> Children isNull(String field) {
+        String condition = " AND " + field + " IS NULL";
+        conditions.add(condition);
+        return typedThis;
+    }
+
+    public <R> Children orIsNull(String field) {
+        String condition = " OR " + field + " IS NULL";
+        conditions.add(condition);
+        return typedThis;
+    }
+
+    public <R> Children isNotNull(String field) {
+        String condition = " AND " + field + " IS NOT NULL";
+        conditions.add(condition);
+        return typedThis;
+    }
+
+    public <R> Children orIsNotNull(String field) {
+        String condition = " OR " + field + " IS NOT NULL";
+        conditions.add(condition);
+        return typedThis;
+    }
+
+    public <R> Children in(String field, List<R> values) {
+        StringBuilder condition = new StringBuilder();
+        condition.append(" AND ").append(field).append(" IN (");
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) {
+                condition.append(", ");
             }
-            sql.append(")");
+            condition.append("?");
         }
-        return sql.toString();
+        condition.append(")");
+        conditions.add(condition.toString());
+        parameters.addAll(values);
+        return typedThis;
+    }
+
+    public <R> Children orIn(String field, List<R> values) {
+        StringBuilder condition = new StringBuilder();
+        condition.append(" OR ").append(field).append(" IN (");
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) {
+                condition.append(", ");
+            }
+            condition.append("?");
+        }
+        condition.append(")");
+        conditions.add(condition.toString());
+        parameters.addAll(values);
+        return typedThis;
+    }
+
+    public <R> Children notIn(String field, List<R> values) {
+        StringBuilder condition = new StringBuilder();
+        condition.append(" AND ").append(field).append(" NOT IN (");
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) {
+                condition.append(", ");
+            }
+            condition.append("?");
+        }
+        condition.append(")");
+        conditions.add(condition.toString());
+        parameters.addAll(values);
+        return typedThis;
+    }
+
+    public <R> Children orNotIn(String field, List<R> values) {
+        StringBuilder condition = new StringBuilder();
+        condition.append(" OR ").append(field).append(" NOT IN (");
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) {
+                condition.append(", ");
+            }
+            condition.append("?");
+        }
+        condition.append(")");
+        conditions.add(condition.toString());
+        parameters.addAll(values);
+        return typedThis;
+    }
+
+    public <R> Children like(String field, R value) {
+        String condition = " AND " + field + " LIKE ?";
+        conditions.add(condition);
+        parameters.add("%" + value + "%");
+        return typedThis;
+    }
+
+    public <R> Children orLike(String field, R value) {
+        String condition = " OR " + field + " LIKE ?";
+        conditions.add(condition);
+        parameters.add("%" + value + "%");
+        return typedThis;
+    }
+
+    public <R> Children notLike(String field, R value) {
+        String condition = " AND " + field + " NOT LIKE ?";
+        conditions.add(condition);
+        parameters.add("%" + value + "%");
+        return typedThis;
+    }
+
+    public <R> Children orNotLike(String field, R value) {
+        String condition = " OR " + field + " NOT LIKE ?";
+        conditions.add(condition);
+        parameters.add("%" + value + "%");
+        return typedThis;
+    }
+
+    public <R> Children leftLike(String field, R value) {
+        String condition = " AND " + field + " LIKE ?";
+        conditions.add(condition);
+        parameters.add("%" + value);
+        return typedThis;
+    }
+
+    public <R> Children orLeftLike(String field, R value) {
+        String condition = " OR " + field + " LIKE ?";
+        conditions.add(condition);
+        parameters.add("%" + value);
+        return typedThis;
+    }
+
+    public <R> Children notLeftLike(String field, R value) {
+        String condition = " AND " + field + " NOT LIKE ?";
+        conditions.add(condition);
+        parameters.add("%" + value);
+        return typedThis;
+    }
+
+    public <R> Children orNotLeftLike(String field, R value) {
+        String condition = " OR " + field + " NOT LIKE ?";
+        conditions.add(condition);
+        parameters.add("%" + value);
+        return typedThis;
+    }
+
+    public <R> Children rightLike(String field, R value) {
+        String condition = " AND " + field + " LIKE ?";
+        conditions.add(condition);
+        parameters.add(value + "%");
+        return typedThis;
+    }
+
+    public <R> Children orRightLike(String field, R value) {
+        String condition = " OR " + field + " LIKE ?";
+        conditions.add(condition);
+        parameters.add(value + "%");
+        return typedThis;
+    }
+
+    public <R> Children notRightLike(String field, R value) {
+        String condition = " AND " + field + " NOT LIKE ?";
+        conditions.add(condition);
+        parameters.add(value + "%");
+        return typedThis;
+    }
+
+    public <R> Children orNotRightLike(String field, R value) {
+        String condition = " OR " + field + " NOT LIKE ?";
+        conditions.add(condition);
+        parameters.add(value + "%");
+        return typedThis;
+    }
+
+    public <R> Children between(String field, R start, R end) {
+        String condition = " AND " + "(" + field + " BETWEEN " +
+                "?" +
+                " AND " +
+                "?" + ")";
+        conditions.add(condition);
+        parameters.add(start);
+        parameters.add(end);
+        return typedThis;
+    }
+
+    public <R> Children orBetween(String field, R start, R end) {
+        String condition = " OR " + "(" + field + " BETWEEN " +
+                "?" +
+                " AND " +
+                "?" + ")";
+        conditions.add(condition);
+        parameters.add(start);
+        parameters.add(end);
+        return typedThis;
+    }
+
+    public <R> Children notBetween(String field, R start, R end) {
+        String condition = " AND " + "(" + field + " NOT BETWEEN " +
+                "?" +
+                " AND " +
+                "?" + ")";
+        conditions.add(condition);
+        parameters.add(start);
+        parameters.add(end);
+        return typedThis;
+    }
+
+    public <R> Children orNotBetween(String field, R start, R end) {
+        String condition = " OR " + "(" + field + " NOT BETWEEN " +
+                "?" +
+                " AND " +
+                "?" + ")";
+        conditions.add(condition);
+        parameters.add(start);
+        parameters.add(end);
+        return typedThis;
+    }
+
+    public <R> Children and(Children criteria) {
+        String condition = " AND " + criteria.children();
+        conditions.add(condition);
+        parameters.addAll(criteria.parameters);
+        return typedThis;
+    }
+
+    public <R> Children or(Children criteria) {
+        String condition = " OR " + criteria.children();
+        conditions.add(condition);
+        parameters.addAll(criteria.parameters);
+        return typedThis;
     }
 }
