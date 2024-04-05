@@ -441,10 +441,24 @@ public class UploadFileService {
 ```
 
 ### UpdateCriteria示例
+```java
+int num = projectInfoDao.update(new UpdateCriteria()
+                .set("created_at", new Date())
+                .set("updated_by", "admin3")
+                .eq("project_name", "批量项目1"));
 
+// 等价于 UPDATE xxxx SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
+```
 
 ### LambdaUpdateCriteria示例
+```java
+int num = projectInfoDao.update(new LambdaUpdateCriteria()
+                        .set(TProjectInfo::getEnableAt, new Date())
+                        .set(TProjectInfo::getUpdatedBy, "admin2")
+                .eq(TProjectInfo::getProjectName, "批量项目1"));
 
+// 等价于 UPDATE xxxx SET enable_at = '2023-08-05 17:31:26', updated_by = 'admin2' WHERE project_name = '批量项目1'
+```
 
 ## 5、自定义ID生成器
 
