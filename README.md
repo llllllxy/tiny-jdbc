@@ -1,4 +1,6 @@
-<h1 align="center">tiny-jdbc-boot-starter</h1>
+<h1 align="center">tiny-jdbc</h1>
+<h1 align="center">一个优雅的 ORM 框架，轻量、灵活、高性能</h1>
+
 
 <p align="center">
     <a href="https://github.com/llllllxy/tiny-jdbc-boot-starter/blob/master/LICENSE">
@@ -27,16 +29,17 @@
 
 ## 1、简介
 
-`tiny-jdbc-boot-starter`是一个基于`Spring Data JDBC`开发的轻量级数据库ORM工具包，在不改变原有功能的基础上，做了大量的增强，让操作数据库这件事变得更加简单便捷！
+`tiny-jdbc-boot-starter`是一个基于`Spring Data JDBC`开发的轻量、灵活、高性能的数据库ORM框架，
+在不改变原有功能的基础上，做了大量的增强，让操作数据库这件事变得更加简单！
 
 ### 优势
 
-- **无侵入**：只做增强不做改变，引入它不会对现有工程产生任何影响
+- **轻量级**：除了 Spring Data JDBC 本身，再无任何第三方依赖，轻量可靠
 - **性能高**：基于高性能的Spring Data JDBC，性能基本无损耗
-- **功能强**：既支持SQL操作、又支持实体类映射操作，BaseDao里封装了大量的公共方法，拿来即用，配合强大的条件构造器，基本满足各类使用需求
+- **功能强**：既支持原生SQL操作、又支持实体类映射操作，BaseDao里封装了大量的通用方法，配合强大灵活的条件构造器，基本满足各类使用需求
 - **支持 Lambda 形式调用**：条件构造器支持Lambda形式调用，编译期增强，无需再担心字段写错
-- **支持主键自动生成**：内含多种主键生成策略（包括自增主键、UUID、雪花ID）
-- **支持多种数据库分页方言**：包括MySQL、ORACLE、DB2、PostgreSql等多种常用数据库
+- **支持主键自动生成**：内含多种主键生成策略（包括自增主键、UUID、雪花ID等，也支持自定义ID生成策略）
+- **支持多种数据库分页方言**：包括MySQL、ORACLE、DB2、PostgreSql等多种常用数据库，无需配置，自动识别数据库类型
 
 ### 支持数据库
 
@@ -56,7 +59,7 @@
 <dependency>
     <groupId>top.lxyccc</groupId>
     <artifactId>tiny-jdbc-boot-starter</artifactId>
-    <version>1.5.3</version>
+    <version>1.6.0</version>
 </dependency>
 ```
 
@@ -227,7 +230,7 @@ public class UploadFile implements Serializable {
 > | OBJECT_ID        | 自动设置 MongoDb objectId 作为主键值 |  
 > | ASSIGN_ID        | 自动设置 雪花ID 作为主键值 |  
 > | UUID             | 自动设置 UUID 作为主键值 |  
-> | CUSTOM           | 自定义主键ID生成器，需要自己实现 IdGeneratorInterface 接口 |  
+> | CUSTOM           | 自定义主键ID生成器，需自行实现 IdGeneratorInterface 接口，详见[自定义ID生成器](#idGen) |  
 
 ### 定义Dao类，继承自BaseDao，泛型一为对应实体类，泛型二实体类主键类型
 
@@ -329,7 +332,6 @@ public class UploadFileService {
 
 ### 使用说明
 
-
 #### 条件构造器(AbstractCriteria & AbstractLambdaCriteria)
 > QueryCriteria(LambdaQueryCriteria) 和 UpdateCriteria(LambdaUpdateCriteria) 的父类
 > 用于生成 sql 的 where 条件
@@ -388,14 +390,8 @@ public class UploadFileService {
 |orderBy    |排序，false=asc| orderBy("name") ---> ORDER BY name | orderBy(User::getName) ---> ORDER BY name |
 |select     |设置查询字段| select("name", "age") ---> SELECT name,age | select(User::getName, User::getAge) ---> SELECT name,age |
 
-#### 更新构造器(UpdateCriteria & LambdaUpdateCriteria)
-> 继承自条件构造器，可额外自定义更新的字段内容和值，更新接口适用
 
-|方法|说明|示例|lambda示例|
-|---|---|---|---|
-|set    |设置更新字段| set("name", "张三") ---> set name = '张三' | set(User::getName, "张三") ---> set name = '张三' |
-
-### QueryCriteria示例
+##### QueryCriteria示例
 
 ```java
     List<Integer> ids = new ArrayList<Integer>(){{
@@ -417,7 +413,7 @@ public class UploadFileService {
 // 等价于 SELECT id,name FROM xxxx WHERE age < 28
 ```
 
-### LambdaQueryCriteria示例
+##### LambdaQueryCriteria示例
 
 ```java
     List<Long> ids = new ArrayList<Long>(){{
@@ -440,27 +436,45 @@ public class UploadFileService {
 // 等价于 SELECT file_id,file_md5 FROM xxxx WHERE file_id < '1000'
 ```
 
-### UpdateCriteria示例
+#### 更新构造器(UpdateCriteria & LambdaUpdateCriteria)
+> 继承自条件构造器，可额外自定义更新的字段内容和值，更新接口适用
+
+|方法|说明|示例|lambda示例|
+|---|---|---|---|
+|set    |设置更新字段| set("name", "张三") ---> set name = '张三' | set(User::getName, "张三") ---> set name = '张三' |
+
+
+##### UpdateCriteria示例
 ```java
 int num = projectInfoDao.update(new UpdateCriteria()
                 .set("created_at", new Date())
                 .set("updated_by", "admin3")
                 .eq("project_name", "批量项目1"));
+// 等价于 UPDATE xxxx SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 
+TProjectInfo project1 = new TProjectInfo();
+project1.setCreatedAt(new Date());
+project1.setUpdatedBy("admin3");
+int num = projectInfoDao.update(project1, new UpdateCriteria().eq("project_name", "批量项目1"));
 // 等价于 UPDATE xxxx SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 ```
 
-### LambdaUpdateCriteria示例
+##### LambdaUpdateCriteria示例
 ```java
 int num = projectInfoDao.update(new LambdaUpdateCriteria()
                         .set(TProjectInfo::getEnableAt, new Date())
                         .set(TProjectInfo::getUpdatedBy, "admin2")
                 .eq(TProjectInfo::getProjectName, "批量项目1"));
-
 // 等价于 UPDATE xxxx SET enable_at = '2023-08-05 17:31:26', updated_by = 'admin2' WHERE project_name = '批量项目1'
+
+TProjectInfo project1 = new TProjectInfo();
+project1.setCreatedAt(new Date());
+project1.setUpdatedBy("admin3");
+int num = projectInfoDao.update(project1, new LambdaUpdateCriteria().eq(TProjectInfo::getProjectName, "批量项目1"));
+// 等价于 UPDATE xxxx SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 ```
 
-## 5、自定义ID生成器
+<h2 id="idGen"> 5、自定义ID生成器</h2>
 
 需要实现 IdGeneratorInterface 接口，并且声明为 Bean 供 Spring 扫描注入
 
