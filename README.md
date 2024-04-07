@@ -279,9 +279,9 @@ public class UploadFileService {
 |`Page<T> paginate(String sql, Page<T> page, Object... params);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
 |`T selectById(Object id);`|根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`List<T> select(T entity);`|实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
-|`T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`List<T> select(QueryCriteria criteria);`|根据查询构造器查询，返回多条，类型使用的是xxxDao<T>的类型|
 |`List<T> select(LambdaQueryCriteria lambdaCriteria);`|根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
+|`T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`T selectOne(QueryCriteria criteria);`|根据查询构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型|
 |`T selectOne(LambdaQueryCriteria lambdaCriteria);`|根据查询构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型|
 |`Page<T> paginate(T entity, Page<T> page);`|根据实体类里面非null的属性作为查询条件，执行分页查询，类型使用的是xxxDao<T>的类型|

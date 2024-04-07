@@ -1,7 +1,6 @@
 package org.tinycloud.jdbc.support;
 
 import org.springframework.jdbc.core.*;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.util.CollectionUtils;
@@ -12,6 +11,8 @@ import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
+import org.tinycloud.jdbc.plugins.SQLInterceptor;
+import org.tinycloud.jdbc.plugins.SQLType;
 import org.tinycloud.jdbc.sql.SqlGenerator;
 import org.tinycloud.jdbc.sql.SqlProvider;
 import org.tinycloud.jdbc.util.DataAccessUtils;
@@ -36,6 +37,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
 
     protected abstract IPageHandle getPageHandle();
 
+    protected abstract List<SQLInterceptor> getSqlInterceptors();
 
     /**
      * 泛型
@@ -54,6 +56,21 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         rowMapper = BeanPropertyRowMapper.newInstance(entityClass);
     }
 
+    private void doBefore(SQLType sqlType, SqlProvider sqlProvider) {
+        if (!CollectionUtils.isEmpty(getSqlInterceptors())) {
+            for (SQLInterceptor sqlInterceptor : getSqlInterceptors()) {
+                sqlInterceptor.before(sqlType, sqlProvider);
+            }
+        }
+    }
+
+    private void doAfter(SqlProvider sqlProvider, Object result) {
+        if (!CollectionUtils.isEmpty(getSqlInterceptors())) {
+            for (SQLInterceptor sqlInterceptor : getSqlInterceptors()) {
+                sqlInterceptor.after(sqlProvider, result);
+            }
+        }
+    }
 
     /**
      * 执行查询sql，有查询条件
@@ -282,23 +299,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         return num;
     }
 
-    /**
-     * 使用 in 进行批量操作，比如批量启用，批量禁用，批量删除等 -- 更灵活的就需要自己写了
-     *
-     * @param sql    示例： update s_url_map set del_flag = '1' where id in (:idList)
-     * @param idList 一般为 List<String> 或 List<Integer>
-     * @return 执行的结果条数
-     */
-    @Override
-    public int batchOpera(String sql, List<Object> idList) {
-        if (idList == null || idList.size() == 0) {
-            throw new TinyJdbcException("batchOpera idList cannot be null or empty");
-        }
-        NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(getJdbcTemplate());
-        Map<String, Object> param = new HashMap<>();
-        param.put("idList", idList);
-        return namedJdbcTemplate.update(sql, param);
-    }
     // ---------------------------------ISqlSupport结束---------------------------------
 
 
@@ -321,11 +321,8 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (CollectionUtils.isEmpty(ids)) {
             throw new TinyJdbcException("selectByIds ids cannot be null or empty");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectByIdsSql(entityClass);
-        NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(getJdbcTemplate());
-        Map<String, Object> param = new HashMap<>();
-        param.put("idList", ids);
-        return namedJdbcTemplate.query(sqlProvider.getSql(), param, rowMapper);
+        SqlProvider sqlProvider = SqlGenerator.selectByIdsSql(entityClass, (List<Object>) ids);
+        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -352,7 +349,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
-        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
+        this.doBefore(SQLType.Select, sqlProvider);
+        List<T> results = this.getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
+        this.doAfter(sqlProvider, results);
+        return results;
     }
 
     @Override
@@ -633,11 +633,8 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (CollectionUtils.isEmpty(ids)) {
             throw new TinyJdbcException("deleteByIds ids cannot be null or empty");
         }
-        SqlProvider sqlProvider = SqlGenerator.deleteByIdsSql(entityClass);
-        NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(getJdbcTemplate());
-        Map<String, Object> param = new HashMap<>();
-        param.put("idList", ids);
-        return namedJdbcTemplate.update(sqlProvider.getSql(), param);
+        SqlProvider sqlProvider = SqlGenerator.deleteByIdsSql(entityClass, (List<Object>) ids);
+        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override

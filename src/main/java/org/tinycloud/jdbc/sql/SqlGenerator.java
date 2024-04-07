@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 
 /**
@@ -591,7 +592,7 @@ public class SqlGenerator {
      * @param clazz 实体类Entity.class
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider selectByIdsSql(Class<?> clazz) {
+    public static SqlProvider selectByIdsSql(Class<?> clazz, List<Object> ids) {
         Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
 
         String tableName = triple.getThird();
@@ -622,10 +623,17 @@ public class SqlGenerator {
         sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableName)
                 .append(" WHERE ")
                 .append(whereColumns)
-                .append(" IN (:idList)");
+                .append(" IN ");
+        // 构建 IN 查询的 SQL 语句
+        StringJoiner placeholders = new StringJoiner(",", "(", ")");
+        for (int i = 0; i < ids.size(); i++) {
+            placeholders.add("?");
+        }
+        sql.append(placeholders.toString());
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
+        so.setParameters(ids);
         return so;
     }
 
@@ -680,7 +688,7 @@ public class SqlGenerator {
      *
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider deleteByIdsSql(Class<?> clazz) {
+    public static SqlProvider deleteByIdsSql(Class<?> clazz, List<Object> ids) {
         Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
         Field[] fields = triple.getSecond();
         String tableName = triple.getThird();
@@ -708,9 +716,17 @@ public class SqlGenerator {
                 .append(tableName)
                 .append(" WHERE ")
                 .append(whereColumns)
-                .append(" IN (:idList)");
+                .append(" IN ");
+        // 构建 IN 查询的 SQL 语句
+        StringJoiner placeholders = new StringJoiner(",", "(", ")");
+        for (int i = 0; i < ids.size(); i++) {
+            placeholders.add("?");
+        }
+        sql.append(placeholders.toString());
+
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
+        so.setParameters(ids);
         return so;
     }
 

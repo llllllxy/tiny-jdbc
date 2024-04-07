@@ -152,13 +152,4 @@ public interface ISqlSupport<T, ID> {
      * @return T
      */
     Page<T> paginate(String sql, Page<T> page, Object... params);
-
-    /**
-     * 使用 in 进行批量操作，比如批量启用，批量禁用，批量删除等 -- 更灵活的就需要自己写了
-     *
-     * @param sql    示例： update s_url_map set del_flag = '1' where id in (:idList)
-     * @param idList 一般为 List<String> 或 List<Integer>
-     * @return 执行的结果条数
-     */
-    int batchOpera(String sql, List<Object> idList);
 }
