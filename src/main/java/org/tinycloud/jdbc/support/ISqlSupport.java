@@ -143,13 +143,5 @@ public interface ISqlSupport<T, ID> {
      * @param sql 要执行的SQL查询
      * @return T
      */
-    Page<T> paginate(String sql, Page<T> page);
-
-    /**
-     * 分页查询
-     *
-     * @param sql 要执行的SQL查询
-     * @return T
-     */
     Page<T> paginate(String sql, Page<T> page, Object... params);
 }

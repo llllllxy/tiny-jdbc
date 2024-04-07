@@ -3,10 +3,7 @@ package org.tinycloud.jdbc;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.tinycloud.jdbc.page.IPageHandle;
-import org.tinycloud.jdbc.plugins.SQLInterceptor;
 import org.tinycloud.jdbc.support.AbstractSqlSupport;
-
-import java.util.List;
 
 /**
  * <p>
@@ -35,9 +32,6 @@ public class BaseDao<T, ID> extends AbstractSqlSupport<T, ID> {
     @Autowired
     private IPageHandle pageHandle;
 
-    @Autowired(required = false)
-    private List<SQLInterceptor> sqlInterceptors;
-
     @Override
     protected JdbcTemplate getJdbcTemplate() {
         return this.jdbcTemplate;
@@ -47,10 +41,4 @@ public class BaseDao<T, ID> extends AbstractSqlSupport<T, ID> {
     protected IPageHandle getPageHandle() {
         return this.pageHandle;
     }
-
-    @Override
-    protected List<SQLInterceptor> getSqlInterceptors() {
-        return this.sqlInterceptors;
-    }
-
 }

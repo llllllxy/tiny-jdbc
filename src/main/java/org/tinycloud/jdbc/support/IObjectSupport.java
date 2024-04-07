@@ -170,28 +170,12 @@ public interface IObjectSupport<T, ID> {
     }
 
     /**
-     * 批量持久化更新给定的实例
-     *
-     * @param collection 实例集合
-     * @return 一个数组，其中包含受批处理中每个更新影响的行数
-     */
-    int[] batchUpdate(Collection<T> collection);
-
-    /**
      * 批量持久化插入给定的实例
      *
      * @param collection 实例集合
      * @return 一个数组，其中包含受批处理中每个更新影响的行数
      */
     int[] batchInsert(Collection<T> collection);
-
-    /**
-     * 批量持久化删除给定的实例
-     *
-     * @param collection 实例集合
-     * @return 一个数组，其中包含受批处理中每个更新影响的行数
-     */
-    int[] batchDelete(Collection<T> collection);
 
     /**
      * 查询给定的id，返回一个实例

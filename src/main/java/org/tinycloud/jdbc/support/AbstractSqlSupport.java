@@ -4,6 +4,7 @@ import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
@@ -11,8 +12,6 @@ import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
-import org.tinycloud.jdbc.plugins.SQLInterceptor;
-import org.tinycloud.jdbc.plugins.SQLType;
 import org.tinycloud.jdbc.sql.SqlGenerator;
 import org.tinycloud.jdbc.sql.SqlProvider;
 import org.tinycloud.jdbc.util.DataAccessUtils;
@@ -37,8 +36,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
 
     protected abstract IPageHandle getPageHandle();
 
-    protected abstract List<SQLInterceptor> getSqlInterceptors();
-
     /**
      * 泛型
      */
@@ -56,24 +53,8 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         rowMapper = BeanPropertyRowMapper.newInstance(entityClass);
     }
 
-    private void doBefore(SQLType sqlType, SqlProvider sqlProvider) {
-        if (!CollectionUtils.isEmpty(getSqlInterceptors())) {
-            for (SQLInterceptor sqlInterceptor : getSqlInterceptors()) {
-                sqlInterceptor.before(sqlType, sqlProvider);
-            }
-        }
-    }
-
-    private void doAfter(SqlProvider sqlProvider, Object result) {
-        if (!CollectionUtils.isEmpty(getSqlInterceptors())) {
-            for (SQLInterceptor sqlInterceptor : getSqlInterceptors()) {
-                sqlInterceptor.after(sqlProvider, result);
-            }
-        }
-    }
-
     /**
-     * 执行查询sql，有查询条件
+     * 执行查询sql
      *
      * @param sql    要执行的SQL
      * @param params 要绑定到查询的参数 ，可以不传
@@ -82,7 +63,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     @Override
     public List<T> select(String sql, Object... params) {
         List<T> resultList;
-        if (params != null && params.length > 0) {
+        if (!ObjectUtils.isEmpty(params)) {
             resultList = getJdbcTemplate().query(sql, rowMapper, params);
         } else {
             // BeanPropertyRowMapper是自动映射实体类的
@@ -92,10 +73,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     /**
-     * 执行查询sql，有查询条件
+     * 执行查询sql，自定义返回类型clazz
      *
      * @param sql    要执行的SQL
-     * @param clazz  实体类
+     * @param clazz  实体类类型
      * @param params 要绑定到查询的参数 ，可以不传
      * @param <F>    泛型
      * @return 查询结果
@@ -103,7 +84,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     @Override
     public <F> List<F> select(String sql, Class<F> clazz, Object... params) {
         List<F> resultList;
-        if (params != null && params.length > 0) {
+        if (!ObjectUtils.isEmpty(params)) {
             resultList = getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz), params);
         } else {
             // BeanPropertyRowMapper是自动映射实体类的
@@ -113,7 +94,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     /**
-     * 执行查询sql，有查询条件，（固定返回List<Map<String, Object>>）
+     * 执行查询sql，（固定返回List<Map<String, Object>>）
      *
      * @param sql    要执行的sql
      * @param params 要绑定到查询的参数
@@ -138,52 +119,23 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     /**
-     * 查询一个值（经常用于查count）
+     * 查询一个值（常用于查count等）
      *
      * @param sql    要执行的SQL查询
-     * @param clazz  实体类
+     * @param clazz  实体类类型
      * @param params 要绑定到查询的参数
      * @param <F>    泛型
-     * @return T
+     * @return F
      */
     @Override
     public <F> F selectOneColumn(String sql, Class<F> clazz, Object... params) {
         F result;
-        if (params == null || params.length == 0) {
+        if (ObjectUtils.isEmpty(params)) {
             result = getJdbcTemplate().queryForObject(sql, clazz);
         } else {
             result = getJdbcTemplate().queryForObject(sql, clazz, params);
         }
         return result;
-    }
-
-    /**
-     * 分页查询
-     *
-     * @param sql  要执行的SQL查询
-     * @param page 分页参数
-     * @return T
-     */
-    @Override
-    public Page<T> paginate(String sql, Page<T> page) {
-        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
-            throw new TinyJdbcException("paginate page cannot be null");
-        }
-        if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("当前页数必须大于1");
-        }
-        if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("每页大小必须大于1");
-        }
-        String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
-        String countSql = getPageHandle().handlerCountSQL(sql);
-        // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper);
-        // 查询总共数量
-        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class);
-        page.setRecords(resultList);
-        page.setTotal(totalSize);
-        return page;
     }
 
     /**
@@ -200,18 +152,18 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("paginate page cannot be null");
         }
         if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("当前页数必须大于1");
+            throw new TinyJdbcException("pageNum must be greater than 0");
         }
         if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("每页大小必须大于1");
+            throw new TinyJdbcException("pageSize must be greater than 0");
         }
         String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sql);
         // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, params);
+        List<T> list = getJdbcTemplate().query(selectSql, rowMapper, params);
         // 查询总共数量
         long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, params);
-        page.setRecords(resultList);
+        page.setRecords(list);
         page.setTotal(totalSize);
         return page;
     }
@@ -231,18 +183,18 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("paginate page cannot be null");
         }
         if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("当前页数必须大于1");
+            throw new TinyJdbcException("pageNum must be greater than 0");
         }
         if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("每页大小必须大于1");
+            throw new TinyJdbcException("pageSize must be greater than 0");
         }
         String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
         String countSql = getPageHandle().handlerCountSQL(sql);
         // 查询数据列表
-        List<F> resultList = getJdbcTemplate().query(selectSql, new BeanPropertyRowMapper<>(clazz), params);
+        List<F> list = getJdbcTemplate().query(selectSql, new BeanPropertyRowMapper<>(clazz), params);
         // 查询总共数量
         long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, params);
-        page.setRecords(resultList);
+        page.setRecords(list);
         page.setTotal(totalSize);
         return page;
     }
@@ -258,7 +210,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     @Override
     public int execute(String sql, final Object... params) {
         int num = 0;
-        if (params == null || params.length == 0) {
+        if (ObjectUtils.isEmpty(params)) {
             num = getJdbcTemplate().update(sql);
         } else {
             num = getJdbcTemplate().update(sql, params);
@@ -269,7 +221,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     @Override
     public int insert(String sql, final Object... params) {
         int num = 0;
-        if (params == null || params.length == 0) {
+        if (ObjectUtils.isEmpty(params)) {
             num = getJdbcTemplate().update(sql);
         } else {
             num = getJdbcTemplate().update(sql, params);
@@ -280,7 +232,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     @Override
     public int update(String sql, final Object... params) {
         int num = 0;
-        if (params == null || params.length == 0) {
+        if (ObjectUtils.isEmpty(params)) {
             num = getJdbcTemplate().update(sql);
         } else {
             num = getJdbcTemplate().update(sql, params);
@@ -291,7 +243,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     @Override
     public int delete(String sql, final Object... params) {
         int num = 0;
-        if (params == null || params.length == 0) {
+        if (ObjectUtils.isEmpty(params)) {
             num = getJdbcTemplate().update(sql);
         } else {
             num = getJdbcTemplate().update(sql, params);
@@ -337,7 +289,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     @Override
     public List<T> select(QueryCriteria criteria) {
         if (criteria == null) {
-            throw new TinyJdbcException("criteria cannot be null");
+            throw new TinyJdbcException("select criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCriteriaSql(criteria, entityClass);
         return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
@@ -346,13 +298,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     @Override
     public List<T> select(LambdaQueryCriteria lambdaCriteria) {
         if (lambdaCriteria == null) {
-            throw new TinyJdbcException("lambdaCriteria cannot be null");
+            throw new TinyJdbcException("select lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
-        this.doBefore(SQLType.Select, sqlProvider);
-        List<T> results = this.getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
-        this.doAfter(sqlProvider, results);
-        return results;
+        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -390,10 +339,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("paginate page cannot be null");
         }
         if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("当前页数必须大于1");
+            throw new TinyJdbcException("pageNum must be greater than 0");
         }
         if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("每页大小必须大于1");
+            throw new TinyJdbcException("pageSize must be greater than 0");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCriteriaSql(criteria, entityClass);
         String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
@@ -416,10 +365,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("paginate page cannot be null");
         }
         if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("当前页数必须大于1");
+            throw new TinyJdbcException("pageNum must be greater than 0");
         }
         if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("每页大小必须大于1");
+            throw new TinyJdbcException("pageSize must be greater than 0");
         }
         SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
         String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
@@ -462,10 +411,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("insert entity cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.insertSql(entity, ignoreNulls);
-        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("insert parameters cannot be null");
         }
-        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -474,30 +423,24 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("insertReturnAutoIncrement entity cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.insertSql(entity, true);
-        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("insertReturnAutoIncrement parameters cannot be null");
         }
         KeyHolder keyHolder = new GeneratedKeyHolder();
         final Object[] params = sqlProvider.getParameters().toArray();
-        if (params == null || params.length == 0) {
-            getJdbcTemplate().update(new PreparedStatementCreator() {
-                public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                    PreparedStatement ps = con.prepareStatement(sqlProvider.getSql(),
-                            PreparedStatement.RETURN_GENERATED_KEYS);
-                    return ps;
-                }
-            }, keyHolder);
-        } else {
-            getJdbcTemplate().update(new PreparedStatementCreator() {
-                public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                    PreparedStatement ps = con.prepareStatement(sqlProvider.getSql(),
-                            PreparedStatement.RETURN_GENERATED_KEYS);
-                    for (int i = 0; i < params.length; i++)
+
+        getJdbcTemplate().update(new PreparedStatementCreator() {
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                PreparedStatement ps = con.prepareStatement(sqlProvider.getSql(),
+                        PreparedStatement.RETURN_GENERATED_KEYS);
+                if (!ObjectUtils.isEmpty(params)) {
+                    for (int i = 0; i < params.length; i++) {
                         ps.setObject(i + 1, params[i]);
-                    return ps;
+                    }
                 }
-            }, keyHolder);
-        }
+                return ps;
+            }
+        }, keyHolder);
         if (keyHolder.getKey() != null) {
             return keyHolder.getKey().longValue();
         } else {
@@ -516,10 +459,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("update entity cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.updateByIdSql(entity, ignoreNulls);
-        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
-        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -541,10 +484,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.updateByEntityAndCriteriaSql(entity, ignoreNulls, criteria);
-        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
-        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -556,10 +499,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.updateByEntityAndLambdaCriteriaSql(entity, ignoreNulls, criteria);
-        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
-        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -568,10 +511,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.updateByCriteriaSql(criteria, entityClass);
-        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
-        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -580,10 +523,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.updateByLambdaCriteriaSql(lambdaCriteria, entityClass);
-        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
-        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -592,10 +535,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("delete entity cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.deleteSql(entity);
-        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("delete parameters cannot be null");
         }
-        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -604,7 +547,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("delete lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.deleteLambdaCriteriaSql(criteria, entityClass);
-        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
+            throw new TinyJdbcException("deleteById parameters cannot be null");
+        }
+        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -613,7 +559,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("delete criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.deleteCriteriaSql(criteria, entityClass);
-        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
+            throw new TinyJdbcException("deleteById parameters cannot be null");
+        }
+        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -622,10 +571,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("deleteById id cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.deleteByIdSql(id, entityClass);
-        if (sqlProvider.getParameters() == null || sqlProvider.getParameters().isEmpty()) {
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("deleteById parameters cannot be null");
         }
-        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -634,29 +583,10 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("deleteByIds ids cannot be null or empty");
         }
         SqlProvider sqlProvider = SqlGenerator.deleteByIdsSql(entityClass, (List<Object>) ids);
-        return execute(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
-    }
-
-    @Override
-    public int[] batchUpdate(Collection<T> collection) {
-        if (CollectionUtils.isEmpty(collection)) {
-            throw new TinyJdbcException("batchUpdate collection cannot be null or empty");
+        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
+            throw new TinyJdbcException("deleteById parameters cannot be null");
         }
-        int[] row = null;
-        List<Object[]> batchArgs = new ArrayList<>();
-        String sql = "";
-        for (T t : collection) {
-            SqlProvider sqlProvider = SqlGenerator.updateByIdSql(t, true);
-            if (StrUtils.isEmpty(sql)) {
-                sql = sqlProvider.getSql();
-            }
-            batchArgs.add(sqlProvider.getParameters().toArray());
-        }
-        if (CollectionUtils.isEmpty(batchArgs)) {
-            throw new TinyJdbcException("batchUpdate batchArgs cannot be null");
-        }
-        row = getJdbcTemplate().batchUpdate(sql, batchArgs);
-        return row;
+        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
 
@@ -677,29 +607,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         }
         if (CollectionUtils.isEmpty(batchArgs)) {
             throw new TinyJdbcException("batchInsert batchArgs cannot be null");
-        }
-        row = getJdbcTemplate().batchUpdate(sql, batchArgs);
-        return row;
-    }
-
-
-    @Override
-    public int[] batchDelete(Collection<T> collection) {
-        if (CollectionUtils.isEmpty(collection)) {
-            throw new TinyJdbcException("batchDelete collection cannot be null or empty");
-        }
-        int[] row = null;
-        List<Object[]> batchArgs = new ArrayList<>();
-        String sql = "";
-        for (T t : collection) {
-            SqlProvider sqlProvider = SqlGenerator.deleteSql(t);
-            if (StrUtils.isEmpty(sql)) {
-                sql = sqlProvider.getSql();
-            }
-            batchArgs.add(sqlProvider.getParameters().toArray());
-        }
-        if (CollectionUtils.isEmpty(batchArgs)) {
-            throw new TinyJdbcException("batchDelete batchArgs cannot be null");
         }
         row = getJdbcTemplate().batchUpdate(sql, batchArgs);
         return row;
