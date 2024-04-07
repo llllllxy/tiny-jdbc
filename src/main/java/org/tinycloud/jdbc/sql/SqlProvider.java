@@ -39,4 +39,12 @@ public class SqlProvider {
         sqlProvider.setParameters(parameters);
         return sqlProvider;
     }
+
+    @Override
+    public String toString() {
+        return "SqlProvider{" +
+                "sql='" + sql + '\'' +
+                ", parameters=" + parameters +
+                '}';
+    }
 }
