@@ -59,7 +59,7 @@
 <dependency>
     <groupId>top.lxyccc</groupId>
     <artifactId>tiny-jdbc-boot-starter</artifactId>
-    <version>1.6.0</version>
+    <version>1.6.1</version>
 </dependency>
 ```
 
@@ -268,16 +268,18 @@ public class UploadFileService {
 
 |方法|说明|
 |---|---|
-|`<T> List<T> select(String sql, Class<T> classz, Object... params);` |根据给定的sql和实体类型和参数，查询数据库并返回实体类对象列表|
-|`<T> T selectOne(String sql, Class<T> classz, Object... params);`|根据给定的sql和实体类型和参数，查询数据并返回一个实体类对象|
+|`<F> List<F> select(String sql, Class<F> classz, Object... params);` |根据给定的sql和实体类型和参数，查询数据库并返回实体类对象列表|
 |`List<T> select(String sql, Object... params);` |根据给定的sql和参数，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
+|`<F> F selectOne(String sql, Class<F> classz, Object... params);`|根据给定的sql和实体类型和参数，查询数据并返回一个实体类对象|
 |`T selectOne(String sql, Object... params);`|根据给定的sql和参数，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`List<Map<String, Object>> selectMap(String sql, Object... params);`|根据给定的sql和参数，查询数据库并返回Map<String, Object>列表|
 |`Map<String, Object> selectOneMap(String sql, Object... params);`|根据给定的sql和参数，查询数据并返回一个Map<String, Object>对象|
 |`<T> T selectOneColumn(String sql, Class<T> clazz, Object... params);`|根据给定的sql和实体类型和参数，查询数据并返回一个值（常用于查count）|
-|`Page<T> paginate(String sql, Page<T> page);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Page<F> paginate(String sql, Class<F> clazz, Page<F> page, Object... params);`|执行分页查询，返回Page对象，类型使用的Class<F>传入的自定义类型|
 |`Page<T> paginate(String sql, Page<T> page, Object... params);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
 |`T selectById(Object id);`|根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
+|`T selectByIds(List<ID> ids);`|根据主键ID值列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
+|`T selectByIds(ID... id);`|根据主键ID值可变参数列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
 |`List<T> select(T entity);`|实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
 |`List<T> select(QueryCriteria criteria);`|根据查询构造器查询，返回多条，类型使用的是xxxDao<T>的类型|
 |`List<T> select(LambdaQueryCriteria lambdaCriteria);`|根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
@@ -315,7 +317,6 @@ public class UploadFileService {
 |`int update(UpdateCriteria criteria);`|只根据条件构造器来更新数据，配合.set方法来使用|
 |`int update(LambdaUpdateCriteria criteria);`|只根据条件构造器（lambda）来更新数据，配合.set方法来使用|
 
-
 #### 删除操作
 
 |方法|说明|
@@ -323,7 +324,7 @@ public class UploadFileService {
 |`int delete(String sql, final Object... params);` | 根据提供的SQL语句和提供的参数，执行删除 |
 |`int deleteById(ID id);` | 根据主键ID进行删除，类型使用的是xxxDao<T, ID>的类型 |
 |`int deleteByIds(List<ID> ids);` | 根据主键ID列表进行删除，类型使用的是xxxDao<T, ID>的类型 |
-|`int deleteByIds(ID... ids);` | 根据主键ID数组进行删除，类型使用的是xxxDao<T, ID>的类型 |
+|`int deleteByIds(ID... ids);` | 根据主键ID可变参数列表进行删除，类型使用的是xxxDao<T, ID>的类型 |
 |`int delete(T entity);`| 根据entity里的属性值进行删除，entity里不为null的属性，将作为where参数 |
 |`int delete(UpdateCriteria criteria);`| 根据条件构造器，将作为where参数 |
 |`int delete(LambdaUpdateCriteria criteria);`| 根据条件构造器（lambda），将作为where参数 |
