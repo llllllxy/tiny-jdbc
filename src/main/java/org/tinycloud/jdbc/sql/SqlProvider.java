@@ -32,4 +32,11 @@ public class SqlProvider {
     public void setParameters(List<Object> parameters) {
         this.parameters = parameters;
     }
+
+    public static SqlProvider create(String sql, List<Object> parameters) {
+        SqlProvider sqlProvider = new SqlProvider();
+        sqlProvider.setSql(sql);
+        sqlProvider.setParameters(parameters);
+        return sqlProvider;
+    }
 }
