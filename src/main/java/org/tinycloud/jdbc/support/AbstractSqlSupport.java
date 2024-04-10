@@ -419,10 +419,15 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
 
     @Override
     public Long insertReturnAutoIncrement(T entity) {
+        return insertReturnAutoIncrement(entity, true);
+    }
+
+    @Override
+    public Long insertReturnAutoIncrement(T entity, boolean ignoreNulls) {
         if (entity == null) {
             throw new TinyJdbcException("insertReturnAutoIncrement entity cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, true);
+        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, ignoreNulls);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("insertReturnAutoIncrement parameters cannot be null");
         }
@@ -444,7 +449,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (keyHolder.getKey() != null) {
             return keyHolder.getKey().longValue();
         } else {
-            throw new TinyJdbcException("insertReturnAutoIncrement please check whether it is an autoincrement primary key");
+            throw new TinyJdbcException("please check whether it is an autoincrement primary key");
         }
     }
 

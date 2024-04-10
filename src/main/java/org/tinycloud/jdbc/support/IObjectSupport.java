@@ -42,12 +42,21 @@ public interface IObjectSupport<T, ID> {
     int insert(T entity, boolean ignoreNulls);
 
     /**
-     * 持久化插入给定的实例，并且返回自增主键
+     * 持久化插入给定的实例，并且返回自增主键（默认忽略null值）
      *
      * @param entity 实例
      * @return Integer 返回主键
      */
     Long insertReturnAutoIncrement(T entity);
+
+    /**
+     * 持久化插入给定的实例，并且返回自增主键
+     *
+     * @param entity      实例
+     * @param ignoreNulls 是否忽略null值，true忽略，false不忽略
+     * @return Integer 返回主键
+     */
+    Long insertReturnAutoIncrement(T entity, boolean ignoreNulls);
 
     /**
      * 持久化更新给定的实例（默认忽略null值），根据主键值更新
