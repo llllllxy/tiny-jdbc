@@ -3,10 +3,11 @@ package org.tinycloud.jdbc.criteria;
 import org.tinycloud.jdbc.util.LambdaUtils;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * <p>
- *     查询条件构造器-抽象类（lambda版）
+ * 查询条件构造器-抽象类（lambda版）
  * </p>
  *
  * @author liuxingyu01
@@ -352,19 +353,30 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <R> Children and(Children criteria) {
-        String condition = " AND " + criteria.children();
+    public Children and(Consumer<Children> consumer) {
+        final Children instance = instance();
+        consumer.accept(instance);
+
+        String condition = " AND " + instance.children();
         conditions.add(condition);
-        parameters.addAll(criteria.parameters);
+        parameters.addAll(instance.parameters);
         return typedThis;
     }
 
-    public <R> Children or(Children criteria) {
-        String condition = " OR " + criteria.children();
+    public Children or(Consumer<Children> consumer) {
+        final Children instance = instance();
+        consumer.accept(instance);
+
+        String condition = " OR " + instance.children();
         conditions.add(condition);
-        parameters.addAll(criteria.parameters);
+        parameters.addAll(instance.parameters);
         return typedThis;
     }
+
+    /**
+     * 子类返回一个自己的新对象
+     */
+    protected abstract Children instance();
 
     public <T, R> String getColumnName(TypeFunction<T, R> field) {
         String fieldName = LambdaUtils.getLambdaColumnName(field);

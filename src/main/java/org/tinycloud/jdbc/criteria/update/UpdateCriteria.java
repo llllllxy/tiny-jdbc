@@ -17,4 +17,9 @@ public class UpdateCriteria extends AbstractCriteria<UpdateCriteria> {
         parameters.add(value);
         return this;
     }
+
+    @Override
+    protected UpdateCriteria instance() {
+        return new UpdateCriteria();
+    }
 }

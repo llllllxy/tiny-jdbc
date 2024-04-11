@@ -2,10 +2,11 @@ package org.tinycloud.jdbc.criteria;
 
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * <p>
- *     查询条件构造器-抽象类
+ * 查询条件构造器-抽象类
  * </p>
  *
  * @author liuxingyu01
@@ -315,17 +316,28 @@ public abstract class AbstractCriteria<Children extends AbstractCriteria<Childre
         return typedThis;
     }
 
-    public <R> Children and(Children criteria) {
-        String condition = " AND " + criteria.children();
+    public <R> Children and(Consumer<Children> consumer) {
+        final Children instance = instance();
+        consumer.accept(instance);
+
+        String condition = " AND " + instance.children();
         conditions.add(condition);
-        parameters.addAll(criteria.parameters);
+        parameters.addAll(instance.parameters);
         return typedThis;
     }
 
-    public <R> Children or(Children criteria) {
-        String condition = " OR " + criteria.children();
+    public <R> Children or(Consumer<Children> consumer) {
+        final Children instance = instance();
+        consumer.accept(instance);
+
+        String condition = " OR " + instance.children();
         conditions.add(condition);
-        parameters.addAll(criteria.parameters);
+        parameters.addAll(instance.parameters);
         return typedThis;
     }
+
+    /**
+     * 子类返回一个自己的新对象
+     */
+    protected abstract Children instance();
 }

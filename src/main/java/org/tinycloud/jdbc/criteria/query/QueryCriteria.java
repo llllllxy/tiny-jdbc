@@ -36,4 +36,9 @@ public class QueryCriteria extends AbstractCriteria<QueryCriteria> {
         orderBy.add(orderByString);
         return this;
     }
+
+    @Override
+    protected QueryCriteria instance() {
+        return new QueryCriteria();
+    }
 }

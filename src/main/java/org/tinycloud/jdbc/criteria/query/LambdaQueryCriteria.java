@@ -39,4 +39,9 @@ public class LambdaQueryCriteria extends AbstractLambdaCriteria<LambdaQueryCrite
         orderBy.add(columnName);
         return this;
     }
+
+    @Override
+    protected LambdaQueryCriteria instance() {
+        return new LambdaQueryCriteria();
+    }
 }
