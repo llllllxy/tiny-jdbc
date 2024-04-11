@@ -39,14 +39,32 @@ public final class PropertyNamer {
         return name;
     }
 
+    /**
+     * 判断是否是一个getter或settre方法方法
+     *
+     * @param name 方法名
+     * @return true是，false不是
+     */
     public static boolean isProperty(String name) {
         return isGetter(name) || isSetter(name);
     }
 
+    /**
+     * 判断是否是getter方法
+     *
+     * @param name 方法名
+     * @return true是，false不是
+     */
     public static boolean isGetter(String name) {
         return name.startsWith("get") && name.length() > 3 || name.startsWith("is") && name.length() > 2;
     }
 
+    /**
+     * 判断是否是setter方法
+     *
+     * @param name 方法名
+     * @return true是，false不是
+     */
     public static boolean isSetter(String name) {
         return name.startsWith("set") && name.length() > 3;
     }

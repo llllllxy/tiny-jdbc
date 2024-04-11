@@ -93,18 +93,13 @@ public class ReflectUtils {
      * @return 字段数组
      */
     public static Field[] getFields(Class<?> clazz) {
-        Field[] result = declaredFieldsCache.get(clazz);
-        if (result != null) {
-            return result;
-        }
         // 先获取本类的所有字段
-        Field[] fields = clazz.getDeclaredFields();
+        Field[] fields = getDeclaredFields(clazz);
 
         // 再遍历其父类的所有字段
         List<Field> superFieldList = new ArrayList<>();
-        Class<?> superClazz = clazz.getSuperclass();
-        while (superClazz != null && !"java.lang.Object".equals(superClazz.getName())) {
-            Field[] declaredFields = superClazz.getDeclaredFields();
+        for (Class<?> superClazz = clazz.getSuperclass(); superClazz != null && Object.class != superClazz; superClazz = superClazz.getSuperclass()) {
+            Field[] declaredFields = getDeclaredFields(superClazz);
             Collections.addAll(superFieldList, declaredFields);
             superClazz = superClazz.getSuperclass();
         }
@@ -113,14 +108,31 @@ public class ReflectUtils {
         Map<String, Field> fieldMap = excludeOverrideSuperField(fields, superFieldList);
 
         /* 去除和父类相同名字的属性 */
-        result = fieldMap.values().stream()
+        Field[] result = fieldMap.values().stream()
                 /* 过滤静态属性 */
                 .filter(f -> !Modifier.isStatic(f.getModifiers()))
                 /* 过滤 transient关键字修饰的属性 */
                 .filter(f -> !Modifier.isTransient(f.getModifiers()))
                 .toArray(Field[]::new);
+        return result;
+    }
 
-        declaredFieldsCache.put(clazz, result.length == 0 ? EMPTY_FIELD_ARRAY : result);
+    /**
+     * 获取本类的所有字段
+     *
+     * @param clazz 类对象
+     * @return 类的字段数组
+     */
+    private static Field[] getDeclaredFields(Class<?> clazz) {
+        Field[] result = declaredFieldsCache.get(clazz);
+        if (result == null) {
+            try {
+                result = clazz.getDeclaredFields();
+                declaredFieldsCache.put(clazz, result.length == 0 ? EMPTY_FIELD_ARRAY : result);
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to introspect Class [" + clazz.getName() + "] from ClassLoader [" + clazz.getClassLoader() + "]", e);
+            }
+        }
         return result;
     }
 
