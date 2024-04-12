@@ -1,8 +1,6 @@
 package org.tinycloud.jdbc.util;
 
 import org.springframework.util.ConcurrentReferenceHashMap;
-import org.tinycloud.jdbc.annotation.Table;
-import org.tinycloud.jdbc.exception.TinyJdbcException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -21,6 +19,8 @@ import java.util.stream.Stream;
  **/
 public class ReflectUtils {
 
+    private static final Class<?>[] EMPTY_CLASS_ARRAY = new Class[0];
+    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
     private static final Method[] EMPTY_METHOD_ARRAY = new Method[0];
     private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
 
@@ -34,86 +34,42 @@ public class ReflectUtils {
      */
     private static final Map<Class<?>, Field[]> declaredFieldsCache = new ConcurrentReferenceHashMap<>(256);
 
-    /**
-     * 校验Entity对象的合法性
-     *
-     * @param entity 实体类对象
-     * @param <T>    泛型
-     */
-    public static <T> Triple<Class<?>, Field[], String> resolveByEntity(T entity) {
-        if (entity == null) {
-            throw new TinyJdbcException("SqlGenerator entity cannot be null");
-        }
-        Class<?> clazz = entity.getClass();
-        return resolveByClass(clazz);
-    }
 
     /**
-     * 校验clazz的合法性
-     *
-     * @param clazz 实体类对象类型
-     */
-    public static Triple<Class<?>, Field[], String> resolveByClass(Class<?> clazz) {
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        if (tableAnnotation == null) {
-            throw new TinyJdbcException("SqlGenerator " + clazz + "no @Table defined");
-        }
-        String tableName = tableAnnotation.value();
-        if (StrUtils.isEmpty(tableName)) {
-            throw new TinyJdbcException("SqlGenerator " + clazz + "@Table value cannot be null");
-        }
-        Field[] fields = getFields(clazz);
-        if (fields == null || fields.length == 0) {
-            throw new TinyJdbcException("SqlGenerator " + clazz + " no field defined");
-        }
-        return Triple.of(clazz, fields, tableName);
-    }
-
-    /**
-     * 创建类实例
-     *
-     * @param clazz 类对象
-     * @return 对象示例
-     */
-    public static Object createInstance(Class<?> clazz) {
-        Object o;
-        try {
-            o = clazz.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException("load class " + clazz.getCanonicalName() + " fail");
-        }
-        return o;
-    }
-
-
-    /**
-     * 根据类对象获取其属性列表
+     * 根据类对象获取其属性列表(包括祖宗类)
      *
      * @param clazz 类对象
      * @return 字段数组
      */
     public static Field[] getFields(Class<?> clazz) {
-        // 先获取本类的所有字段
-        Field[] fields = getDeclaredFields(clazz);
+        Field[] result = declaredFieldsCache.get(clazz);
+        if (result != null) {
+            return result;
+        }
+        /* 先获取本类的所有字段 */
+        Field[] fields = clazz.getDeclaredFields();
 
-        // 再遍历其父类的所有字段
+        /*  再遍历其父类的所有字段 */
         List<Field> superFieldList = new ArrayList<>();
-        for (Class<?> superClazz = clazz.getSuperclass(); superClazz != null && Object.class != superClazz; superClazz = superClazz.getSuperclass()) {
-            Field[] declaredFields = getDeclaredFields(superClazz);
-            Collections.addAll(superFieldList, declaredFields);
+        Class<?> superClazz = clazz.getSuperclass();
+        while (Object.class != superClazz && superClazz != null) {
+            Field[] superClassFields = getDeclaredFields(superClazz);
+            Collections.addAll(superFieldList, superClassFields);
             superClazz = superClazz.getSuperclass();
         }
 
-        /* 排除重载属性 */
+        /* 去除和父类相同名字的属性 */
         Map<String, Field> fieldMap = excludeOverrideSuperField(fields, superFieldList);
 
-        /* 去除和父类相同名字的属性 */
-        Field[] result = fieldMap.values().stream()
+        /* 去除静态属性和transient关键字修饰的属性 */
+        result = fieldMap.values().stream()
                 /* 过滤静态属性 */
                 .filter(f -> !Modifier.isStatic(f.getModifiers()))
-                /* 过滤 transient关键字修饰的属性 */
+                /* 过滤 transient 关键字修饰的属性 */
                 .filter(f -> !Modifier.isTransient(f.getModifiers()))
                 .toArray(Field[]::new);
+
+        declaredFieldsCache.put(clazz, result.length == 0 ? EMPTY_FIELD_ARRAY : result);
         return result;
     }
 
@@ -124,16 +80,11 @@ public class ReflectUtils {
      * @return 类的字段数组
      */
     private static Field[] getDeclaredFields(Class<?> clazz) {
-        Field[] result = declaredFieldsCache.get(clazz);
-        if (result == null) {
-            try {
-                result = clazz.getDeclaredFields();
-                declaredFieldsCache.put(clazz, result.length == 0 ? EMPTY_FIELD_ARRAY : result);
-            } catch (Exception e) {
-                throw new IllegalStateException("Failed to introspect Class [" + clazz.getName() + "] from ClassLoader [" + clazz.getClassLoader() + "]", e);
-            }
+        try {
+            return clazz.getDeclaredFields();
+        } catch (Throwable ex) {
+            throw new IllegalStateException("Failed to introspect Class [" + clazz.getName() + "] from ClassLoader [" + clazz.getClassLoader() + "]", ex);
         }
-        return result;
     }
 
     /**
@@ -163,13 +114,60 @@ public class ReflectUtils {
      * @param clazz 类对象
      * @return 字段数组
      */
-    public static Method[] getMethods(Class<?> clazz) {
+    public static Method[] getDeclaredMethods(Class<?> clazz) {
+        return getDeclaredMethods(clazz, true);
+    }
+
+    /**
+     * 根据类对象获取其方法列表
+     *
+     * @param clazz 类对象
+     * @return 字段数组
+     */
+    public static Method[] getDeclaredMethods(Class<?> clazz, boolean defensive) {
         Method[] result = declaredMethodsCache.get(clazz);
-        if (result != null) {
-            return result;
+        if (result == null) {
+            try {
+                Method[] declaredMethods = clazz.getDeclaredMethods();
+                // 获取接口类里的默认方法
+                List<Method> defaultMethods = findDefaultMethodsOnInterfaces(clazz);
+                if (defaultMethods != null) {
+                    result = new Method[declaredMethods.length + defaultMethods.size()];
+                    System.arraycopy(declaredMethods, 0, result, 0, declaredMethods.length);
+                    int index = declaredMethods.length;
+                    for (Method defaultMethod : defaultMethods) {
+                        result[index] = defaultMethod;
+                        index++;
+                    }
+                } else {
+                    result = declaredMethods;
+                }
+                declaredMethodsCache.put(clazz, result.length == 0 ? EMPTY_METHOD_ARRAY : result);
+            } catch (Throwable ex) {
+                throw new IllegalStateException("Failed to introspect Class [" + clazz.getName() + "] from ClassLoader [" + clazz.getClassLoader() + "]", ex);
+            }
         }
-        result = clazz.getDeclaredMethods();
-        declaredMethodsCache.put(clazz, result.length == 0 ? EMPTY_METHOD_ARRAY : result);
+        return (result.length == 0 || !defensive) ? result : result.clone();
+    }
+
+    /**
+     * 查找接口中的默认方法（Default Methods）， Java 8 中引入了接口的默认方法
+     *
+     * @param clazz 类对象
+     * @return 默认方法列表
+     */
+    private static List<Method> findDefaultMethodsOnInterfaces(Class<?> clazz) {
+        List<Method> result = null;
+        for (Class<?> ifc : clazz.getInterfaces()) {
+            for (Method method : ifc.getMethods()) {
+                if (method.isDefault()) {
+                    if (result == null) {
+                        result = new ArrayList<>();
+                    }
+                    result.add(method);
+                }
+            }
+        }
         return result;
     }
 
@@ -182,7 +180,7 @@ public class ReflectUtils {
      * @param fieldValue 对象属性值
      */
     public static void invokeSetter(Object o, String fieldName, Object fieldValue) {
-        Method[] declaredMethods = getMethods(o.getClass());
+        Method[] declaredMethods = getDeclaredMethods(o.getClass());
         for (Method declaredMethod : declaredMethods) {
             if (declaredMethod.getName().equalsIgnoreCase("set" + StrUtils.capitalize(fieldName))) {
                 try {
@@ -204,7 +202,7 @@ public class ReflectUtils {
      */
     public static Object invokeGetter(Object o, String fieldName) {
         Object object = o;
-        Method[] declaredMethods = getMethods(o.getClass());
+        Method[] declaredMethods = getDeclaredMethods(o.getClass());
         for (Method declaredMethod : declaredMethods) {
             if (declaredMethod.getName().equalsIgnoreCase("get" + StrUtils.capitalize(fieldName))) {
                 try {
@@ -220,24 +218,46 @@ public class ReflectUtils {
 
 
     /**
+     * 根据名称获取一个方法。如果未找到该方法，则返回null。
+     *
+     * @param clazz      方法所属的类
+     * @param methodName 方法的名称
+     */
+    public static Method getMethod(Class<?> clazz, String methodName) {
+        return getMethod(clazz, methodName, EMPTY_CLASS_ARRAY);
+    }
+
+    /**
      * 根据名称和参数类型获取一个方法。如果未找到该方法，则返回null。
      *
      * @param clazz          方法所属的类
      * @param methodName     方法的名称
      * @param parameterTypes 方法接受的参数类型
      */
-    protected static Method getMethod(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
-        try {
-            if (clazz == null) {
-                return null;
-            } else {
-                return clazz.getMethod(methodName, parameterTypes);
+    public static Method getMethod(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
+        Class<?> searchType = clazz;
+        while (searchType != null) {
+            Method[] methods = (searchType.isInterface() ? searchType.getMethods() : getDeclaredMethods(searchType, false));
+            for (Method method : methods) {
+                if (methodName.equals(method.getName()) && (parameterTypes == null || hasSameParams(method, parameterTypes))) {
+                    return method;
+                }
             }
-        } catch (SecurityException e) {
-            throw new RuntimeException("Security exception looking for method " + clazz.getName() + "." + methodName + ". ");
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException("Method not found " + clazz.getName() + "." + methodName + "." + methodName + ". ");
+            searchType = searchType.getSuperclass();
         }
+        return null;
+    }
+
+    /**
+     * 判断方法的参数类型列表是否相同
+     *
+     * @param method     方法
+     * @param paramTypes 参数类型列表
+     * @return true or false
+     */
+    private static boolean hasSameParams(Method method, Class<?>[] paramTypes) {
+        return (paramTypes.length == method.getParameterCount() &&
+                Arrays.equals(paramTypes, method.getParameterTypes()));
     }
 
     /**
@@ -339,5 +359,21 @@ public class ReflectUtils {
                 && !method.isAccessible()) {
             method.setAccessible(true);
         }
+    }
+
+    /**
+     * 创建类实例
+     *
+     * @param clazz 类对象
+     * @return 对象示例
+     */
+    public static Object createInstance(Class<?> clazz) {
+        Object o;
+        try {
+            o = clazz.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException("load class " + clazz.getCanonicalName() + " fail");
+        }
+        return o;
     }
 }

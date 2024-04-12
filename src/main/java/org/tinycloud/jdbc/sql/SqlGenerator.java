@@ -12,9 +12,7 @@ import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.annotation.IdType;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.IdUtils;
-import org.tinycloud.jdbc.util.ReflectUtils;
-import org.tinycloud.jdbc.util.StrUtils;
-import org.tinycloud.jdbc.util.Triple;
+import org.tinycloud.jdbc.util.*;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -41,9 +39,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider insertSql(Object object, boolean ignoreNulls) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByEntity(object);
-        Field[] fields = triple.getSecond();
-        String tableName = triple.getThird();
+        Field[] fields = TableParserUtils.resolveFields(object);
+        String tableName = TableParserUtils.getTableName(object);
 
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
@@ -151,9 +148,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider updateByIdSql(Object object, boolean ignoreNulls) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByEntity(object);
-        Field[] fields = triple.getSecond();
-        String tableName = triple.getThird();
+        Field[] fields = TableParserUtils.resolveFields(object);
+        String tableName = TableParserUtils.getTableName(object);
 
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
@@ -194,11 +190,13 @@ public class SqlGenerator {
             throw new TinyJdbcException("SqlGenerator updateByIdSql primaryKeyId can not null!");
         }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        sql.append("UPDATE ").append(tableName)
-                .append(" SET ").append(tableColumn);
-        sql.append(" WHERE ");
-        sql.append(whereColumns);
-        sql.append("=?");
+        sql.append("UPDATE ")
+                .append(tableName)
+                .append(" SET ")
+                .append(tableColumn)
+                .append(" WHERE ")
+                .append(whereColumns)
+                .append("=?");
 
         parameters.add(whereValues);
 
@@ -221,10 +219,8 @@ public class SqlGenerator {
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new TinyJdbcException("SqlGenerator updateByCriteriaSql criteria can not null or empty!");
         }
-
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByEntity(object);
-        Field[] fields = triple.getSecond();
-        String tableName = triple.getThird();
+        Field[] fields = TableParserUtils.resolveFields(object);
+        String tableName = TableParserUtils.getTableName(object);
 
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
@@ -279,9 +275,8 @@ public class SqlGenerator {
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new TinyJdbcException("SqlGenerator updateByLambdaCriteriaSql criteria can not null or empty!");
         }
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByEntity(object);
-        Field[] fields = triple.getSecond();
-        String tableName = triple.getThird();
+        Field[] fields = TableParserUtils.resolveFields(object);
+        String tableName = TableParserUtils.getTableName(object);
 
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
@@ -341,9 +336,7 @@ public class SqlGenerator {
             throw new TinyJdbcException("SqlGenerator updateByCriteriaSql criteria can not null or empty!");
         }
 
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-        String tableName = triple.getThird();
-
+        String tableName = TableParserUtils.getTableName(clazz);
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(tableName).append(" SET ").append(updateSql);
         sql.append(whereSql);
@@ -371,9 +364,7 @@ public class SqlGenerator {
             throw new TinyJdbcException("SqlGenerator updateByCriteriaSql criteria can not null or empty!");
         }
 
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-        String tableName = triple.getThird();
-
+        String tableName = TableParserUtils.getTableName(clazz);
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(tableName).append(" SET ").append(updateSql);
         sql.append(whereSql);
@@ -391,9 +382,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteSql(Object object) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByEntity(object);
-        Field[] fields = triple.getSecond();
-        String tableName = triple.getThird();
+        Field[] fields = TableParserUtils.resolveFields(object);
+        String tableName = TableParserUtils.getTableName(object);
 
         StringBuilder sql = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
@@ -448,8 +438,7 @@ public class SqlGenerator {
             throw new TinyJdbcException("SqlGenerator deleteCriteriaSql criteria can not null or empty!");
         }
         List<Object> parameters = criteria.getParameters();
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-        String tableName = triple.getThird();
+        String tableName = TableParserUtils.getTableName(clazz);
 
         SqlProvider so = new SqlProvider();
         so.setSql("DELETE FROM " + tableName + criteriaSql);
@@ -469,8 +458,7 @@ public class SqlGenerator {
             throw new TinyJdbcException("SqlGenerator deleteLambdaCriteriaSql criteria can not null or empty!");
         }
         List<Object> parameters = criteria.getParameters();
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-        String tableName = triple.getThird();
+        String tableName = TableParserUtils.getTableName(clazz);
 
         SqlProvider so = new SqlProvider();
         so.setSql("DELETE FROM " + tableName + criteriaSql);
@@ -485,9 +473,8 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectSql(Object object) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByEntity(object);
-        Field[] fields = triple.getSecond();
-        String tableName = triple.getThird();
+        String tableName = TableParserUtils.getTableName(object);
+        Field[] fields = TableParserUtils.resolveFields(object);
 
         StringBuilder columns = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
@@ -545,40 +532,18 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectByIdSql(Object id, Class<?> clazz) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-        String tableName = triple.getThird();
-        Field[] fields = triple.getSecond();
+        String tableName = TableParserUtils.getTableName(clazz);
+        Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
+        String primaryKeyColumn = pair.getRight();
+        List<String> columnList = pair.getLeft();
+        String tableColumn = String.join(",", columnList);
         List<Object> parameters = new ArrayList<>();
-        StringBuilder columns = new StringBuilder();
-        StringBuilder whereColumns = new StringBuilder();
-
-        for (Field field : fields) {
-            ReflectUtils.makeAccessible(field);
-            Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
-            }
-            String column = columnAnnotation.value();
-            if (StrUtils.isEmpty(column)) {
-                continue;
-            }
-            boolean primaryKey = columnAnnotation.primaryKey();
-            if (primaryKey) {
-                whereColumns.append(column);
-            }
-            columns.append(column)
-                    .append(",");
-        }
-
-        String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
         parameters.add(id);
-
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableName)
                 .append(" WHERE ")
-                .append(whereColumns)
+                .append(primaryKeyColumn)
                 .append("=?");
-
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
         so.setParameters(parameters);
@@ -593,36 +558,16 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectByIdsSql(Class<?> clazz, List<Object> ids) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-
-        String tableName = triple.getThird();
-        Field[] fields = triple.getSecond();
-        StringBuilder columns = new StringBuilder();
-        StringBuilder whereColumns = new StringBuilder();
-
-        for (Field field : fields) {
-            ReflectUtils.makeAccessible(field);
-            Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
-            }
-            String column = columnAnnotation.value();
-            if (StrUtils.isEmpty(column)) {
-                continue;
-            }
-            boolean primaryKey = columnAnnotation.primaryKey();
-            if (primaryKey) {
-                whereColumns.append(column);
-            }
-            columns.append(column)
-                    .append(",");
-        }
-        String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
+        String tableName = TableParserUtils.getTableName(clazz);
+        Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
+        String primaryKeyColumn = pair.getRight();
+        List<String> columnList = pair.getLeft();
+        String tableColumn = String.join(",", columnList);
 
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableName)
                 .append(" WHERE ")
-                .append(whereColumns)
+                .append(primaryKeyColumn)
                 .append(" IN ");
         // 构建 IN 查询的 SQL 语句
         StringJoiner placeholders = new StringJoiner(",", "(", ")");
@@ -645,36 +590,17 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteByIdSql(Object id, Class<?> clazz) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-        String tableName = triple.getThird();
-        Field[] fields = triple.getSecond();
+        String tableName = TableParserUtils.getTableName(clazz);
+        Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
+        String primaryKeyColumn = pair.getRight();
 
         List<Object> parameters = new ArrayList<>();
-        StringBuilder whereColumns = new StringBuilder();
-
-        for (Field field : fields) {
-            ReflectUtils.makeAccessible(field);
-            Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
-            }
-            String column = columnAnnotation.value();
-            if (StrUtils.isEmpty(column)) {
-                continue;
-            }
-            boolean primaryKey = columnAnnotation.primaryKey();
-            if (primaryKey) {
-                whereColumns.append(column);
-                break;
-            }
-        }
         parameters.add(id);
-
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ")
                 .append(tableName)
                 .append(" WHERE ")
-                .append(whereColumns)
+                .append(primaryKeyColumn)
                 .append("=?");
 
         SqlProvider so = new SqlProvider();
@@ -689,33 +615,14 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider deleteByIdsSql(Class<?> clazz, List<Object> ids) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-        Field[] fields = triple.getSecond();
-        String tableName = triple.getThird();
-
-        StringBuilder whereColumns = new StringBuilder();
-
-        for (Field field : fields) {
-            ReflectUtils.makeAccessible(field);
-            Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
-            }
-            String column = columnAnnotation.value();
-            if (StrUtils.isEmpty(column)) {
-                continue;
-            }
-            boolean primaryKey = columnAnnotation.primaryKey();
-            if (primaryKey) {
-                whereColumns.append(column);
-                break;
-            }
-        }
+        String tableName = TableParserUtils.getTableName(clazz);
+        Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
+        String primaryKeyColumn = pair.getRight();
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ")
                 .append(tableName)
                 .append(" WHERE ")
-                .append(whereColumns)
+                .append(primaryKeyColumn)
                 .append(" IN ");
         // 构建 IN 查询的 SQL 语句
         StringJoiner placeholders = new StringJoiner(",", "(", ")");
@@ -738,31 +645,13 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectCriteriaSql(QueryCriteria criteria, Class<?> clazz) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-        Field[] fields = triple.getSecond();
-        String tableName = triple.getThird();
+        String tableName = TableParserUtils.getTableName(clazz);
 
-        StringBuilder columns = new StringBuilder();
-        String selectSql = criteria.selectSql();
-        String tableColumn;
-        if (StrUtils.isEmpty(selectSql)) {
-            for (Field field : fields) {
-                ReflectUtils.makeAccessible(field);
-                Column columnAnnotation = field.getAnnotation(Column.class);
-                if (columnAnnotation == null) {
-                    continue;
-                }
-                String column = columnAnnotation.value();
-                if (StrUtils.isEmpty(column)) {
-                    continue;
-                }
-                columns.append(column)
-                        .append(",");
-            }
-            tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        } else {
-            columns.append(selectSql);
-            tableColumn = columns.toString();
+        String tableColumn = criteria.selectSql();
+        if (StrUtils.isEmpty(tableColumn)) {
+            Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
+            List<String> columnList = pair.getLeft();
+            tableColumn = String.join(",", columnList);
         }
         String whereSql = criteria.whereSql();
         List<Object> parameters = criteria.getParameters();
@@ -785,38 +674,19 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectLambdaCriteriaSql(LambdaQueryCriteria lambdaCriteria, Class<?> clazz) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-        Field[] fields = triple.getSecond();
-        String tableName = triple.getThird();
+        String tableName = TableParserUtils.getTableName(clazz);
 
-        StringBuilder columns = new StringBuilder();
-        String selectSql = lambdaCriteria.selectSql();
-        String tableColumn;
-        if (StrUtils.isEmpty(selectSql)) {
-            for (Field field : fields) {
-                ReflectUtils.makeAccessible(field);
-                Column columnAnnotation = field.getAnnotation(Column.class);
-                if (columnAnnotation == null) {
-                    continue;
-                }
-                String column = columnAnnotation.value();
-                if (StrUtils.isEmpty(column)) {
-                    continue;
-                }
-                columns.append(column)
-                        .append(",");
-            }
-            tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        } else {
-            columns.append(selectSql);
-            tableColumn = columns.toString();
+        String tableColumn = lambdaCriteria.selectSql();
+        if (StrUtils.isEmpty(tableColumn)) {
+            Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
+            List<String> columnList = pair.getLeft();
+            tableColumn = String.join(",", columnList);
         }
 
         String whereSql = lambdaCriteria.whereSql();
         List<Object> parameters = lambdaCriteria.getParameters();
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableName)
-                .append(whereSql);
+        sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableName).append(whereSql);
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
@@ -832,12 +702,9 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectCountCriteriaSql(QueryCriteria criteria, Class<?> clazz) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-        String tableName = triple.getThird();
-
+        String tableName = TableParserUtils.getTableName(clazz);
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT COUNT(*) FROM ").append(tableName).append(criteria.whereSql());
-
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
         so.setParameters(criteria.getParameters());
@@ -852,12 +719,9 @@ public class SqlGenerator {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider selectCountLambdaCriteriaSql(LambdaQueryCriteria lambdaCriteria, Class<?> clazz) {
-        Triple<Class<?>, Field[], String> triple = ReflectUtils.resolveByClass(clazz);
-        String tableName = triple.getThird();
-
+        String tableName = TableParserUtils.getTableName(clazz);
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT COUNT(*) FROM ").append(tableName).append(lambdaCriteria.whereSql());
-
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
         so.setParameters(lambdaCriteria.getParameters());
