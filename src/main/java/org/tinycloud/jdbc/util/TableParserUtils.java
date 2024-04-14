@@ -26,7 +26,7 @@ public class TableParserUtils {
 
 
     /**
-     * 获取字段列表-根据
+     * 获取属性列表-Field
      *
      * @param entity 实体类对象
      * @param <T>    泛型
@@ -40,11 +40,12 @@ public class TableParserUtils {
     }
 
     /**
-     * 获取字段列表-根据
+     * 获取属性列表-Field
      *
      * @param clazz 对象类型
+     * @param <T>   泛型
      */
-    public static <T> Field[] resolveFields(Class<?> clazz) {
+    public static <T> Field[] resolveFields(Class<T> clazz) {
         Field[] fields = ReflectUtils.getFields(clazz);
         if (fields == null || fields.length == 0) {
             throw new TinyJdbcException("resolveFields " + clazz.getName() + " no field defined");
@@ -52,7 +53,13 @@ public class TableParserUtils {
         return fields;
     }
 
-
+    /**
+     * 获取表名
+     *
+     * @param entity 实体类对象
+     * @param <T>    泛型
+     * @return 表名字符串
+     */
     public static <T> String getTableName(T entity) {
         if (entity == null) {
             throw new TinyJdbcException("getTableName entity cannot be null");
@@ -61,6 +68,13 @@ public class TableParserUtils {
         return getTableName(clazz);
     }
 
+    /**
+     * 获取表名
+     *
+     * @param clazz 实体类类型
+     * @param <T>   泛型
+     * @return 表名字符串
+     */
     public static <T> String getTableName(Class<T> clazz) {
         String tableName = tableNameCache.get(clazz);
         if (StrUtils.isNotEmpty(tableName)) {
@@ -78,6 +92,13 @@ public class TableParserUtils {
         return tableName;
     }
 
+    /**
+     * 获取实体类对应数据库字段列表和主键字段值
+     *
+     * @param entity 实体类
+     * @param <T>    泛型
+     * @return Pair，左数据库字段列表，右主键字段值
+     */
     public static <T> Pair<List<String>, String> getTableColumn(T entity) {
         if (entity == null) {
             throw new TinyJdbcException("getTableColumn entity cannot be null");
@@ -86,6 +107,13 @@ public class TableParserUtils {
         return getTableColumn(clazz);
     }
 
+    /**
+     * 获取实体类对应数据库字段列表和主键字段值
+     *
+     * @param clazz 实体类类型
+     * @param <T>   泛型
+     * @return Pair，左数据库字段列表，右主键字段值
+     */
     public static <T> Pair<List<String>, String> getTableColumn(Class<T> clazz) {
         Pair<List<String>, String> tableColumn = tableColumnCache.get(clazz);
         if (tableColumn != null) {
