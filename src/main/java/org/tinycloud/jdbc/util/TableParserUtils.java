@@ -8,6 +8,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -120,7 +121,7 @@ public class TableParserUtils {
             return tableColumn;
         }
         Field[] fields = resolveFields(clazz);
-        String primaryKeyColumn = "";
+        String primaryKeyColumn = null;
         List<String> columnList = new ArrayList<>();
         for (Field field : fields) {
             Column columnAnnotation = field.getAnnotation(Column.class);
@@ -129,7 +130,9 @@ public class TableParserUtils {
             }
             columnList.add(columnAnnotation.value());
             if (columnAnnotation.primaryKey()) {
-                primaryKeyColumn = columnAnnotation.value();
+                if (primaryKeyColumn == null) {
+                    primaryKeyColumn = columnAnnotation.value();
+                }
             }
         }
         tableColumn = new Pair<>(columnList, primaryKeyColumn);
