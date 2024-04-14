@@ -8,7 +8,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -21,9 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class TableParserUtils {
 
-    private static final Map<Class<?>, String> tableNameCache = new ConcurrentHashMap<>(256);
+    private static final Map<Class<?>, String> tableNameCache = new ConcurrentHashMap<>(128);
 
-    private static final Map<Class<?>, Pair<List<String>, String>> tableColumnCache = new ConcurrentHashMap<>(256);
+    private static final Map<Class<?>, Pair<List<String>, String>> tableColumnCache = new ConcurrentHashMap<>(128);
 
 
     /**

@@ -1,12 +1,11 @@
 package org.tinycloud.jdbc.util;
 
-import org.springframework.util.ConcurrentReferenceHashMap;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,12 +26,12 @@ public class ReflectUtils {
     /**
      * Cache for {@link Class#getDeclaredMethods()} plus equivalent default methods
      */
-    private static final Map<Class<?>, Method[]> declaredMethodsCache = new ConcurrentReferenceHashMap<>(256);
+    private static final Map<Class<?>, Method[]> declaredMethodsCache = new ConcurrentHashMap<>(128);
 
     /**
      * Cache for {@link Class#getDeclaredFields()}, allowing for fast iteration.
      */
-    private static final Map<Class<?>, Field[]> declaredFieldsCache = new ConcurrentReferenceHashMap<>(256);
+    private static final Map<Class<?>, Field[]> declaredFieldsCache = new ConcurrentHashMap<>(128);
 
 
     /**
