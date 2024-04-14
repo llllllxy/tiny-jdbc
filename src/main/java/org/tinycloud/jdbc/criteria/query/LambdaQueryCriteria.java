@@ -12,12 +12,12 @@ import org.tinycloud.jdbc.criteria.TypeFunction;
  * @author liuxingyu01
  * @since 2023-08-02
  **/
-public class LambdaQueryCriteria extends AbstractLambdaCriteria<LambdaQueryCriteria> {
+public class LambdaQueryCriteria<T> extends AbstractLambdaCriteria<T, LambdaQueryCriteria<T>> {
 
     @SafeVarargs
-    public final <T, R> LambdaQueryCriteria select(TypeFunction<T, R>... field) {
+    public final LambdaQueryCriteria<T> select(TypeFunction<T, ?>... field) {
         if (!ObjectUtils.isEmpty(field)) {
-            for (TypeFunction<T, R> f : field) {
+            for (TypeFunction<T, ?> f : field) {
                 String columnName = getColumnName(f);
                 selectFields.add(columnName);
             }
@@ -25,7 +25,7 @@ public class LambdaQueryCriteria extends AbstractLambdaCriteria<LambdaQueryCrite
         return this;
     }
 
-    public <T, R> LambdaQueryCriteria orderBy(TypeFunction<T, R> field, boolean desc) {
+    public LambdaQueryCriteria<T> orderBy(TypeFunction<T, ?> field, boolean desc) {
         String columnName = getColumnName(field);
         if (desc) {
             columnName += " DESC";
@@ -34,14 +34,14 @@ public class LambdaQueryCriteria extends AbstractLambdaCriteria<LambdaQueryCrite
         return this;
     }
 
-    public <T, R> LambdaQueryCriteria orderBy(TypeFunction<T, R> field) {
+    public LambdaQueryCriteria<T> orderBy(TypeFunction<T, ?> field) {
         String columnName = getColumnName(field);
         orderBy.add(columnName);
         return this;
     }
 
     @Override
-    protected LambdaQueryCriteria instance() {
-        return new LambdaQueryCriteria();
+    protected LambdaQueryCriteria<T> instance() {
+        return new LambdaQueryCriteria<>();
     }
 }

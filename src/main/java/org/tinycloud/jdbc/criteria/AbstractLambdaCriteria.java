@@ -14,14 +14,14 @@ import java.util.function.Consumer;
  * @since 2024-04-03 14:40
  */
 @SuppressWarnings({"unchecked"})
-public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCriteria<Children>> extends Criteria {
+public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaCriteria<T, Children>> extends Criteria<T> {
 
     /**
      * 占位符
      */
     protected final Children typedThis = (Children) this;
 
-    public <T, R> Children lt(TypeFunction<T, R> field, R value) {
+    public <R> Children lt(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " < " + "?";
         conditions.add(condition);
@@ -29,7 +29,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orLt(TypeFunction<T, R> field, R value) {
+    public <R> Children orLt(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " < " + "?";
         conditions.add(condition);
@@ -37,7 +37,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children lte(TypeFunction<T, R> field, R value) {
+    public <R> Children lte(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " <= " + "?";
         conditions.add(condition);
@@ -45,7 +45,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orLte(TypeFunction<T, R> field, R value) {
+    public <R> Children orLte(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " <= " + "?";
         conditions.add(condition);
@@ -53,7 +53,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children gt(TypeFunction<T, R> field, R value) {
+    public <R> Children gt(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " > " + "?";
         conditions.add(condition);
@@ -61,7 +61,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orGt(TypeFunction<T, R> field, R value) {
+    public <R> Children orGt(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " > " + "?";
         conditions.add(condition);
@@ -69,7 +69,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children gte(TypeFunction<T, R> field, R value) {
+    public <R> Children gte(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " >= " + "?";
         conditions.add(condition);
@@ -77,7 +77,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orGte(TypeFunction<T, R> field, R value) {
+    public <R> Children orGte(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " >= " + "?";
         conditions.add(condition);
@@ -85,7 +85,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children eq(TypeFunction<T, R> field, R value) {
+    public <R> Children eq(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " = " + "?";
         conditions.add(condition);
@@ -93,7 +93,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orEq(TypeFunction<T, R> field, R value) {
+    public <R> Children orEq(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " = " + "?";
         conditions.add(condition);
@@ -101,7 +101,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children notEq(TypeFunction<T, R> field, R value) {
+    public <R> Children notEq(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " <> " + "?";
         conditions.add(condition);
@@ -109,7 +109,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orNotEq(TypeFunction<T, R> field, R value) {
+    public <R> Children orNotEq(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " <> " + "?";
         conditions.add(condition);
@@ -117,35 +117,35 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children isNull(TypeFunction<T, R> field) {
+    public <R> Children isNull(TypeFunction<T, ?> field) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " IS NULL";
         conditions.add(condition);
         return typedThis;
     }
 
-    public <T, R> Children orIsNull(TypeFunction<T, R> field) {
+    public <R> Children orIsNull(TypeFunction<T, ?> field) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " IS NULL";
         conditions.add(condition);
         return typedThis;
     }
 
-    public <T, R> Children isNotNull(TypeFunction<T, R> field) {
+    public <R> Children isNotNull(TypeFunction<T, ?> field) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " IS NOT NULL";
         conditions.add(condition);
         return typedThis;
     }
 
-    public <T, R> Children orIsNotNull(TypeFunction<T, R> field) {
+    public <R> Children orIsNotNull(TypeFunction<T, ?> field) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " IS NOT NULL";
         conditions.add(condition);
         return typedThis;
     }
 
-    public <T, R> Children in(TypeFunction<T, R> field, List<R> values) {
+    public <R> Children in(TypeFunction<T, ?> field, List<R> values) {
         String columnName = getColumnName(field);
         StringBuilder condition = new StringBuilder();
         condition.append(" AND ").append(columnName).append(" IN (");
@@ -161,7 +161,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orIn(TypeFunction<T, R> field, List<R> values) {
+    public <R> Children orIn(TypeFunction<T, ?> field, List<R> values) {
         String columnName = getColumnName(field);
         StringBuilder condition = new StringBuilder();
         condition.append(" OR ").append(columnName).append(" IN (");
@@ -177,7 +177,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children notIn(TypeFunction<T, R> field, List<R> values) {
+    public <R> Children notIn(TypeFunction<T, ?> field, List<R> values) {
         String columnName = getColumnName(field);
         StringBuilder condition = new StringBuilder();
         condition.append(" AND ").append(columnName).append(" NOT IN (");
@@ -193,7 +193,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orNotIn(TypeFunction<T, R> field, List<R> values) {
+    public <R> Children orNotIn(TypeFunction<T, ?> field, List<R> values) {
         String columnName = getColumnName(field);
         StringBuilder condition = new StringBuilder();
         condition.append(" OR ").append(columnName).append(" NOT IN (");
@@ -209,7 +209,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children like(TypeFunction<T, R> field, R value) {
+    public <R> Children like(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " LIKE ?";
         conditions.add(condition);
@@ -217,7 +217,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orLike(TypeFunction<T, R> field, R value) {
+    public <R> Children orLike(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " LIKE ?";
         conditions.add(condition);
@@ -225,7 +225,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children notLike(TypeFunction<T, R> field, R value) {
+    public <R> Children notLike(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " NOT LIKE ?";
         conditions.add(condition);
@@ -233,7 +233,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orNotLike(TypeFunction<T, R> field, R value) {
+    public <R> Children orNotLike(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " NOT LIKE ?";
         conditions.add(condition);
@@ -241,7 +241,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children leftLike(TypeFunction<T, R> field, R value) {
+    public <R> Children leftLike(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " LIKE ?";
         conditions.add(condition);
@@ -249,7 +249,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orLeftLike(TypeFunction<T, R> field, R value) {
+    public <R> Children orLeftLike(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " LIKE ?";
         conditions.add(condition);
@@ -257,7 +257,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children notLeftLike(TypeFunction<T, R> field, R value) {
+    public <R> Children notLeftLike(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " NOT LIKE ?";
         conditions.add(condition);
@@ -265,7 +265,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orNotLeftLike(TypeFunction<T, R> field, R value) {
+    public <R> Children orNotLeftLike(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " NOT LIKE ?";
         conditions.add(condition);
@@ -273,7 +273,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children rightLike(TypeFunction<T, R> field, R value) {
+    public <R> Children rightLike(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " LIKE ?";
         conditions.add(condition);
@@ -281,7 +281,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orRightLike(TypeFunction<T, R> field, R value) {
+    public <R> Children orRightLike(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " LIKE ?";
         conditions.add(condition);
@@ -289,7 +289,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children notRightLike(TypeFunction<T, R> field, R value) {
+    public <R> Children notRightLike(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " AND " + columnName + " NOT LIKE ?";
         conditions.add(condition);
@@ -297,7 +297,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orNotRightLike(TypeFunction<T, R> field, R value) {
+    public <R> Children orNotRightLike(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         String condition = " OR " + columnName + " NOT LIKE ?";
         conditions.add(condition);
@@ -305,7 +305,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children between(TypeFunction<T, R> field, R start, R end) {
+    public <R> Children between(TypeFunction<T, ?> field, R start, R end) {
         String columnName = getColumnName(field);
         String condition = " AND " + "(" + columnName + " BETWEEN " +
                 "?" +
@@ -317,7 +317,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orBetween(TypeFunction<T, R> field, R start, R end) {
+    public <R> Children orBetween(TypeFunction<T, ?> field, R start, R end) {
         String columnName = getColumnName(field);
         String condition = " OR " + "(" + columnName + " BETWEEN " +
                 "?" +
@@ -329,7 +329,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children notBetween(TypeFunction<T, R> field, R start, R end) {
+    public <R> Children notBetween(TypeFunction<T, ?> field, R start, R end) {
         String columnName = getColumnName(field);
         String condition = " AND " + "(" + columnName + " NOT BETWEEN " +
                 "?" +
@@ -341,7 +341,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
         return typedThis;
     }
 
-    public <T, R> Children orNotBetween(TypeFunction<T, R> field, R start, R end) {
+    public <R> Children orNotBetween(TypeFunction<T, ?> field, R start, R end) {
         String columnName = getColumnName(field);
         String condition = " OR " + "(" + columnName + " NOT BETWEEN " +
                 "?" +
@@ -378,7 +378,7 @@ public abstract class AbstractLambdaCriteria<Children extends AbstractLambdaCrit
      */
     protected abstract Children instance();
 
-    public <T, R> String getColumnName(TypeFunction<T, R> field) {
+    public String getColumnName(TypeFunction<T, ?> field) {
         String fieldName = LambdaUtils.getLambdaColumnName(field);
         return fieldName;
     }

@@ -2,7 +2,6 @@ package org.tinycloud.jdbc.criteria.update;
 
 import org.tinycloud.jdbc.criteria.AbstractLambdaCriteria;
 import org.tinycloud.jdbc.criteria.TypeFunction;
-import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 
 /**
  * <p>
@@ -11,9 +10,9 @@ import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
  * @author liuxingyu01
  * @since 2024-04-03 14:36
  */
-public class LambdaUpdateCriteria extends AbstractLambdaCriteria<LambdaUpdateCriteria> {
+public class LambdaUpdateCriteria<T> extends AbstractLambdaCriteria<T, LambdaUpdateCriteria<T>> {
 
-    public <T, R> LambdaUpdateCriteria set(TypeFunction<T, R> field, R value) {
+    public <R> LambdaUpdateCriteria<T> set(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         updateFields.add(columnName + "=?");
         parameters.add(value);
@@ -21,7 +20,7 @@ public class LambdaUpdateCriteria extends AbstractLambdaCriteria<LambdaUpdateCri
     }
 
     @Override
-    protected LambdaUpdateCriteria instance() {
-        return new LambdaUpdateCriteria();
+    protected LambdaUpdateCriteria<T> instance() {
+        return new LambdaUpdateCriteria<>();
     }
 }

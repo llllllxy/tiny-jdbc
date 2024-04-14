@@ -13,7 +13,7 @@ import java.util.function.Consumer;
  * @since 2024-04-03 14:39
  */
 @SuppressWarnings({"unchecked"})
-public abstract class AbstractCriteria<Children extends AbstractCriteria<Children>> extends Criteria {
+public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, Children>> extends Criteria<T> {
 
     /**
      * 占位符

@@ -287,7 +287,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public List<T> select(QueryCriteria criteria) {
+    public List<T> select(QueryCriteria<T> criteria) {
         if (criteria == null) {
             throw new TinyJdbcException("select criteria cannot be null");
         }
@@ -296,7 +296,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public List<T> select(LambdaQueryCriteria lambdaCriteria) {
+    public List<T> select(LambdaQueryCriteria<T> lambdaCriteria) {
         if (lambdaCriteria == null) {
             throw new TinyJdbcException("select lambdaCriteria cannot be null");
         }
@@ -331,7 +331,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public Page<T> paginate(QueryCriteria criteria, Page<T> page) {
+    public Page<T> paginate(QueryCriteria<T> criteria, Page<T> page) {
         if (criteria == null) {
             throw new TinyJdbcException("paginate criteria cannot be null");
         }
@@ -357,7 +357,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public Page<T> paginate(LambdaQueryCriteria lambdaCriteria, Page<T> page) {
+    public Page<T> paginate(LambdaQueryCriteria<T> lambdaCriteria, Page<T> page) {
         if (lambdaCriteria == null) {
             throw new TinyJdbcException("paginate lambdaCriteria cannot be null");
         }
@@ -383,7 +383,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public Long selectCount(QueryCriteria criteria) {
+    public Long selectCount(QueryCriteria<T> criteria) {
         if (criteria == null) {
             throw new TinyJdbcException("criteria cannot be null");
         }
@@ -392,7 +392,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public Long selectCount(LambdaQueryCriteria lambdaCriteria) {
+    public Long selectCount(LambdaQueryCriteria<T> lambdaCriteria) {
         if (lambdaCriteria == null) {
             throw new TinyJdbcException("lambdaCriteria cannot be null");
         }
@@ -471,17 +471,17 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public int update(T entity, UpdateCriteria criteria) {
+    public int update(T entity, UpdateCriteria<T> criteria) {
         return update(entity, true, criteria);
     }
 
     @Override
-    public int update(T entity, LambdaUpdateCriteria lambdaCriteria) {
+    public int update(T entity, LambdaUpdateCriteria<T> lambdaCriteria) {
         return update(entity, true, lambdaCriteria);
     }
 
     @Override
-    public int update(T entity, boolean ignoreNulls, UpdateCriteria criteria) {
+    public int update(T entity, boolean ignoreNulls, UpdateCriteria<T> criteria) {
         if (entity == null) {
             throw new TinyJdbcException("update entity cannot be null");
         }
@@ -496,7 +496,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria criteria) {
+    public int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria<T> criteria) {
         if (entity == null) {
             throw new TinyJdbcException("update entity cannot be null");
         }
@@ -511,7 +511,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public int update(UpdateCriteria criteria) {
+    public int update(UpdateCriteria<T> criteria) {
         if (criteria == null) {
             throw new TinyJdbcException("criteria cannot be null");
         }
@@ -523,7 +523,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public int update(LambdaUpdateCriteria lambdaCriteria) {
+    public int update(LambdaUpdateCriteria<T> lambdaCriteria) {
         if (lambdaCriteria == null) {
             throw new TinyJdbcException("lambdaCriteria cannot be null");
         }
@@ -547,7 +547,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public int delete(LambdaUpdateCriteria criteria) {
+    public int delete(LambdaUpdateCriteria<T> criteria) {
         if (criteria == null) {
             throw new TinyJdbcException("delete lambdaCriteria cannot be null");
         }
@@ -559,7 +559,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public int delete(UpdateCriteria criteria) {
+    public int delete(UpdateCriteria<T> criteria) {
         if (criteria == null) {
             throw new TinyJdbcException("delete criteria cannot be null");
         }

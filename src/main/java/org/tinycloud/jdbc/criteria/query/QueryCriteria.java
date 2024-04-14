@@ -13,16 +13,16 @@ import java.util.Arrays;
  * @author liuxingyu01
  * @since 2023-08-02
  **/
-public class QueryCriteria extends AbstractCriteria<QueryCriteria> {
+public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
 
-    public <R> QueryCriteria select(String... field) {
+    public final QueryCriteria<T> select(String... field) {
         if (!ObjectUtils.isEmpty(field)) {
             selectFields.addAll(Arrays.asList(field));
         }
         return this;
     }
 
-    public QueryCriteria orderBy(String field, boolean desc) {
+    public final QueryCriteria<T> orderBy(String field, boolean desc) {
         String orderByString = field;
         if (desc) {
             orderByString += " DESC";
@@ -31,14 +31,14 @@ public class QueryCriteria extends AbstractCriteria<QueryCriteria> {
         return this;
     }
 
-    public QueryCriteria orderBy(String field) {
+    public final QueryCriteria<T> orderBy(String field) {
         String orderByString = field;
         orderBy.add(orderByString);
         return this;
     }
 
     @Override
-    protected QueryCriteria instance() {
-        return new QueryCriteria();
+    protected QueryCriteria<T> instance() {
+        return new QueryCriteria<T>();
     }
 }

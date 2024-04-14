@@ -12,7 +12,7 @@ import java.util.List;
  * @author liuxingyu01
  * @since 2023-08-02
  **/
-public abstract class Criteria {
+public abstract class Criteria<T> {
 
     /**
      * 查询字段-键
