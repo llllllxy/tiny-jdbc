@@ -43,7 +43,7 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
     public IPageHandle pageHandle(@Autowired DataSource dataSource) {
         DbType dbType = DbTypeUtils.getDbType(dataSource);
         if (logger.isInfoEnabled()) {
-            logger.info("TinyJdbcAutoConfiguration pageHandle dbType={}", dbType.getName());
+            logger.info("TinyJdbc dbType: {}", dbType.getName());
         }
         IPageHandle pageHandle;
         if (dbType == DbType.MYSQL) {
@@ -106,7 +106,7 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
             pageHandle = new MysqlPageHandleImpl();
         }
         if (logger.isInfoEnabled()) {
-            logger.info("TinyJdbcAutoConfiguration pageHandle is running!");
+            logger.info("TinyJdbc started successfully, version: 1.6.3!");
         }
         return pageHandle;
     }

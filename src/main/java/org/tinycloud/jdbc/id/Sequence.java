@@ -199,8 +199,9 @@ public class Sequence {
     }
 
     private void printLog() {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Initialization Sequence datacenterId:" + this.datacenterId + " workerId:" + this.workerId);
+        if (logger.isInfoEnabled()) {
+            logger.info("Initialization Sequence network:" + inetAddress.getHostName() + "/" + inetAddress.getHostAddress());
+            logger.info("Initialization Sequence datacenterId:" + this.datacenterId + " workerId:" + this.workerId);
         }
     }
 }
