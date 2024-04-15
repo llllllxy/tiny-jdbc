@@ -214,7 +214,7 @@ public class SqlGenerator {
      * @param criteria    条件构造器
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider updateByEntityAndCriteriaSql(Object object, boolean ignoreNulls, UpdateCriteria criteria) {
+    public static <T> SqlProvider updateByEntityAndCriteriaSql(Object object, boolean ignoreNulls, UpdateCriteria<T> criteria) {
         String criteriaSql = criteria.whereSql();
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new TinyJdbcException("SqlGenerator updateByCriteriaSql criteria can not null or empty!");
@@ -270,7 +270,7 @@ public class SqlGenerator {
      * @param criteria    条件构造器Lambda
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider updateByEntityAndLambdaCriteriaSql(Object object, boolean ignoreNulls, LambdaUpdateCriteria criteria) {
+    public static <T> SqlProvider updateByEntityAndLambdaCriteriaSql(Object object, boolean ignoreNulls, LambdaUpdateCriteria<T> criteria) {
         String criteriaSql = criteria.whereSql();
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new TinyJdbcException("SqlGenerator updateByLambdaCriteriaSql criteria can not null or empty!");
@@ -326,7 +326,7 @@ public class SqlGenerator {
      * @param criteria 条件构造器
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider updateByCriteriaSql(UpdateCriteria criteria, Class<?> clazz) {
+    public static <T> SqlProvider updateByCriteriaSql(UpdateCriteria<T> criteria, Class<?> clazz) {
         String whereSql = criteria.whereSql();
         String updateSql = criteria.updateSql();
         if (StrUtils.isEmpty(whereSql) || !whereSql.contains("WHERE")) {
@@ -354,7 +354,7 @@ public class SqlGenerator {
      * @param criteria 条件构造器
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider updateByLambdaCriteriaSql(LambdaUpdateCriteria criteria, Class<?> clazz) {
+    public static <T> SqlProvider updateByLambdaCriteriaSql(LambdaUpdateCriteria<T> criteria, Class<?> clazz) {
         String whereSql = criteria.whereSql();
         String updateSql = criteria.updateSql();
         if (StrUtils.isEmpty(whereSql) || !whereSql.contains("WHERE")) {
@@ -432,7 +432,7 @@ public class SqlGenerator {
      * @param criteria 条件构造器
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider deleteCriteriaSql(UpdateCriteria criteria, Class<?> clazz) {
+    public static <T> SqlProvider deleteCriteriaSql(UpdateCriteria<T> criteria, Class<?> clazz) {
         String criteriaSql = criteria.whereSql();
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new TinyJdbcException("SqlGenerator deleteCriteriaSql criteria can not null or empty!");
@@ -452,7 +452,7 @@ public class SqlGenerator {
      * @param criteria 条件构造器Lambda
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider deleteLambdaCriteriaSql(LambdaUpdateCriteria criteria, Class<?> clazz) {
+    public static <T> SqlProvider deleteLambdaCriteriaSql(LambdaUpdateCriteria<T> criteria, Class<?> clazz) {
         String criteriaSql = criteria.whereSql();
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new TinyJdbcException("SqlGenerator deleteLambdaCriteriaSql criteria can not null or empty!");
@@ -463,6 +463,19 @@ public class SqlGenerator {
         SqlProvider so = new SqlProvider();
         so.setSql("DELETE FROM " + tableName + criteriaSql);
         so.setParameters(parameters);
+        return so;
+    }
+
+    /**
+     * 构建TRUNCATE SQL
+     *
+     * @param clazz Entity类型
+     * @return 组装完毕的SqlProvider
+     */
+    public static SqlProvider truncateSql(Class<?> clazz) {
+        String tableName = TableParserUtils.getTableName(clazz);
+        SqlProvider so = new SqlProvider();
+        so.setSql("TRUNCATE TABLE " + tableName);
         return so;
     }
 
@@ -644,7 +657,7 @@ public class SqlGenerator {
      * @param clazz    实体类Entity.class
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider selectCriteriaSql(QueryCriteria criteria, Class<?> clazz) {
+    public static <T> SqlProvider selectCriteriaSql(QueryCriteria<T> criteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
 
         String tableColumn = criteria.selectSql();
@@ -673,7 +686,7 @@ public class SqlGenerator {
      * @param clazz          实体类Entity.class
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider selectLambdaCriteriaSql(LambdaQueryCriteria lambdaCriteria, Class<?> clazz) {
+    public static <T> SqlProvider selectLambdaCriteriaSql(LambdaQueryCriteria<T> lambdaCriteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
 
         String tableColumn = lambdaCriteria.selectSql();
@@ -701,7 +714,7 @@ public class SqlGenerator {
      * @param criteria 条件构造器
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider selectCountCriteriaSql(QueryCriteria criteria, Class<?> clazz) {
+    public static <T> SqlProvider selectCountCriteriaSql(QueryCriteria<T> criteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT COUNT(*) FROM ").append(tableName).append(criteria.whereSql());
@@ -718,7 +731,7 @@ public class SqlGenerator {
      * @param lambdaCriteria 条件构造器lambda
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider selectCountLambdaCriteriaSql(LambdaQueryCriteria lambdaCriteria, Class<?> clazz) {
+    public static <T> SqlProvider selectCountLambdaCriteriaSql(LambdaQueryCriteria<T> lambdaCriteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT COUNT(*) FROM ").append(tableName).append(lambdaCriteria.whereSql());

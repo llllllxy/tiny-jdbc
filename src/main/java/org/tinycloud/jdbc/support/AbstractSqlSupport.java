@@ -53,13 +53,8 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         rowMapper = BeanPropertyRowMapper.newInstance(entityClass);
     }
 
-    /**
-     * 执行查询sql
-     *
-     * @param sql    要执行的SQL
-     * @param params 要绑定到查询的参数 ，可以不传
-     * @return 查询结果
-     */
+    // ---------------------------------ISqlSupport开始---------------------------------
+
     @Override
     public List<T> select(String sql, Object... params) {
         List<T> resultList;
@@ -72,15 +67,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         return resultList;
     }
 
-    /**
-     * 执行查询sql，自定义返回类型clazz
-     *
-     * @param sql    要执行的SQL
-     * @param clazz  实体类类型
-     * @param params 要绑定到查询的参数 ，可以不传
-     * @param <F>    泛型
-     * @return 查询结果
-     */
     @Override
     public <F> List<F> select(String sql, Class<F> clazz, Object... params) {
         List<F> resultList;
@@ -93,40 +79,17 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         return resultList;
     }
 
-    /**
-     * 执行查询sql，（固定返回List<Map<String, Object>>）
-     *
-     * @param sql    要执行的sql
-     * @param params 要绑定到查询的参数
-     * @return Map<String, Object>
-     */
     @Override
     public List<Map<String, Object>> selectMap(String sql, Object... params) {
         return getJdbcTemplate().queryForList(sql, params);
     }
 
-    /**
-     * 执行查询sql，有查询条件，结果返回第一条（固定返回Map<String, Object>）
-     *
-     * @param sql    要执行的sql
-     * @param params 要绑定到查询的参数
-     * @return Map<String, Object>
-     */
     @Override
     public Map<String, Object> selectOneMap(String sql, final Object... params) {
         List<Map<String, Object>> resultList = getJdbcTemplate().queryForList(sql, params);
         return DataAccessUtils.singleResult(resultList);
     }
 
-    /**
-     * 查询一个值（常用于查count等）
-     *
-     * @param sql    要执行的SQL查询
-     * @param clazz  实体类类型
-     * @param params 要绑定到查询的参数
-     * @param <F>    泛型
-     * @return F
-     */
     @Override
     public <F> F selectOneColumn(String sql, Class<F> clazz, Object... params) {
         F result;
@@ -138,14 +101,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         return result;
     }
 
-    /**
-     * 分页查询（带参数）
-     *
-     * @param sql    要执行的SQL
-     * @param page   分页参数
-     * @param params ？参数
-     * @return Page<T>
-     */
     @Override
     public Page<T> paginate(String sql, Page<T> page, final Object... params) {
         if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
@@ -168,15 +123,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         return page;
     }
 
-    /**
-     * 分页查询（带参数）
-     *
-     * @param sql    要执行的SQL
-     * @param clazz  实体类型
-     * @param page   分页参数
-     * @param params ？参数
-     * @return Page<F>
-     */
     @Override
     public <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params) {
         if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
@@ -199,14 +145,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         return page;
     }
 
-
-    /**
-     * 执行删除，插入，更新操作
-     *
-     * @param sql    要执行的SQL
-     * @param params 要绑定到SQL的参数
-     * @return 成功的条数
-     */
     @Override
     public int execute(String sql, final Object... params) {
         int num = 0;
@@ -250,8 +188,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         }
         return num;
     }
-
-    // ---------------------------------ISqlSupport结束---------------------------------
 
 
     // ---------------------------------IObjectSupport开始---------------------------------
@@ -594,7 +530,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
-
     @Override
     public int[] batchInsert(Collection<T> collection) {
         if (CollectionUtils.isEmpty(collection)) {
@@ -615,5 +550,11 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         }
         row = getJdbcTemplate().batchUpdate(sql, batchArgs);
         return row;
+    }
+
+    @Override
+    public int truncate() {
+        SqlProvider sqlProvider = SqlGenerator.truncateSql(entityClass);
+        return getJdbcTemplate().update(sqlProvider.getSql());
     }
 }

@@ -179,6 +179,14 @@ public interface IObjectSupport<T, ID> {
     }
 
     /**
+     * 清空表
+     * truncate table操作的返回值是0
+     *
+     * @return 0
+     */
+    int truncate();
+
+    /**
      * 批量持久化插入给定的实例
      *
      * @param collection 实例集合
