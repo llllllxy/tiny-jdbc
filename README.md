@@ -43,7 +43,7 @@
 
 ### 支持数据库
 
-- 分页插件目前支持MySQL、ORACLE、DB2、PostgreSql、SQLITE、H2
+- 分页插件目前支持MySQL、MARIADB、ORACLE、DB2、PostgreSql、SQLite、H2、OceanBase、openGauss、informix、达梦数据库、瀚高数据库等常见数据库
 - 其他操作支持任何使用标准 SQL 的数据库
 
 ## 2、快速开始
@@ -51,7 +51,6 @@
 ### 引入Maven依赖
 
 ```xml
-
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-jdbc</artifactId>
@@ -59,7 +58,7 @@
 <dependency>
     <groupId>top.lxyccc</groupId>
     <artifactId>tiny-jdbc-boot-starter</artifactId>
-    <version>1.6.2</version>
+    <version>1.7.0</version>
 </dependency>
 ```
 
@@ -281,18 +280,18 @@ public class UploadFileService {
 |`T selectByIds(List<ID> ids);`|根据主键ID值列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
 |`T selectByIds(ID... id);`|根据主键ID值可变参数列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
 |`List<T> select(T entity);`|实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
-|`List<T> select(QueryCriteria criteria);`|根据查询构造器查询，返回多条，类型使用的是xxxDao<T>的类型|
-|`List<T> select(LambdaQueryCriteria lambdaCriteria);`|根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
+|`List<T> select(QueryCriteria<T> criteria);`|根据查询构造器查询，返回多条，类型使用的是xxxDao<T>的类型|
+|`List<T> select(LambdaQueryCriteria<T> lambdaCriteria);`|根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
 |`T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
-|`T selectOne(QueryCriteria criteria);`|根据查询构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型|
-|`T selectOne(LambdaQueryCriteria lambdaCriteria);`|根据查询构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型|
+|`T selectOne(QueryCriteria<T> criteria);`|根据查询构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型|
+|`T selectOne(LambdaQueryCriteria<T> lambdaCriteria);`|根据查询构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型|
 |`Page<T> paginate(T entity, Page<T> page);`|根据实体类里面非null的属性作为查询条件，执行分页查询，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(QueryCriteria criteria, Page<T> page);`|根据查询构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(LambdaQueryCriteria lambdaCriteria, Page<T> page);`|根据查询构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
-|`Long selectCount(QueryCriteria criteria);`|根据查询构造器执行总记录数查询，返回符合条件的总记录数量|
-|`Long selectCount(LambdaQueryCriteria lambdaCriteria);`|根据查询构造器(lambda)执行总记录数查询，返回符合条件的总记录数量|
-|`boolean exists(QueryCriteria criteria);`|根据查询构造器执行查询记录是否存在，返回true或者false|
-|`boolean exists(LambdaQueryCriteria lambdaCriteria);`|根据查询构造器(lambda)执行查询记录是否存在，返回true或者false|
+|`Page<T> paginate(QueryCriteria<T> criteria, Page<T> page);`|根据查询构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Page<T> paginate(LambdaQueryCriteria<T> lambdaCriteria, Page<T> page);`|根据查询构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
+|`Long selectCount(QueryCriteria<T> criteria);`|根据查询构造器执行总记录数查询，返回符合条件的总记录数量|
+|`Long selectCount(LambdaQueryCriteria<T> lambdaCriteria);`|根据查询构造器(lambda)执行总记录数查询，返回符合条件的总记录数量|
+|`boolean exists(QueryCriteria<T> criteria);`|根据查询构造器执行查询记录是否存在，返回true或者false|
+|`boolean exists(LambdaQueryCriteria<T> lambdaCriteria);`|根据查询构造器(lambda)执行查询记录是否存在，返回true或者false|
 
 ### 插入操作
 
@@ -302,20 +301,21 @@ public class UploadFileService {
 |`int insert(T entity);`|插入entity里的数据，忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值|
 |`int insert(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值|
 |`Long insertReturnAutoIncrement(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，并且返回自增的主键|
+|`Long insertReturnAutoIncrement(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里值为null的属性，并且返回自增的主键|
 
 ### 更新操作
 
 |方法|说明|
 |---|---|
 |`int update(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行修改|
-|`int update(T entity, UpdateCriteria criteria);`|根据entity里的值和条件构造器，执行修改，默认忽略entity里值为null的属性|
-|`int update(T entity, LambdaUpdateCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改，默认忽略entity里值为null的属性|
-|`int update(T entity, boolean ignoreNulls, UpdateCriteria criteria);`|根据entity里的值和条件构造器，执行修改，可选择是否忽略entity里值为null的属性|
-|`int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria criteria);`|根据entity里的值和条件构造器（lambda），执行修改，可选择是否忽略entity里值为null的属性|
 |`int updateById(T entity);`|根据entity内的主键值作为条件更新数据，默认忽略entity里值为null的属性|
 |`int updateById(T entity, boolean ignoreNulls);`|根据entity内的主键值更新数据，可选择是否忽略entity里值为null的属性|
-|`int update(UpdateCriteria criteria);`|只根据条件构造器来更新数据，配合.set方法来使用|
-|`int update(LambdaUpdateCriteria criteria);`|只根据条件构造器（lambda）来更新数据，配合.set方法来使用|
+|`int update(T entity, UpdateCriteria<T> criteria);`|根据entity里的值和条件构造器，执行修改，默认忽略entity里值为null的属性|
+|`int update(T entity, LambdaUpdateCriteria<T> criteria);`|根据entity里的值和条件构造器（lambda），执行修改，默认忽略entity里值为null的属性|
+|`int update(T entity, boolean ignoreNulls, UpdateCriteria<T> criteria);`|根据entity里的值和条件构造器，执行修改，可选择是否忽略entity里值为null的属性|
+|`int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria<T> criteria);`|根据entity里的值和条件构造器（lambda），执行修改，可选择是否忽略entity里值为null的属性|
+|`int update(UpdateCriteria<T> criteria);`|只根据条件构造器来更新数据，配合.set方法来使用|
+|`int update(LambdaUpdateCriteria<T> criteria);`|只根据条件构造器（lambda）来更新数据，配合.set方法来使用|
 
 #### 删除操作
 
@@ -401,16 +401,16 @@ public class UploadFileService {
         add(3);
     }};
 
-    QueryCriteria criteria = new QueryCriteria()
-    .lt("age",28)
-    .eq("created_at", new java.util.Date())
-    .in("id", ids)
-    .orderBy("age", true);
+    QueryCriteria<Person> criteria = new QueryCriteria<>();
+    criteria.lt("age", 28);
+    criteria.eq("created_at", new java.util.Date());
+    criteria.in("id", ids);
+    criteria.orderBy("age", true);
 // 等价于 WHERE age < 28 AND created_at = '2023-08-05 17:31:26' AND id IN (1,2,3) ORDER BY age DESC
 
-    QueryCriteria criteria = new QueryCriteria()
-    .select("id", "name")
-    .lt("age",28);
+    QueryCriteria<Person> criteria = new QueryCriteria<>();
+    criteria.select("id", "name");
+    criteria.lt("age",28);
 // 等价于 SELECT id,name FROM xxxx WHERE age < 28
 ```
 
@@ -423,18 +423,18 @@ public class UploadFileService {
         add(3L);
     }};
 
-  LambdaQueryCriteria criteria = new LambdaQueryCriteria()
-    .lt(UploadFile::getFileId, "1000")
-    .eq(UploadFile::getFileMd5, "b8394b15e02c50b508b3e46cc120f0f5")
-    .in(UploadFile::getId, ids)
-    .orderBy(UploadFile::getCreatedAt, true);
+  LambdaQueryCriteria<UploadFile> criteria = new LambdaQueryCriteria<>();
+  criteria.lt(UploadFile::getFileId, "1000");
+  criteria.eq(UploadFile::getFileMd5, "b8394b15e02c50b508b3e46cc120f0f5");
+  criteria.in(UploadFile::getId, ids);
+  criteria.orderBy(UploadFile::getCreatedAt, true);
 
 // 等价于  WHERE file_id < '1000' AND file_md5 = 'b8394b15e02c50b508b3e46cc120f0f5' AND id IN (1,2,3) ORDER BY created_at DESC
 
-  LambdaQueryCriteria criteria = new LambdaQueryCriteria()
-    .select(UploadFile::getFileId, UploadFile::getFileMd5)
-    .lt(UploadFile::getFileId, "1000");
-// 等价于 SELECT file_id,file_md5 FROM xxxx WHERE file_id < '1000'
+  LambdaQueryCriteria<UploadFile> criteria = new LambdaQueryCriteria<>();
+  criteria.select(UploadFile::getFileId, UploadFile::getFileMd5);
+  criteria.lt(UploadFile::getFileId, "1000");
+// 等价于 SELECT file_id,file_md5 FROM b_upload_file WHERE file_id < '1000'
 ```
 
 #### 更新构造器(UpdateCriteria & LambdaUpdateCriteria)
