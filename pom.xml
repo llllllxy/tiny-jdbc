@@ -5,11 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>top.lxyccc</groupId>
-    <artifactId>tiny-jdbc-boot-starter</artifactId>
-    <version>1.7.0</version>
-    <packaging>jar</packaging>
+    <artifactId>tiny-jdbc-parent</artifactId>
+    <version>1.7.1</version>
+    <packaging>pom</packaging>
 
-    <name>tiny-jdbc-boot-starter</name>
+    <modules>
+        <module>tiny-jdbc-core</module>
+        <module>tiny-jdbc-boot-starter</module>
+    </modules>
+
+    <name>tiny-jdbc</name>
     <url>https://github.com/llllllxy/tiny-jdbc-boot-starter</url>
     <description>A simple and easy-to-use ORM framework</description>
 
@@ -43,20 +48,30 @@
         <springboot.version>2.7.14</springboot.version>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jdbc</artifactId>
-            <version>${springboot.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-            <version>${springboot.version}</version>
-            <optional>true</optional>
-        </dependency>
-    </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-jdbc</artifactId>
+                <version>${springboot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-autoconfigure</artifactId>
+                <version>${springboot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-configuration-processor</artifactId>
+                <version>${springboot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.lxyccc</groupId>
+                <artifactId>tiny-jdbc-core</artifactId>
+                <version>1.7.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>

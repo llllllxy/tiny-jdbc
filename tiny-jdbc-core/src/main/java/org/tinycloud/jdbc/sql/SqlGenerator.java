@@ -2,17 +2,20 @@ package org.tinycloud.jdbc.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tinycloud.jdbc.TinyJdbcAutoConfiguration;
 import org.tinycloud.jdbc.annotation.Column;
-import org.tinycloud.jdbc.criteria.query.QueryCriteria;
+import org.tinycloud.jdbc.annotation.IdType;
+import org.tinycloud.jdbc.config.GlobalConfigUtils;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
+import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
 import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
-import org.tinycloud.jdbc.annotation.IdType;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.IdUtils;
-import org.tinycloud.jdbc.util.*;
+import org.tinycloud.jdbc.util.Pair;
+import org.tinycloud.jdbc.util.ReflectUtils;
+import org.tinycloud.jdbc.util.StrUtils;
+import org.tinycloud.jdbc.util.TableParserUtils;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -88,7 +91,7 @@ public class SqlGenerator {
                     }
                 }
                 if (idType == IdType.CUSTOM) {
-                    IdGeneratorInterface idGeneratorInterface = TinyJdbcAutoConfiguration.getIdGenerator();
+                    IdGeneratorInterface idGeneratorInterface = GlobalConfigUtils.getGlobalConfig().getIdGeneratorInterface();
                     Class<?> keyType = field.getType();
                     Object fieldValue;
                     Object id = idGeneratorInterface.nextId(object);

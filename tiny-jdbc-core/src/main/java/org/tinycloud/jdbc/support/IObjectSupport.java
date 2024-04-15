@@ -1,8 +1,8 @@
 package org.tinycloud.jdbc.support;
 
 import org.springframework.util.ObjectUtils;
-import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
+import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
 import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;

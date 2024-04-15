@@ -9,34 +9,27 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.tinycloud.jdbc.config.GlobalConfig;
+import org.tinycloud.jdbc.config.GlobalConfigUtils;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.page.*;
 import org.tinycloud.jdbc.util.DbType;
 import org.tinycloud.jdbc.util.DbTypeUtils;
 
 import javax.sql.DataSource;
+import java.util.function.Consumer;
 
 @Configuration
 public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
     final static Logger logger = LoggerFactory.getLogger(TinyJdbcAutoConfiguration.class);
 
-    private static ApplicationContext applicationContext;
+    private ApplicationContext applicationContext;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        TinyJdbcAutoConfiguration.applicationContext = applicationContext;
+        this.applicationContext = applicationContext;
     }
 
-    /**
-     * 根据Class<T>获取Bean
-     *
-     * @param clazz Class
-     * @param <T>   泛型
-     * @return Bean
-     */
-    public static <T> T getBean(Class<T> clazz) {
-        return TinyJdbcAutoConfiguration.applicationContext.getBean(clazz);
-    }
 
     @ConditionalOnMissingBean(IPageHandle.class)
     @Bean
@@ -105,18 +98,28 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
         } else {
             pageHandle = new MysqlPageHandleImpl();
         }
+
+        GlobalConfig globalConfig = new GlobalConfig();
+        /* 获取自定义的ID生成器 */
+        this.getBeanThen(IdGeneratorInterface.class, globalConfig::setIdGeneratorInterface);
+        GlobalConfigUtils.setGlobalConfig(globalConfig);
+
         if (logger.isInfoEnabled()) {
-            logger.info("TinyJdbc started successfully, version: 1.6.3!");
+            logger.info("TinyJdbc started successfully, version: 1.7.0!");
         }
         return pageHandle;
     }
 
     /**
-     * 获取自定义的ID生成器
+     * 根据Class<T>获取Bean
      *
-     * @return IdGeneratorInterface
+     * @param clazz    Class
+     * @param <T>      泛型
+     * @param consumer 操作
      */
-    public static IdGeneratorInterface getIdGenerator() {
-        return getBean(IdGeneratorInterface.class);
+    public <T> void getBeanThen(Class<T> clazz, Consumer<T> consumer) {
+        if (this.applicationContext.getBeanNamesForType(clazz, false, false).length > 0) {
+            consumer.accept(this.applicationContext.getBean(clazz));
+        }
     }
 }
