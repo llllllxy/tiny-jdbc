@@ -512,7 +512,7 @@ public CustomIdGeneratorInterface idGenerator(){
 }
 ```
 
-## 6、一些示例
+## 5、一些示例
 
 1. 查询操作
 
@@ -705,3 +705,8 @@ int result = baseDao.delete(criteria);
 UpdateCriteria<TProjectInfo> criteria = new UpdateCriteria<>().eq("id", 1L)
 int result = baseDao.delete(criteria);
 ``` 
+
+
+## 6、安全说明
+使用`QueryCriteria`和`UpdateCriteria`时应避免前端传入字段名，防止`SQL注入`的风险；
+如若必须使用由前端传入的动态内容，如使用QueryCriteria.orderBy("任意前端传入字段")进行动态排序，推荐使用工具类 `SqlInjectionUtils.check(内容)` 先行验证字符串是否存在 `SQL注入`， 存在则拒绝操作。
