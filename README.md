@@ -326,8 +326,8 @@ public class UploadFileService {
 |`int deleteByIds(List<ID> ids);` | 根据主键ID列表进行删除，类型使用的是xxxDao<T, ID>的类型 |
 |`int deleteByIds(ID... ids);` | 根据主键ID可变参数列表进行删除，类型使用的是xxxDao<T, ID>的类型 |
 |`int delete(T entity);`| 根据entity里的属性值进行删除，entity里不为null的属性，将作为where参数 |
-|`int delete(UpdateCriteria criteria);`| 根据条件构造器，将作为where参数 |
-|`int delete(LambdaUpdateCriteria criteria);`| 根据条件构造器（lambda），将作为where参数 |
+|`int delete(UpdateCriteria<T> criteria);`| 根据条件构造器，将作为where参数 |
+|`int delete(LambdaUpdateCriteria<T> criteria);`| 根据条件构造器（lambda），将作为where参数 |
 
 ## 4、条件构造器
 
@@ -447,7 +447,7 @@ public class UploadFileService {
 
 ##### UpdateCriteria示例
 ```java
-int num = projectInfoDao.update(new UpdateCriteria()
+int num = projectInfoDao.update(new UpdateCriteria<TProjectInfo>()
                 .set("created_at", new Date())
                 .set("updated_by", "admin3")
                 .eq("project_name", "批量项目1"));
@@ -456,13 +456,13 @@ int num = projectInfoDao.update(new UpdateCriteria()
 TProjectInfo project1 = new TProjectInfo();
 project1.setCreatedAt(new Date());
 project1.setUpdatedBy("admin3");
-int num = projectInfoDao.update(project1, new UpdateCriteria().eq("project_name", "批量项目1"));
+int num = projectInfoDao.update(project1, new UpdateCriteria<TProjectInfo>().eq("project_name", "批量项目1"));
 // 等价于 UPDATE xxxx SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 ```
 
 ##### LambdaUpdateCriteria示例
 ```java
-int num = projectInfoDao.update(new LambdaUpdateCriteria()
+int num = projectInfoDao.update(new LambdaUpdateCriteria<TProjectInfo>()
                         .set(TProjectInfo::getEnableAt, new Date())
                         .set(TProjectInfo::getUpdatedBy, "admin2")
                 .eq(TProjectInfo::getProjectName, "批量项目1"));
@@ -471,7 +471,7 @@ int num = projectInfoDao.update(new LambdaUpdateCriteria()
 TProjectInfo project1 = new TProjectInfo();
 project1.setCreatedAt(new Date());
 project1.setUpdatedBy("admin3");
-int num = projectInfoDao.update(project1, new LambdaUpdateCriteria().eq(TProjectInfo::getProjectName, "批量项目1"));
+int num = projectInfoDao.update(project1, new LambdaUpdateCriteria<TProjectInfo>().eq(TProjectInfo::getProjectName, "批量项目1"));
 // 等价于 UPDATE xxxx SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 ```
 
@@ -561,11 +561,11 @@ ids.add(4L);
 Project project=projectDao.selectByIds(ids)
 
 // 查询id=3的项目信息
-LambdaQueryCriteria criteria = new LambdaQueryCriteria().eq(Project::getId, 3L);
+LambdaQueryCriteria<TProjectInfo> criteria = new LambdaQueryCriteria<>().eq(Project::getId, 3L);
 Project project = projectDao.selectOne(criteria);
 
 // 查询id=3的项目信息
-QueryCriteria criteria = new QueryCriteria().eq("id",3L);
+QueryCriteria<TProjectInfo> criteria = new QueryCriteria<>().eq("id",3L);
 Project project = projectDao.selectOne(criteria);
 
 // 分页查询id=3的项目信息，第一页，每页10个
@@ -574,7 +574,7 @@ project.setId(3L);
 Page<Project> page = projectDao.paginate(project,new Page<Project>(1, 10));
 
 // 分页查询id=3的项目信息，第一页，每页10个
-QueryCriteria criteria = new QueryCriteria().eq("id",3L);
+QueryCriteria<TProjectInfo> criteria = new QueryCriteria()<>.eq("id",3L);
 Page<Project> page = projectDao.paginate(criteria,new Page<Project>(1, 10));
 
 // 根据条件构造器构建复杂查询条件
@@ -582,7 +582,7 @@ Page<Project> page = projectDao.paginate(criteria,new Page<Project>(1, 10));
 List<Long> ids = new ArrayList<>();
 ids.add(1L);
 ids.add(5L);
-LambdaQueryCriteria criteria = new LambdaQueryCriteria()
+LambdaQueryCriteria<TProjectInfo> criteria = new LambdaQueryCriteria<>()
     .eq(Project::getCreatedBy, "admin")
     .gte(Project::getDelFlag, 0)
     .in(Project::getId, ids)
@@ -592,11 +592,11 @@ List<Project> projectList = projectDao.select(criteria);
 
 
 // 根据条件构造器查询记录数量
-LambdaQueryCriteria criteria = new LambdaQueryCriteria().eq(Project::getId,1695713712801116162L);
+LambdaQueryCriteria<TProjectInfo> criteria = new LambdaQueryCriteria<>().eq(Project::getId,1695713712801116162L);
 Long count=projectDao.selectCount(criteria);
 
 // 根据条件构造器查询记录是否存在
-LambdaQueryCriteria criteria = new LambdaQueryCriteria().eq(Project::getId,1695713712801116162L);
+LambdaQueryCriteria<TProjectInfo> criteria = new LambdaQueryCriteria<>().eq(Project::getId,1695713712801116162L);
 boolean result=projectDao.exists(criteria)
 
 ```
@@ -608,10 +608,10 @@ boolean result=projectDao.exists(criteria)
 private ProjectDao projectDao;
 
 // 使用sql插入一条数据
-int result=projectDao.insert("insert t_into project_info(project_name, del_flag, remark) values (?,?,?)","测试项目",1,"XXXXXXX");
+int result = projectDao.insert("insert t_into project_info(project_name, del_flag, remark) values (?,?,?)","测试项目",1,"XXXXXXX");
 
 // 使用实体类插入一条数据，默认忽略null
-Project project=new Project();
+Project project = new Project();
 project.setProjectName("xxxx");
 project.setDelFlag(1);
 project.setCreatedBy("admin");
@@ -619,16 +619,16 @@ project.setRemark("XXXX");
 int result=projectDao.insert(project);
 
 // 获取生成的主键id，在主键策略为assignId、uuid或objectId时适用
-Long id=project.getId();
+Long id = project.getId();
 
 // 使用实体类插入一条数据，不忽略null
-int result=projectDao.insert(project,false);
+int result = projectDao.insert(project,false);
 
 // 获取生成的主键id，在主键策略为assignId、uuid或objectId时适用
-Long id=project.getId();
+Long id = project.getId();
 
 // 使用实体类插入一条数据，并返回数据库自增的主键值，默认忽略null
-int result=projectDao.insertReturnAutoIncrement(project);
+int result = projectDao.insertReturnAutoIncrement(project);
 
 ```
 
@@ -639,7 +639,7 @@ int result=projectDao.insertReturnAutoIncrement(project);
 private ProjectDao projectDao;
 
 // 使用sql插入一条数据
-int result=baseDao.update(""update project_info set project_name=?where id=?"",new Object[]{"测试项目",1});
+int result = baseDao.update(""update project_info set project_name=?where id=?"",new Object[]{"测试项目",1});
 
 // 使用实体类更新一条数据，其中以主键Id值为where条件，默认忽略null
 Project project = new Project();
@@ -654,19 +654,19 @@ int result = baseDao.updateById(project);
 int result = baseDao.updateById(project, false);
 
 // 根据条件构造器（Lambda）作为条件更新一条数据，默认忽略null
-LambdaCriteria criteria = new LambdaCriteria().eq(Project::getId(), 1L)
+LambdaUpdateCriteria<TProjectInfo> criteria = new LambdaUpdateCriteria<>().eq(Project::getId(), 1L)
 int result=baseDao.update(project, criteria);
 
 // 根据实体类内容和条件构造器作为条件更新一条数据，默认忽略null
-Criteria criteria = new Criteria().eq("id",1L)
+UpdateCriteria<TProjectInfo> criteria = new UpdateCriteria<>().eq("id",1L)
 int result = update.update(project, criteria);
 
 // 根据实体类内容和条件构造器作为条件更新一条数据，不忽略null
-Criteria criteria = new Criteria().eq("id",1L)
+UpdateCriteria<TProjectInfo> criteria = new UpdateCriteria<>().eq("id",1L)
 int result = update.update(project, false, criteria);
 
 // 只根据条件构造器作为条件更新一条数据
-Criteria criteria = new Criteria().set("project_name", "测试项目").eq("id",1L);
+UpdateCriteria<TProjectInfo> criteria = new UpdateCriteria<>().set("project_name", "测试项目").eq("id",1L);
 int result = baseDao.update(criteria);
 ```
 
@@ -677,7 +677,7 @@ int result = baseDao.update(criteria);
 private ProjectDao projectDao;
 
 // 使用sql删除一条数据
-int result = projectDao.delete(""delete from t_project_info where id=?"",new Object[]{1});
+int result = projectDao.delete(""delete from t_project_info where id=?"", new Object[]{1});
 
 // 根据实体类非null内容作为where条件删除一条数据
 Project project = new Project();
@@ -698,10 +698,10 @@ List<Long> ids = new ArrayList<Long>();
 int result = baseDao.deleteByIds(1L, 5L);
 
 // 根据条件构造器（Lambda）作为查询条件删除一条数据
-LambdaUpdateCriteria criteria = new LambdaUpdateCriteria().eq(Project::getId(), 1L)
+LambdaUpdateCriteria<TProjectInfo> criteria = new LambdaUpdateCriteria<>().eq(Project::getId(), 1L)
 int result = baseDao.delete(criteria);
 
 // 根据条件构造器作为查询条件删除一条数据
-UpdateCriteria criteria = new UpdateCriteria().eq("id", 1L)
+UpdateCriteria<TProjectInfo> criteria = new UpdateCriteria<>().eq("id", 1L)
 int result = baseDao.delete(criteria);
 ``` 
