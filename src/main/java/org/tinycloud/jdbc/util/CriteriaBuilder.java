@@ -7,13 +7,14 @@ import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 
 /**
  * <p>
+ * 条件构造快速工厂类
  * </p>
  *
  * @author liuxingyu01
- * @since 2024-04-2024/4/14 22:32
+ * @since 2024-04-14 22:32
  */
-public final class Criterias {
-    private Criterias() {
+public final class CriteriaBuilder {
+    private CriteriaBuilder() {
         // ignore
     }
 
