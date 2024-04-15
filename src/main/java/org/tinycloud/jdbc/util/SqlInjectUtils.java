@@ -1,6 +1,6 @@
 package org.tinycloud.jdbc.util;
 
-import org.springframework.util.Assert;
+import org.tinycloud.jdbc.exception.TinyJdbcException;
 
 import java.util.regex.Pattern;
 
@@ -28,7 +28,9 @@ public class SqlInjectUtils {
      * @return true 非法， false 合法
      */
     public static boolean check(String value) {
-        Assert.notNull(value, "所传入的SQL参数不能为空！");
+        if (value == null) {
+            throw new TinyJdbcException("所传入的SQL参数不能为空！");
+        }
         // 处理是否包含SQL注释字符 || 检查是否包含SQL注入敏感字符
         return SQL_COMMENT_PATTERN.matcher(value).find() || SQL_SYNTAX_PATTERN.matcher(value).find();
     }
@@ -40,7 +42,9 @@ public class SqlInjectUtils {
      * @return 处理后的字段
      */
     public static String removeEscapeCharacter(String text) {
-        Assert.notNull(text, "所传入参数不能为空！");
+        if (text == null) {
+            throw new TinyJdbcException("所传入参数不能为空！");
+        }
         return text.replaceAll("\"", "").replaceAll("'", "");
     }
 }
