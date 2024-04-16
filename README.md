@@ -62,6 +62,16 @@
 </dependency>
 ```
 
+### application.yml参数配置 (或application.properties)
+
+```yaml
+tiny-jdbc:
+  # 打印banner，默认false
+  banner: true
+  # 分页器适配类型，可不配置，不配置的话会自动获取
+  db-type: mysql
+```
+
 ### 定义Entity实体类，对应数据库的一张表，如下
 
 - 实体类属性名必须使用`驼峰命名规则`，与数据库表字段一一映射
