@@ -13,9 +13,11 @@ import java.io.Serializable;
  */
 public class GlobalConfig implements Serializable {
     /**
-     * 是否开启 LOGO
+     * 是否开启 LOGO 打印
      */
     private boolean banner = true;
+
+    private String version;
 
     /**
      * 主键生成器
@@ -36,5 +38,13 @@ public class GlobalConfig implements Serializable {
 
     public void setIdGeneratorInterface(IdGeneratorInterface idGeneratorInterface) {
         this.idGeneratorInterface = idGeneratorInterface;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }

@@ -28,6 +28,9 @@ public class GlobalConfigUtils {
     public static void setGlobalConfig(GlobalConfig globalConfig) {
         // 设置全局设置
         GLOBAL_CONFIG.putIfAbsent(GLOBAL_CONFIG_KEY, globalConfig);
+        if (globalConfig.isBanner()) {
+            printBanner();
+        }
     }
 
     /**
@@ -35,5 +38,24 @@ public class GlobalConfigUtils {
      */
     public static GlobalConfig getGlobalConfig() {
         return GLOBAL_CONFIG.get(GLOBAL_CONFIG_KEY);
+    }
+
+    /**
+     * <p>
+     * 输出banner
+     * <p/>
+     */
+    public static void printBanner() {
+        String banner = "  _______ _                    _     _ _          \n" +
+                " |__   __(_)                  | |   | | |         \n" +
+                "    | |   _ _ __  _   _       | | __| | |__   ___ \n" +
+                "    | |  | | '_ \\| | | |  _   | |/ _` | '_ \\ / __|\n" +
+                "    | |  | | | | | |_| | | |__| | (_| | |_) | (__ \n" +
+                "    |_|  |_|_| |_|\\__, |  \\____/ \\__,_|_.__/ \\___|\n" +
+                "                   __/ |                          \n" +
+                "                  |___/                           " + "\n" +
+                getGlobalConfig().getVersion();
+
+        System.out.println(banner);
     }
 }
