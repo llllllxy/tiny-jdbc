@@ -1,7 +1,5 @@
 package org.tinycloud.jdbc.sql;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.IdType;
 import org.tinycloud.jdbc.config.GlobalConfigUtils;
@@ -32,8 +30,6 @@ import java.util.StringJoiner;
  * @since 2023-07-28-16:49
  **/
 public class SqlGenerator {
-    final static Logger logger = LoggerFactory.getLogger(SqlGenerator.class);
-
 
     /**
      * 构建插入SQL
@@ -70,7 +66,7 @@ public class SqlGenerator {
                     try {
                         field.set(object, fieldValue);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String when objectId!");
+                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String when objectId!", e);
                     }
                 }
                 if (idType == IdType.ASSIGN_ID) {
@@ -79,7 +75,7 @@ public class SqlGenerator {
                     try {
                         field.set(object, fieldValue);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String or Long when assignId!");
+                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String or Long when assignId!", e);
                     }
                 }
                 if (idType == IdType.UUID) {
@@ -87,7 +83,7 @@ public class SqlGenerator {
                     try {
                         field.set(object, fieldValue);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String when uuid!");
+                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String when uuid!", e);
                     }
                 }
                 if (idType == IdType.CUSTOM) {
@@ -111,7 +107,7 @@ public class SqlGenerator {
                     try {
                         field.set(object, fieldValue);
                     } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", please verify if the return data type of idGeneratorInterface.nextId() method matches the data type of the primary key!");
+                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", please verify if the return data type of idGeneratorInterface.nextId() method matches the data type of the primary key!", e);
                     }
                 }
             }
@@ -119,7 +115,6 @@ public class SqlGenerator {
             try {
                 fieldValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                logger.error("get field value failed : " + field.getName() + "", e);
                 throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             // 是否忽略null
@@ -173,7 +168,6 @@ public class SqlGenerator {
             try {
                 filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                logger.error("get field value failed : " + field.getName() + "", e);
                 throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             boolean primaryKey = columnAnnotation.primaryKey();
@@ -243,7 +237,6 @@ public class SqlGenerator {
             try {
                 filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                logger.error("get field value failed : " + field.getName() + "", e);
                 throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             // 是否忽略null
@@ -300,7 +293,6 @@ public class SqlGenerator {
             try {
                 filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                logger.error("get field value failed : " + field.getName() + "", e);
                 throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             // 是否忽略null
@@ -406,7 +398,6 @@ public class SqlGenerator {
             try {
                 filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                logger.error("get field value failed : " + field.getName() + "", e);
                 throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             if (filedValue == null) {
@@ -510,7 +501,6 @@ public class SqlGenerator {
             try {
                 filedValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                logger.error("get field value failed : " + field.getName() + "", e);
                 throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             if (filedValue != null) {
