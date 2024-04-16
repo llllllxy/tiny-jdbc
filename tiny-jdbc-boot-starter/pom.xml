@@ -7,7 +7,7 @@
     <parent>
         <artifactId>tiny-jdbc-parent</artifactId>
         <groupId>top.lxyccc</groupId>
-        <version>1.7.1</version>
+        <version>${revision}</version>
     </parent>
 
     <name>tiny-jdbc-boot-starter</name>
