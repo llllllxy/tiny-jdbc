@@ -101,4 +101,7 @@ public class Page<T> implements Serializable {
                 + ", records=" + records + "}";
     }
 
+    public static <T> Page<T> of(Long pageNum, Long pageSize) {
+        return new Page<>(pageNum, pageSize);
+    }
 }
