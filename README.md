@@ -453,7 +453,8 @@ public class UploadFileService {
 |方法|说明|示例|lambda示例|
 |---|---|---|---|
 |set    |设置更新字段| set("name", "张三") ---> set name = '张三' | set(User::getName, "张三") ---> set name = '张三' |
-
+|setIncrement    |设置字段自增| setIncrement("age", 1) ---> set age = age + 1 | setIncrement(User::getAge, 1) ---> set age = age + 1 |
+|setDecrement    |设置字段自减| setDecrement("age", 1) ---> set age = age - 1 | setDecrement(User::getAge, 1) ---> set age = age - 1|
 
 ##### UpdateCriteria示例
 ```java
