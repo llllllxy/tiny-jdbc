@@ -32,8 +32,6 @@ public class OraclePageHandleImpl implements IPageHandle {
 
     @Override
     public String handlerCountSQL(String oldSQL) {
-        return "SELECT COUNT(*) FROM ( " +
-                oldSQL +
-                " ) TEMP";
+        return "SELECT COUNT(*) FROM ( " + oldSQL + " ) TEMP";
     }
 }
