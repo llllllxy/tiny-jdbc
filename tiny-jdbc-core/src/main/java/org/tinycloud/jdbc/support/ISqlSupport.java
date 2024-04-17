@@ -73,17 +73,6 @@ public interface ISqlSupport<T, ID> {
     <F> List<F> select(String sql, Class<F> clazz, Object... params);
 
     /**
-     * 分页查询（带参数）
-     *
-     * @param sql    要执行的SQL
-     * @param clazz  实体类型
-     * @param page   分页参数
-     * @param params ？参数
-     * @return Page<F>
-     */
-    <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params);
-
-    /**
      * 查询给定的SQL和参数列表，结果返回第一条
      *
      * @param sql    要执行的SQL查询
@@ -124,7 +113,10 @@ public interface ISqlSupport<T, ID> {
      * @param params 要绑定到查询的参数
      * @return Map<String, Object>
      */
-    Map<String, Object> selectOneMap(String sql, Object... params);
+    default Map<String, Object> selectOneMap(String sql, Object... params) {
+        List<Map<String, Object>> resultList = this.selectMap(sql, params);
+        return DataAccessUtils.singleResult(resultList);
+    }
 
     /**
      * 查询一个值（经常用于查count）
@@ -144,4 +136,23 @@ public interface ISqlSupport<T, ID> {
      * @return T
      */
     Page<T> paginate(String sql, Page<T> page, Object... params);
+
+    /**
+     * 分页查询
+     *
+     * @param sql 要执行的SQL查询
+     * @return T
+     */
+    Page<Map<String, Object>> paginateMap(String sql, Page<Map<String, Object>> page, Object... params);
+
+    /**
+     * 分页查询（带参数）
+     *
+     * @param sql    要执行的SQL
+     * @param clazz  实体类型
+     * @param page   分页参数
+     * @param params ？参数
+     * @return Page<F>
+     */
+    <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params);
 }

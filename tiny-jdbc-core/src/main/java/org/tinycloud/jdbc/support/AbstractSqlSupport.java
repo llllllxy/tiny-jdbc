@@ -17,7 +17,6 @@ import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
 import org.tinycloud.jdbc.sql.SqlGenerator;
 import org.tinycloud.jdbc.sql.SqlProvider;
-import org.tinycloud.jdbc.util.DataAccessUtils;
 import org.tinycloud.jdbc.util.StrUtils;
 
 import java.lang.reflect.ParameterizedType;
@@ -91,12 +90,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
     }
 
     @Override
-    public Map<String, Object> selectOneMap(String sql, final Object... params) {
-        List<Map<String, Object>> resultList = getJdbcTemplate().queryForList(sql, params);
-        return DataAccessUtils.singleResult(resultList);
-    }
-
-    @Override
     public <F> F selectOneColumn(String sql, Class<F> clazz, Object... params) {
         F result;
         if (ObjectUtils.isEmpty(params)) {
@@ -144,6 +137,28 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         String countSql = getPageHandle().handlerCountSQL(sql);
         // 查询数据列表
         List<F> list = getJdbcTemplate().query(selectSql, new BeanPropertyRowMapper<>(clazz), params);
+        // 查询总共数量
+        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, params);
+        page.setRecords(list);
+        page.setTotal(totalSize);
+        return page;
+    }
+
+    @Override
+    public Page<Map<String, Object>> paginateMap(String sql, Page<Map<String, Object>> page, Object... params) {
+        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
+            throw new TinyJdbcException("paginate page cannot be null");
+        }
+        if (page.getPageNum() <= 0) {
+            throw new TinyJdbcException("pageNum must be greater than 0");
+        }
+        if (page.getPageSize() <= 0) {
+            throw new TinyJdbcException("pageSize must be greater than 0");
+        }
+        String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
+        String countSql = getPageHandle().handlerCountSQL(sql);
+        // 查询数据列表
+        List<Map<String, Object>> list = getJdbcTemplate().queryForList(selectSql, params);
         // 查询总共数量
         long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, params);
         page.setRecords(list);
