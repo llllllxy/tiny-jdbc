@@ -2,6 +2,8 @@ package org.tinycloud.jdbc.criteria.update;
 
 import org.tinycloud.jdbc.criteria.AbstractCriteria;
 
+import java.math.BigDecimal;
+
 
 /**
  * <p>
@@ -15,6 +17,16 @@ public class UpdateCriteria<T> extends AbstractCriteria<T, UpdateCriteria<T>> {
     public final <R> UpdateCriteria<T> set(String field, R value) {
         updateFields.add(field + "=?");
         parameters.add(value);
+        return this;
+    }
+
+    public UpdateCriteria<T> setIncrement(String field, Number value) {
+        updateFields.add(field + "=" + field + "+" + (value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
+        return this;
+    }
+
+    public UpdateCriteria<T> setDecrement(String field, Number value) {
+        updateFields.add(field + "=" + field + "-" + (value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
         return this;
     }
 

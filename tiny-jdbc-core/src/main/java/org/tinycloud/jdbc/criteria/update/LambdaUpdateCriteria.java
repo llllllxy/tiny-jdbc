@@ -3,6 +3,8 @@ package org.tinycloud.jdbc.criteria.update;
 import org.tinycloud.jdbc.criteria.AbstractLambdaCriteria;
 import org.tinycloud.jdbc.criteria.TypeFunction;
 
+import java.math.BigDecimal;
+
 /**
  * <p>
  * </p>
@@ -16,6 +18,18 @@ public class LambdaUpdateCriteria<T> extends AbstractLambdaCriteria<T, LambdaUpd
         String columnName = getColumnName(field);
         updateFields.add(columnName + "=?");
         parameters.add(value);
+        return this;
+    }
+
+    public LambdaUpdateCriteria<T> setIncrement(TypeFunction<T, ?> field, Number value) {
+        String columnName = getColumnName(field);
+        updateFields.add(columnName + "=" + columnName + "+" + (value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
+        return this;
+    }
+
+    public LambdaUpdateCriteria<T> setDecrement(TypeFunction<T, ?> field, Number value) {
+        String columnName = getColumnName(field);
+        updateFields.add(columnName + "=" + columnName + "-" + (value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
         return this;
     }
 
