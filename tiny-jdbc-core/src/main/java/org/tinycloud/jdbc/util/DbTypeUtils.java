@@ -130,7 +130,7 @@ public class DbTypeUtils {
         } else if (jdbcUrl.contains(":vertica:")) {
             return DbType.VERTICA;
         } else if (jdbcUrl.contains(":xcloud:")) {
-            return DbType.XCloud;
+            return DbType.XCLOUD;
         } else if (jdbcUrl.contains(":firebirdsql:")) {
             return DbType.FIREBIRD;
         } else if (jdbcUrl.contains(":redshift:")) {
