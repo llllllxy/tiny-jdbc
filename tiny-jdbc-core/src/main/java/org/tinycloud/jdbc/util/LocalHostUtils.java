@@ -3,10 +3,7 @@ package org.tinycloud.jdbc.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
+import java.net.*;
 import java.util.Enumeration;
 
 /**
@@ -26,29 +23,36 @@ public class LocalHostUtils {
      * @return String
      */
     public static String getLocalHost() {
-        Enumeration<NetworkInterface> allNetInterfaces;
         String ipLocalHost = null;
-        InetAddress ip = null;
         try {
-            allNetInterfaces = NetworkInterface.getNetworkInterfaces();
+            Enumeration<NetworkInterface> allNetInterfaces = NetworkInterface.getNetworkInterfaces();
             while (allNetInterfaces.hasMoreElements()) {
                 NetworkInterface netInterface = allNetInterfaces.nextElement();
-                Enumeration<InetAddress> addresses = netInterface.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    ip = (InetAddress) addresses.nextElement();
-                    if (ip instanceof Inet4Address) {
-                        String hostAddress = ip.getHostAddress();
-                        if (!hostAddress.equals("127.0.0.1") && !hostAddress.equals("/127.0.0.1")) {
-                            // 得到本地IP
-                            ipLocalHost = ip.toString().split("[/]")[1];
+                if (netInterface.isUp()) {
+                    Enumeration<InetAddress> addresses = netInterface.getInetAddresses();
+                    while (addresses.hasMoreElements()) {
+                        InetAddress address = addresses.nextElement();
+                        if (address instanceof Inet4Address && !address.isLoopbackAddress()) {
+                            String hostAddress = address.getHostAddress();
+                            if (hostAddress != null && !hostAddress.equals("127.0.0.1") && !hostAddress.equals("/127.0.0.1")) {
+                                // 得到本地IP
+                                ipLocalHost = address.toString().split("[/]")[1];
+                            }
                         }
                     }
                 }
             }
         } catch (SocketException e) {
-            log.error("getLocalHost SocketException：", e);
+            log.error("Cannot get first non-loopback ip address：", e);
         }
-        return ipLocalHost;
+        if (ipLocalHost != null && !ipLocalHost.isEmpty()) {
+            return ipLocalHost;
+        }
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException("Unable to retrieve localhost");
+        }
     }
 
 
@@ -58,32 +62,34 @@ public class LocalHostUtils {
      * @return String
      */
     public static InetAddress getInetAddress() {
-        Enumeration<NetworkInterface> allNetInterfaces;
         InetAddress inetAddress = null;
         try {
-            allNetInterfaces = NetworkInterface.getNetworkInterfaces();
+            Enumeration<NetworkInterface> allNetInterfaces = NetworkInterface.getNetworkInterfaces();
             while (allNetInterfaces.hasMoreElements()) {
                 NetworkInterface netInterface = allNetInterfaces.nextElement();
-                Enumeration<InetAddress> addresses = netInterface.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    InetAddress temp = addresses.nextElement();
-                    if (temp instanceof Inet4Address && !temp.isLoopbackAddress()) {
-                        String host = temp.getHostAddress();
-                        if (host != null && !"0.0.0.0".equals(host) && !"127.0.0.1".equals(host)) {
-                            inetAddress = temp;
+                if (netInterface.isUp()) {
+                    Enumeration<InetAddress> addresses = netInterface.getInetAddresses();
+                    while (addresses.hasMoreElements()) {
+                        InetAddress temp = addresses.nextElement();
+                        if (temp instanceof Inet4Address && !temp.isLoopbackAddress()) {
+                            String host = temp.getHostAddress();
+                            if (host != null && !"0.0.0.0".equals(host) && !"127.0.0.1".equals(host)) {
+                                inetAddress = temp;
+                            }
                         }
                     }
                 }
             }
         } catch (SocketException e) {
-            log.error("getInetAddress SocketException：", e);
+            log.error("Cannot get first non-loopback address：", e);
         }
-        return inetAddress;
-    }
-
-
-    public static void main(String[] args) {
-        System.out.println(getLocalHost());
-        System.out.println(getInetAddress().getHostAddress());
+        if (inetAddress != null) {
+            return inetAddress;
+        }
+        try {
+            return InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException("Unable to retrieve localhost");
+        }
     }
 }
