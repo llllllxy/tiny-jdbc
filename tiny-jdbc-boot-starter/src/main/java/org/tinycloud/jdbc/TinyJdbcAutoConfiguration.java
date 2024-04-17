@@ -53,6 +53,10 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
             pageHandle = new MysqlPageHandleImpl();
         } else if (dbType == DbType.GBASE) {
             pageHandle = new MysqlPageHandleImpl();
+        } else if (dbType == DbType.GBASE_8S) {
+            pageHandle = new GBase8sPageHandleImpl();
+        } else if (dbType == DbType.SINODB) {
+            pageHandle = new GBase8sPageHandleImpl();
         } else if (dbType == DbType.OSCAR) {
             pageHandle = new MysqlPageHandleImpl();
         } else if (dbType == DbType.OCEAN_BASE) {
@@ -73,6 +77,10 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
             pageHandle = new DB2PageHandleImpl();
         } else if (dbType == DbType.ORACLE) {
             pageHandle = new OraclePageHandleImpl();
+        } else if (dbType == DbType.ORACLE_12C) {
+            pageHandle = new Oracle12cPageHandleImpl();
+        } else if (dbType == DbType.DM) {
+            pageHandle = new OraclePageHandleImpl();
         } else if (dbType == DbType.POSTGRE_SQL) {
             pageHandle = new PostgreSqlPageHandleImpl();
         } else if (dbType == DbType.SQLITE) {
@@ -84,9 +92,11 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
         } else if (dbType == DbType.KINGBASE_ES) {
             pageHandle = new PostgreSqlPageHandleImpl();
         } else if (dbType == DbType.HSQL) {
-            pageHandle = new PostgreSqlPageHandleImpl();
+            pageHandle = new H2PageHandleImpl();
         } else if (dbType == DbType.PHOENIX) {
             pageHandle = new PostgreSqlPageHandleImpl();
+        } else if (dbType == DbType.INFORMIX) {
+            pageHandle = new InforMixPageHandleImpl();
         } else if (dbType == DbType.HIGH_GO) {
             pageHandle = new PostgreSqlPageHandleImpl();
         } else if (dbType == DbType.IMPALA) {
@@ -99,8 +109,14 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
             pageHandle = new PostgreSqlPageHandleImpl();
         } else if (dbType == DbType.UXDB) {
             pageHandle = new PostgreSqlPageHandleImpl();
+        } else if (dbType == DbType.XUGU) {
+            pageHandle = new MysqlPageHandleImpl();
         } else if (dbType == DbType.H2) {
             pageHandle = new H2PageHandleImpl();
+        } else if (dbType == DbType.FIREBIRD) {
+            pageHandle = new FirebirdPageHandleImpl();
+        } else if (dbType == DbType.XCLOUD) {
+            pageHandle = new XCloudPageHandleImpl();
         } else {
             pageHandle = new MysqlPageHandleImpl();
         }

@@ -1,14 +1,14 @@
 package org.tinycloud.jdbc.page;
 
-
 /**
- * 分页查询适配器-MySQL
+ * <p>
+ * 分页查询适配器-GBase8s
+ * </p>
  *
  * @author liuxingyu01
- * @since 2022-05-10 8:32
- **/
-public class MysqlPageHandleImpl implements IPageHandle {
-
+ * @since 2024-04-17 11:45
+ */
+public class GBase8sPageHandleImpl implements IPageHandle {
     /**
      * 分页查询适配
      *
@@ -19,17 +19,12 @@ public class MysqlPageHandleImpl implements IPageHandle {
      */
     @Override
     public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
-        StringBuilder sql = new StringBuilder(oldSQL);
         long offset = (pageNo - 1) * pageSize;
         long limit = pageSize;
-        if (offset <= 0) {
-            sql.append(" LIMIT ").append(limit);
-        } else {
-            sql.append(" LIMIT ").append(offset).append(",").append(limit);
-        }
+
+        StringBuilder sql = (new StringBuilder(oldSQL)).insert(6, " SKIP " + offset + " FIRST " + limit);
         return sql.toString();
     }
-
 
     @Override
     public String handlerCountSQL(String oldSQL) {

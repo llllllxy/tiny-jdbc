@@ -1,14 +1,14 @@
 package org.tinycloud.jdbc.page;
 
-
 /**
- * 分页查询适配器-MySQL
+ * <p>
+ * 分页查询适配器-Firebird
+ * </p>
  *
  * @author liuxingyu01
- * @since 2022-05-10 8:32
- **/
-public class MysqlPageHandleImpl implements IPageHandle {
-
+ * @since 2024-04-17 11:41
+ */
+public class FirebirdPageHandleImpl implements IPageHandle {
     /**
      * 分页查询适配
      *
@@ -22,11 +22,14 @@ public class MysqlPageHandleImpl implements IPageHandle {
         StringBuilder sql = new StringBuilder(oldSQL);
         long offset = (pageNo - 1) * pageSize;
         long limit = pageSize;
-        if (offset <= 0) {
-            sql.append(" LIMIT ").append(limit);
-        } else {
-            sql.append(" LIMIT ").append(offset).append(",").append(limit);
-        }
+
+        sql.append(oldSQL);
+        sql.append(" OFFSET ");
+        sql.append(offset);
+        sql.append(" ROWS FETCH NEXT ");
+        sql.append(limit);
+        sql.append(" ROWS ONLY");
+
         return sql.toString();
     }
 

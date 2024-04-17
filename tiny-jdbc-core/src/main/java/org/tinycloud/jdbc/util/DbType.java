@@ -135,7 +135,7 @@ public enum DbType {
     /**
      * 东方国信 xcloud
      */
-    XCloud("xcloud", "行云数据库"),
+    XCLOUD("xcloud", "行云数据库"),
     /**
      * redshift
      */

@@ -1,14 +1,17 @@
 package org.tinycloud.jdbc.page;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * 分页查询适配器-MySQL
+ * <p>
+ * 分页查询适配器-InforMix
+ * </p>
  *
  * @author liuxingyu01
- * @since 2022-05-10 8:32
- **/
-public class MysqlPageHandleImpl implements IPageHandle {
-
+ * @since 2024-04-17 11:48
+ */
+public class InforMixPageHandleImpl implements IPageHandle {
     /**
      * 分页查询适配
      *
@@ -19,17 +22,20 @@ public class MysqlPageHandleImpl implements IPageHandle {
      */
     @Override
     public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
-        StringBuilder sql = new StringBuilder(oldSQL);
         long offset = (pageNo - 1) * pageSize;
         long limit = pageSize;
-        if (offset <= 0) {
-            sql.append(" LIMIT ").append(limit);
-        } else {
-            sql.append(" LIMIT ").append(offset).append(",").append(limit);
-        }
-        return sql.toString();
-    }
 
+        StringBuilder sql = new StringBuilder("SELECT");
+        sql.append(" SKIP ");
+        sql.append(offset);
+        sql.append(" FIRST ");
+        sql.append(limit);
+
+        // 忽略大小写进行替换
+        Pattern pattern = Pattern.compile("SELECT", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(oldSQL);
+        return matcher.replaceFirst(sql.toString());
+    }
 
     @Override
     public String handlerCountSQL(String oldSQL) {
