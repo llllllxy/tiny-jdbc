@@ -531,13 +531,6 @@ import org.example.entity.TProjectInfo;
 import org.springframework.stereotype.Repository;
 import org.tinycloud.jdbc.BaseDao;
 
-/**
- * <p>
- * </p>
- *
- * @author liuxingyu01
- * @since 2024-03-05 16:46
- */
 @Repository
 public class ProjectInfoDao extends BaseDao<TProjectInfo, Long> {
 
@@ -552,6 +545,9 @@ private ProjectDao projectDao;
 
 // 查询所有的项目，返回列表
 List<TProjectInfo> projectList = projectDao.select("select * from t_project_info order by created_at desc");
+
+// 自定义返回类型，返回列表
+List<ProjectInfoVo> projectList = projectDao.select("select * from t_project_info order by created_at desc", ProjectInfoVo.class);
 
 // 查询所有的项目，返回列表
 List<TProjectInfo> projectList = projectDao.select("select * from t_project_info order by created_at desc");
@@ -582,10 +578,10 @@ List<TProjectInfo> projectList = projectDao.select(project);
 // 查询id=3的项目信息
 TProjectInfo project = new TProjectInfo();
 project.setId(3L);
-Project project=projectDao.selectOne(project);
+Project project = projectDao.selectOne(project);
 
 // 查询id=3的项目信息
-        TProjectInfo project=projectDao.selectById(3L);
+TProjectInfo project=projectDao.selectById(3L);
 
 // 查询id=3和id=4的项目信息
 List<Long> ids = new ArrayList<Long>();
@@ -611,7 +607,7 @@ QueryCriteria<TProjectInfo> criteria = new QueryCriteria()<>.eq("id", 3L);
 Page<TProjectInfo> page = projectDao.paginate(criteria,new Page<TProjectInfo>(1, 10));
 
 // 根据条件构造器构建复杂查询条件
-// 等价于 `SELECT id AS id,project_name AS projectName,del_flag AS delFlag,created_by AS createdBy,updated_by AS updatedBy,created_at AS createdAt,updated_at AS updatedAt,remark AS remark FROM t_project_info WHERE created_by = 'admin' AND del_flag >= 0 AND id IN (1, 5) OR (remark NOT LIKE '%XXX%') ORDER BY created_at DESC`
+// 等价于 `SELECT id,project_name ,del_flag,created_by,updated_by,created_at AS createdAt,updated_at,remark FROM t_project_info WHERE created_by = 'admin' AND del_flag >= 0 AND id IN (1, 5) OR (remark NOT LIKE '%XXX%') ORDER BY created_at DESC`
 List<Long> ids = new ArrayList<>();
 ids.add(1L);
 ids.add(5L);

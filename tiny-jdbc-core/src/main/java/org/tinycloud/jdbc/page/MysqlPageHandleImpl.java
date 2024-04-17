@@ -20,9 +20,9 @@ public class MysqlPageHandleImpl implements IPageHandle {
     @Override
     public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         StringBuilder sql = new StringBuilder(oldSQL);
-        long offset = (pageNo - 1) * pageSize;
+        long offset = (pageNo - 1L) * pageSize;
         long limit = pageSize;
-        if (offset <= 0) {
+        if (offset <= 0L) {
             sql.append(" LIMIT ").append(limit);
         } else {
             sql.append(" LIMIT ").append(offset).append(",").append(limit);

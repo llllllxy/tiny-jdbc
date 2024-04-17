@@ -84,6 +84,14 @@ public enum DbType {
      */
     GBASE_8S("gbase-8s", "南大通用数据库 GBase 8s"),
     /**
+     * GBase8sPG
+     */
+    GBASE8S_PG("gbase8s-pg", "南大通用数据库 GBase 8s兼容pg"),
+    /**
+     * GBase8c
+     */
+    GBASE_8C("gbase-8c", "南大通用数据库 GBase 8c"),
+    /**
      * Oscar
      */
     OSCAR("oscar", "神通数据库"),
@@ -111,7 +119,10 @@ public enum DbType {
      * CUBRID
      */
     CUBRID("cubrid", "CUBRID 数据库"),
-
+    /**
+     * SUNDB
+     */
+    SUNDB("sundb", "SUNDB 数据库"),
     /**
      * GOLDILOCKS
      */
@@ -121,7 +132,7 @@ public enum DbType {
      */
     CSIIDB("csiidb", "CSIIDB 数据库"),
     /**
-     * CSIIDB
+     * SAP_HANA
      */
     SAP_HANA("hana", "SAP_HANA 数据库"),
     /**
@@ -165,6 +176,18 @@ public enum DbType {
      */
     GREENPLUM("greenplum", "greenplum 数据库"),
     /**
+     * trino
+     */
+    TRINO("trino", "trino数据库"),
+    /**
+     * lealone
+     */
+    LEALONE("lealone", "Lealone数据库"),
+    /**
+     * trino
+     */
+    PRESTO("Presto", "Presto数据库"),
+    /**
      * UNKNOWN DB
      */
     OTHER("other", "其他数据库");
@@ -191,5 +214,72 @@ public enum DbType {
     DbType(String name, String remarks) {
         this.name = name;
         this.remarks = remarks;
+    }
+
+    /**
+     * 获取数据库类型
+     *
+     * @param dbType 数据库类型字符串
+     */
+    public static DbType getDbType(String dbType) {
+        for (DbType type : DbType.values()) {
+            if (type.name.equalsIgnoreCase(dbType)) {
+                return type;
+            }
+        }
+        return OTHER;
+    }
+
+    public boolean mysqlFamilyType() {
+        return this == DbType.MYSQL
+                || this == DbType.MARIADB
+                || this == DbType.GBASE
+                || this == DbType.OSCAR
+                || this == DbType.XUGU
+                || this == DbType.DERBY
+                || this == DbType.CLICK_HOUSE
+                || this == DbType.OCEAN_BASE
+                || this == DbType.CUBRID
+                || this == DbType.GOLDILOCKS
+                || this == DbType.CSIIDB
+                || this == DbType.SUNDB;
+    }
+
+    public boolean oracleFamilyType() {
+        return this == DbType.ORACLE
+                || this == DbType.DM
+                || this == DbType.GAUSS;
+    }
+
+    public boolean oracle12cFamilyType() {
+        return this == DbType.ORACLE_12C
+                || this == DbType.FIREBIRD
+                || this == DbType.SQLSERVER;
+    }
+
+    public boolean gBase8sFamilyType() {
+        return this == DbType.GBASE_8S
+                || this == DbType.SINODB;
+    }
+
+    public boolean postgresqlFamilyType() {
+        return this == DbType.POSTGRE_SQL
+                || this == DbType.H2
+                || this == DbType.LEALONE
+                || this == DbType.SQLITE
+                || this == DbType.HSQL
+                || this == DbType.KINGBASE_ES
+                || this == DbType.PHOENIX
+                || this == DbType.SAP_HANA
+                || this == DbType.IMPALA
+                || this == DbType.HIGH_GO
+                || this == DbType.VERTICA
+                || this == DbType.REDSHIFT
+                || this == DbType.OPENGAUSS
+                || this == DbType.TDENGINE
+                || this == DbType.UXDB
+                || this == DbType.GBASE8S_PG
+                || this == DbType.GREENPLUM
+                || this == DbType.GBASE_8C;
     }
 }

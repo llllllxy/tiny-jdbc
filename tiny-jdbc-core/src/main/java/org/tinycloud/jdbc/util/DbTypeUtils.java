@@ -107,6 +107,10 @@ public class DbTypeUtils {
             return DbType.GBASE;
         } else if (jdbcUrl.contains(":gbasedbt-sqli:") || jdbcUrl.contains(":informix-sqli:")) {
             return DbType.GBASE_8S;
+        } else if (jdbcUrl.contains(":gbase8s-pg:")) {
+            return DbType.GBASE8S_PG;
+        } else if (jdbcUrl.contains(":gbase8c:")) {
+            return DbType.GBASE_8C;
         } else if (jdbcUrl.contains(":ch:") || jdbcUrl.contains(":clickhouse:")) {
             return DbType.CLICK_HOUSE;
         } else if (jdbcUrl.contains(":oscar:")) {
@@ -119,6 +123,8 @@ public class DbTypeUtils {
             return DbType.HIGH_GO;
         } else if (jdbcUrl.contains(":cubrid:")) {
             return DbType.CUBRID;
+        } else if (jdbcUrl.contains(":sundb:")) {
+            return DbType.SUNDB;
         } else if (jdbcUrl.contains(":goldilocks:")) {
             return DbType.GOLDILOCKS;
         } else if (jdbcUrl.contains(":csiidb:")) {
@@ -147,6 +153,10 @@ public class DbTypeUtils {
             return DbType.UXDB;
         } else if (jdbcUrl.contains(":greenplum:")) {
             return DbType.GREENPLUM;
+        } else if (jdbcUrl.contains(":trino:")) {
+            return DbType.TRINO;
+        } else if (jdbcUrl.contains(":presto:")) {
+            return DbType.PRESTO;
         } else {
             logger.warn("The jdbcUrl " + jdbcUrl + ", cannot parse DialectEnum or the database is not supported!");
             return DbType.OTHER;

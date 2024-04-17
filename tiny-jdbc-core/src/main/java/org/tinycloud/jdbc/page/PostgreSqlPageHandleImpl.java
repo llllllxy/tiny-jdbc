@@ -19,12 +19,12 @@ public class PostgreSqlPageHandleImpl implements IPageHandle {
     @Override
     public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         StringBuilder sql = new StringBuilder(oldSQL);
-        long offset = (pageNo - 1) * pageSize;
+        long offset = (pageNo - 1L) * pageSize;
         long limit = pageSize;
-        if (offset <= 0) {
-            sql.append(" LIMIT ").append(limit);
-        } else {
+        if (offset != 0L) {
             sql.append(" LIMIT ").append(limit).append(" OFFSET ").append(offset);
+        } else {
+            sql.append(" LIMIT ").append(limit);
         }
         return sql.toString();
     }

@@ -21,7 +21,6 @@ public class GBase8sPageHandleImpl implements IPageHandle {
     public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         long offset = (pageNo - 1) * pageSize;
         long limit = pageSize;
-
         StringBuilder sql = (new StringBuilder(oldSQL)).insert(6, " SKIP " + offset + " FIRST " + limit);
         return sql.toString();
     }

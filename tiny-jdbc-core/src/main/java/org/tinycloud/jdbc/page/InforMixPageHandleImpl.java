@@ -22,7 +22,7 @@ public class InforMixPageHandleImpl implements IPageHandle {
      */
     @Override
     public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
-        long offset = (pageNo - 1) * pageSize;
+        long offset = (pageNo - 1L) * pageSize;
         long limit = pageSize;
 
         StringBuilder sql = new StringBuilder("SELECT");
