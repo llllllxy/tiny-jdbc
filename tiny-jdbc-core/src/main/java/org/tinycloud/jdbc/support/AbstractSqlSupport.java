@@ -367,7 +367,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (entity == null) {
             throw new TinyJdbcException("insert entity cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, ignoreNulls);
+        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, ignoreNulls, getJdbcTemplate());
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("insert parameters cannot be null");
         }
@@ -384,7 +384,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (entity == null) {
             throw new TinyJdbcException("insertReturnAutoIncrement entity cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, ignoreNulls);
+        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, ignoreNulls, getJdbcTemplate());
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("insertReturnAutoIncrement parameters cannot be null");
         }
@@ -560,7 +560,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         List<Object[]> batchArgs = new ArrayList<>();
         String sql = "";
         for (T t : collection) {
-            SqlProvider sqlProvider = SqlGenerator.insertSql(t, true);
+            SqlProvider sqlProvider = SqlGenerator.insertSql(t, true, getJdbcTemplate());
             if (StrUtils.isEmpty(sql)) {
                 sql = sqlProvider.getSql();
             }

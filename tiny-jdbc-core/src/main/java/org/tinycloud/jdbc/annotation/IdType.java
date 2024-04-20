@@ -7,7 +7,8 @@ public enum IdType {
     OBJECT_ID(2),
     ASSIGN_ID(3),
     UUID(4),
-    CUSTOM(5);
+    SEQUENCE(5),
+    CUSTOM(6);
 
     private final int key;
 
