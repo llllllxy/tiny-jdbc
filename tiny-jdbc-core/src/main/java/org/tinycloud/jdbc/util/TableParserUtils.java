@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc.util;
 
 import org.tinycloud.jdbc.annotation.Column;
+import org.tinycloud.jdbc.annotation.Id;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 
@@ -48,7 +49,7 @@ public class TableParserUtils {
     public static <T> Field[] resolveFields(Class<T> clazz) {
         Field[] fields = ReflectUtils.getFields(clazz);
         if (fields == null || fields.length == 0) {
-            throw new TinyJdbcException("resolveFields " + clazz.getName() + " no field defined");
+            throw new TinyJdbcException("resolveFields " + clazz.getName() + " no field defined!");
         }
         return fields;
     }
@@ -62,7 +63,7 @@ public class TableParserUtils {
      */
     public static <T> String getTableName(T entity) {
         if (entity == null) {
-            throw new TinyJdbcException("getTableName entity cannot be null");
+            throw new TinyJdbcException("getTableName entity cannot be null!");
         }
         Class<?> clazz = entity.getClass();
         return getTableName(clazz);
@@ -101,7 +102,7 @@ public class TableParserUtils {
      */
     public static <T> Pair<List<String>, String> getTableColumn(T entity) {
         if (entity == null) {
-            throw new TinyJdbcException("getTableColumn entity cannot be null");
+            throw new TinyJdbcException("getTableColumn entity cannot be null!");
         }
         Class<?> clazz = entity.getClass();
         return getTableColumn(clazz);
@@ -124,15 +125,20 @@ public class TableParserUtils {
         List<String> columnList = new ArrayList<>();
         for (Field field : fields) {
             Column columnAnnotation = field.getAnnotation(Column.class);
+            Id idAnnotation = field.getAnnotation(Id.class);
+            String column;
             if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                continue;
+                column = (StrUtils.humpToLine(field.getName()));
+            } else {
+                column = (columnAnnotation.value());
             }
-            columnList.add(columnAnnotation.value());
-            if (columnAnnotation.primaryKey()) {
-                if (primaryKeyColumn == null) {
-                    primaryKeyColumn = columnAnnotation.value();
-                }
+            columnList.add(column);
+            if (idAnnotation != null) {
+                primaryKeyColumn = column;
             }
+        }
+        if (primaryKeyColumn == null || primaryKeyColumn.isEmpty()) {
+            throw new TinyJdbcException("Please correctly set the primary key attribute column!");
         }
         tableColumn = new Pair<>(columnList, primaryKeyColumn);
         tableColumnCache.put(clazz, tableColumn);

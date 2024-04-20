@@ -16,14 +16,4 @@ public @interface Column {
      * 数据库字段对应
      */
     String value() default "";
-
-    /**
-     * 标记字段是否为主键
-     */
-    boolean primaryKey() default false;
-
-    /**
-     * 标记主键策略类型
-     */
-    IdType idType() default IdType.INPUT;
 }

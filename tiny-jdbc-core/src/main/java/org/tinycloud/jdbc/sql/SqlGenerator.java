@@ -1,6 +1,8 @@
 package org.tinycloud.jdbc.sql;
 
+import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.annotation.Column;
+import org.tinycloud.jdbc.annotation.Id;
 import org.tinycloud.jdbc.annotation.IdType;
 import org.tinycloud.jdbc.config.GlobalConfigUtils;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
@@ -48,80 +50,96 @@ public class SqlGenerator {
         StringBuilder values = new StringBuilder();
         for (Field field : fields) {
             ReflectUtils.makeAccessible(field);
+            Class<?> fieldType = field.getType();
+            String fieldName = field.getName();
             Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
+            Id idAnnotation = field.getAnnotation(Id.class);
+            String column;
+            if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
+                column = StrUtils.humpToLine(fieldName);
+            } else {
+                column = columnAnnotation.value();
             }
-            String column = columnAnnotation.value();
-            boolean primaryKey = columnAnnotation.primaryKey();
-            if (primaryKey) {
-                IdType idType = columnAnnotation.idType();
-                if (idType == IdType.AUTO_INCREMENT) {
-                    // 自增主键直接跳过，无需处理
-                    continue;
-                }
-                // 如果是其他主键策略，设置完主键后，塞回到实体类里，这样可以方便插入后获取主键值
-                if (idType == IdType.OBJECT_ID) {
-                    Object fieldValue = IdUtils.objectId();
-                    try {
-                        field.set(object, fieldValue);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String when objectId!", e);
-                    }
-                }
-                if (idType == IdType.ASSIGN_ID) {
-                    Class<?> type = field.getType();
-                    Object fieldValue = (type == String.class) ? IdUtils.nextId() : IdUtils.nextLongId();
-                    try {
-                        field.set(object, fieldValue);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String or Long when assignId!", e);
-                    }
-                }
-                if (idType == IdType.UUID) {
-                    Object fieldValue = IdUtils.simpleUUID();
-                    try {
-                        field.set(object, fieldValue);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", field type must be String when uuid!", e);
-                    }
-                }
-                if (idType == IdType.CUSTOM) {
-                    IdGeneratorInterface idGeneratorInterface = GlobalConfigUtils.getGlobalConfig().getIdGeneratorInterface();
-                    Class<?> keyType = field.getType();
-                    Object fieldValue;
-                    Object id = idGeneratorInterface.nextId(object);
-                    if (keyType == id.getClass()) {
-                        fieldValue = id;
-                    } else if (Integer.class == keyType) {
-                        fieldValue = Integer.parseInt(id.toString());
-                    } else if (Long.class == keyType) {
-                        fieldValue = Long.parseLong(id.toString());
-                    } else if (BigDecimal.class == keyType) {
-                        fieldValue = new BigDecimal(id.toString());
-                    } else if (BigInteger.class == keyType) {
-                        fieldValue = new BigInteger(id.toString());
-                    } else {
-                        fieldValue = id;
-                    }
-                    try {
-                        field.set(object, fieldValue);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        throw new TinyJdbcException("inject field value fail : " + field.getName() + ", please verify if the return data type of idGeneratorInterface.nextId() method matches the data type of the primary key!", e);
-                    }
-                }
-            }
-            Object fieldValue = null;
+            Object fieldValue;
             try {
                 fieldValue = field.get(object);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
-            // 是否忽略null
+            // 如果是主键列
+            if (idAnnotation != null) {
+                // 只有用户没有自己设置主键值时，才走自动生成的策略
+                if (ObjectUtils.isEmpty(fieldValue)) {
+                    IdType idType = idAnnotation.idType();
+                    if (idType == IdType.AUTO_INCREMENT) {
+                        // 自增主键直接跳过，无需处理
+                        continue;
+                    }
+                    // 如果是其他主键策略，设置完主键后，塞回到实体类里，这样可以方便插入后获取主键值
+                    if (idType == IdType.OBJECT_ID) {
+                        if (fieldType != String.class) {
+                            throw new TinyJdbcException("The type of " + fieldName + " field  must be String when objectId!");
+                        }
+                        fieldValue = IdUtils.objectId();
+                        try {
+                            field.set(object, fieldValue);
+                        } catch (IllegalArgumentException | IllegalAccessException e) {
+                            throw new TinyJdbcException("inject field value fail : " + fieldName + " field type must be String when objectId!", e);
+                        }
+                    }
+                    if (idType == IdType.ASSIGN_ID) {
+                        if (fieldType != String.class && fieldType != Long.class) {
+                            throw new TinyJdbcException("The type of " + fieldName + ", field  must be String or Long when assignId!");
+                        }
+                        fieldValue = (fieldType == String.class) ? IdUtils.nextId() : IdUtils.nextLongId();
+                        try {
+                            field.set(object, fieldValue);
+                        } catch (IllegalArgumentException | IllegalAccessException e) {
+                            throw new TinyJdbcException("inject field value fail : " + fieldName + ", field type must be String or Long when assignId!", e);
+                        }
+                    }
+                    if (idType == IdType.UUID) {
+                        if (fieldType != String.class) {
+                            throw new TinyJdbcException("The type of " + fieldName + " field must be String when uuid!");
+                        }
+                        fieldValue = IdUtils.simpleUUID();
+                        try {
+                            field.set(object, fieldValue);
+                        } catch (IllegalArgumentException | IllegalAccessException e) {
+                            throw new TinyJdbcException("inject field value fail : " + fieldName + ", field type must be String when uuid!", e);
+                        }
+                    }
+                    if (idType == IdType.CUSTOM) {
+                        IdGeneratorInterface idGeneratorInterface = GlobalConfigUtils.getGlobalConfig().getIdGeneratorInterface();
+                        Object id = idGeneratorInterface.nextId(object);
+                        if (fieldType == id.getClass()) {
+                            fieldValue = id;
+                        } else if (Integer.class == fieldType) {
+                            fieldValue = Integer.parseInt(id.toString());
+                        } else if (Long.class == fieldType) {
+                            fieldValue = Long.parseLong(id.toString());
+                        } else if (BigDecimal.class.isAssignableFrom(fieldType)) {
+                            fieldValue = new BigDecimal(id.toString());
+                        } else if (BigInteger.class.isAssignableFrom(fieldType)) {
+                            fieldValue = new BigInteger(id.toString());
+                        } else if (String.class.isAssignableFrom(fieldType)) {
+                            fieldValue = id.toString();
+                        } else {
+                            fieldValue = id;
+                        }
+                        try {
+                            field.set(object, fieldValue);
+                        } catch (IllegalArgumentException | IllegalAccessException e) {
+                            throw new TinyJdbcException("inject field value fail : " + field.getName() + ", please verify if the return data type of idGeneratorInterface.nextId() method matches the data type of the primary key!", e);
+                        }
+                    }
+                }
+            }
+
+            // 判断是否忽略null
             if (ignoreNulls && fieldValue == null) {
                 continue;
             }
-
             columns.append(column).append(",");
             values.append("?").append(",");
             parameters.add(fieldValue);
@@ -157,12 +175,12 @@ public class SqlGenerator {
         for (Field field : fields) {
             ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
-            }
-            String column = columnAnnotation.value();
-            if (StrUtils.isEmpty(column)) {
-                continue;
+            Id idAnnotation = field.getAnnotation(Id.class);
+            String column;
+            if (columnAnnotation != null && StrUtils.isNotEmpty(columnAnnotation.value())) {
+                column = columnAnnotation.value();
+            } else {
+                column = StrUtils.humpToLine(field.getName());
             }
             Object filedValue = null;
             try {
@@ -170,8 +188,7 @@ public class SqlGenerator {
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
-            boolean primaryKey = columnAnnotation.primaryKey();
-            if (primaryKey) {
+            if (idAnnotation != null) {
                 whereColumns.append(column);
                 whereValues = filedValue;
                 continue;
@@ -226,12 +243,11 @@ public class SqlGenerator {
         for (Field field : fields) {
             ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
-            }
-            String column = columnAnnotation.value();
-            if (StrUtils.isEmpty(column)) {
-                continue;
+            String column;
+            if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
+                column = StrUtils.humpToLine(field.getName());
+            } else {
+                column = columnAnnotation.value();
             }
             Object filedValue = null;
             try {
@@ -246,7 +262,6 @@ public class SqlGenerator {
             columns.append(column).append("=?,");
             parameters.add(filedValue);
         }
-
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
         sql.append("UPDATE ").append(tableName).append(" SET ").append(tableColumn);
         sql.append(criteriaSql);
@@ -282,12 +297,11 @@ public class SqlGenerator {
         for (Field field : fields) {
             ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
-            }
-            String column = columnAnnotation.value();
-            if (StrUtils.isEmpty(column)) {
-                continue;
+            String column;
+            if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
+                column = StrUtils.humpToLine(field.getName());
+            } else {
+                column = columnAnnotation.value();
             }
             Object filedValue = null;
             try {
@@ -387,12 +401,11 @@ public class SqlGenerator {
         for (Field field : fields) {
             ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
-            }
-            String column = columnAnnotation.value();
-            if (StrUtils.isEmpty(column)) {
-                continue;
+            String column;
+            if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
+                column = StrUtils.humpToLine(field.getName());
+            } else {
+                column = columnAnnotation.value();
             }
             Object filedValue = null;
             try {
@@ -490,12 +503,11 @@ public class SqlGenerator {
         for (Field field : fields) {
             ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
-            if (columnAnnotation == null) {
-                continue;
-            }
-            String column = columnAnnotation.value();
-            if (StrUtils.isEmpty(column)) {
-                continue;
+            String column;
+            if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
+                column = StrUtils.humpToLine(field.getName());
+            } else {
+                column = columnAnnotation.value();
             }
             Object filedValue = null;
             try {
@@ -504,22 +516,16 @@ public class SqlGenerator {
                 throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             if (filedValue != null) {
-                whereColumns.append("AND ")
-                        .append(column)
-                        .append("=? ");
+                whereColumns.append("AND ").append(column).append("=? ");
                 parameters.add(filedValue);
             }
-            columns.append(column)
-                    .append(",");
+            columns.append(column).append(",");
         }
         // 截去columns的最后一个字符
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
 
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ")
-                .append(tableColumn)
-                .append(" FROM ")
-                .append(tableName);
+        sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableName);
         if (StrUtils.isNotEmpty(whereColumns.toString())) {
             sql.append(" WHERE ").append(whereColumns.toString().replaceFirst("AND", ""));
         }
@@ -547,9 +553,7 @@ public class SqlGenerator {
         parameters.add(id);
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableName)
-                .append(" WHERE ")
-                .append(primaryKeyColumn)
-                .append("=?");
+                .append(" WHERE ").append(primaryKeyColumn).append("=?");
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
         so.setParameters(parameters);
@@ -572,9 +576,7 @@ public class SqlGenerator {
 
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableName)
-                .append(" WHERE ")
-                .append(primaryKeyColumn)
-                .append(" IN ");
+                .append(" WHERE ").append(primaryKeyColumn).append(" IN ");
         // 构建 IN 查询的 SQL 语句
         StringJoiner placeholders = new StringJoiner(",", "(", ")");
         for (int i = 0; i < ids.size(); i++) {
@@ -603,12 +605,7 @@ public class SqlGenerator {
         List<Object> parameters = new ArrayList<>();
         parameters.add(id);
         StringBuilder sql = new StringBuilder();
-        sql.append("DELETE FROM ")
-                .append(tableName)
-                .append(" WHERE ")
-                .append(primaryKeyColumn)
-                .append("=?");
-
+        sql.append("DELETE FROM ").append(tableName).append(" WHERE ").append(primaryKeyColumn).append("=?");
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
         so.setParameters(parameters);
@@ -625,11 +622,7 @@ public class SqlGenerator {
         Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
         String primaryKeyColumn = pair.getRight();
         StringBuilder sql = new StringBuilder();
-        sql.append("DELETE FROM ")
-                .append(tableName)
-                .append(" WHERE ")
-                .append(primaryKeyColumn)
-                .append(" IN ");
+        sql.append("DELETE FROM ").append(tableName).append(" WHERE ").append(primaryKeyColumn).append(" IN ");
         // 构建 IN 查询的 SQL 语句
         StringJoiner placeholders = new StringJoiner(",", "(", ")");
         for (int i = 0; i < ids.size(); i++) {
@@ -663,8 +656,7 @@ public class SqlGenerator {
         List<Object> parameters = criteria.getParameters();
 
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableName)
-                .append(whereSql);
+        sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableName).append(whereSql);
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
