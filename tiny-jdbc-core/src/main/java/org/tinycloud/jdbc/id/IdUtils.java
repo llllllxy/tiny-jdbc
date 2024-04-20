@@ -2,8 +2,6 @@ package org.tinycloud.jdbc.id;
 
 import org.tinycloud.jdbc.util.LocalHostUtils;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -80,24 +78,5 @@ public class IdUtils {
      */
     public static String objectId() {
         return ObjectId.nextId();
-    }
-
-
-    public static void main(String[] args) {
-
-        // ID是否重复验证测试
-        Set<String> set = new HashSet<>();
-        try {
-            for (int i = 0; i < 10000; i++) {
-                String id = String.valueOf(nextId());
-                if (set.contains(id)) {
-                    throw new Exception(id + " exists");
-                }
-                set.add(id);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
 }
