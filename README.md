@@ -58,11 +58,12 @@
 <dependency>
     <groupId>top.lxyccc</groupId>
     <artifactId>tiny-jdbc-boot-starter</artifactId>
-    <version>1.7.3</version>
+    <version>1.7.4</version>
 </dependency>
 ```
 
-### application.yml参数配置 (或application.properties)
+### application.yml参数配置 
+- **或application.properties**
 
 ```yaml
 tiny-jdbc:
@@ -72,9 +73,9 @@ tiny-jdbc:
   db-type: mysql
 ```
 
-### 定义Entity实体类，对应数据库的一张表，如下
-
-- 实体类属性名必须使用`驼峰命名规则`，与数据库表字段一一映射
+### 定义Entity实体类
+- **实体类对应数据库的一张表**
+- **实体类属性名必须使用`驼峰命名规则`，与数据库表字段一一映射**
 
 ```java
 
@@ -83,19 +84,24 @@ public class UploadFile implements Serializable {
     private static final long serialVersionUID = -1L;
 
     /**
-     * 表的主键，暂时只支持单主键
+     * @Id注解用于标记表的主键，目前只支持单主键，请不要在多个属性上设置此注解，会导致程序出错
      *
-     * value: 字段名
-     * primaryKey: 标记是否为主键，true是，false不是
-     * idType: 主键ID策略，目前支持以下六种 AUTO_INCREMENT、INPUT、OBJECT_ID、ASSIGN_ID、UUID、CUSTOM
+     * idType: 主键ID策略，目前支持以下7种 AUTO_INCREMENT、INPUT、OBJECT_ID、ASSIGN_ID、UUID、SEQUENCE、CUSTOM
+     * value: 则代表的是sequence 序列的 sql 内容，idType=SEQUENCE时，必须设置此内容
+     * 
      * 注意！
-     * 如果设置为 AUTO_INCREMENT自增主键 的话，则此字段必须为Long
-     * 如果设置为 UUID 的话，则此字段必须为String
-     * 如果设置为 OBJECT_ID 的话，则此字段必须为String
-     * 如果设置为 ASSIGN_ID 的话，则此字段必须为String或者Long
-     * 如果设置为 CUSTOM 的话，则需要自己实现 IdGeneratorInterface 接口
+     * 如果设置为 AUTO_INCREMENT 自增主键 的话，则此字段必须为Long
+     * 如果设置为 UUID 的话，则此属性类型必须为String
+     * 如果设置为 OBJECT_ID 的话，则此属性类型必须为String
+     * 如果设置为 ASSIGN_ID 的话，则此属性类型必须为String或者Long
+     * 如果设置为 SEQUENCE 的话，则此属性类型必须为Integer或者Long，且必须设置value属性为查询序列值的SQL
+     * 如果设置为 CUSTOM 的话，则需要自己实现 IdGeneratorInterface 接口并注册为bean
+     * 
+     * 
+     * @Column注解用于标记属性和表字段的对应关系
      */
-    @Column(value = "id", primaryKey = true, idType = IdType.AUTO_INCREMENT)
+    @Id(idType = IdType.AUTO_INCREMENT)
+    @Column(value = "id")
     private Long id;
 
     /**
@@ -142,106 +148,12 @@ public class UploadFile implements Serializable {
         this.id = id;
     }
 
-    public String getFileId() {
-        return fileId;
-    }
-
-    public void setFileId(String fileId) {
-        this.fileId = fileId;
-    }
-
-    public String getFileNameOld() {
-        return fileNameOld;
-    }
-
-    public void setFileNameOld(String fileNameOld) {
-        this.fileNameOld = fileNameOld;
-    }
-
-    public String getFileNameNew() {
-        return fileNameNew;
-    }
-
-    public void setFileNameNew(String fileNameNew) {
-        this.fileNameNew = fileNameNew;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public String getFileMd5() {
-        return fileMd5;
-    }
-
-    public void setFileMd5(String fileMd5) {
-        this.fileMd5 = fileMd5;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
+    ...
 }
 ```
 
-> 注解说明
-> ##### @Table
-> - 描述：表名注解，标识实体类对应的表
-> - 使用位置：实体类
-> ```java
-> @Table("b_upload_file")
-> public class UploadFile implements Serializable {
->     private static final long serialVersionUID = -1L;
->     
->     ...
-> }
-> ```
-> |属性|类型|必须指定|默认值|描述|
-> |---|---|---|---|---|
-> | value  | String  |  是 | ""    | 对应数据库表名  |
->
-> ##### @Column
-> - 描述：字段注解
-> - 使用位置：实体类
-> ```java
-> @Table("b_upload_file")
-> public class UploadFile implements Serializable {
->     private static final long serialVersionUID = -1L;
->
->     @Column(value = "id", primaryKey = true, idType = IdType.AUTO_INCREMENT)
->     private Long id;
->     
->     @Column("file_id")
->     private String fileId;
->
-> }
-> ```
-> |属性|类型|必须指定|默认值|描述|
-> |---|---|---|---|---|
-> | value         | String  |  是 | ""    | 对应数据库字段名  |
-> | primaryKey    | boolean |  否 | false | 是否为主键  |
-> | idType        | IdType  |  否 | false | 主键策略 |
->
-> ##### IdType主键策略说明
->
-> |值|描述|
-> |---|---|
-> | INPUT            | insert 前自行 set 主键值  |  
-> | AUTO_INCREMENT   | 数据库 ID 自增 |  
-> | OBJECT_ID        | 自动设置 MongoDb objectId 作为主键值 |  
-> | ASSIGN_ID        | 自动设置 雪花ID 作为主键值 |  
-> | UUID             | 自动设置 UUID 作为主键值 |  
-> | CUSTOM           | 自定义主键ID生成器，需自行实现 IdGeneratorInterface 接口，详见[自定义ID生成器](#idGen) |  
-
-### 定义Dao类，继承自BaseDao，泛型一为对应实体类，泛型二实体类主键类型
+### 定义Dao类，继承自BaseDao
+- **泛型一为对应实体类，泛型二实体类主键类型**
 
 ```java
 import org.springframework.stereotype.Repository;
@@ -255,7 +167,7 @@ public class UploadFileDao extends BaseDao<UploadFile, Long> {
 }
 ```
 
-### Service层注入即可使用
+### Service层注入使用
 
 ```java
 import org.springframework.stereotype.Service;
@@ -271,7 +183,75 @@ public class UploadFileService {
 }
 ```
 
-## 3、BaseDao CRUD接口说明
+## 3、注解说明
+
+##### @Table
+- 描述：表名注解，标识实体类对应的表
+- 使用位置：实体类
+```java
+@Table("b_upload_file")
+public class UploadFile implements Serializable {
+ private static final long serialVersionUID = -1L;
+
+ ...
+}
+```
+|属性|类型|必须指定|默认值|描述|
+|---|---|---|---|---|
+| value  | String  |  是 | ""    | 对应数据库表名  |
+
+#### @Id
+- 描述：主键注解，标识实体类主键属性
+- 使用位置：实体类属性
+```java
+ @Table("b_upload_file")
+ public class UploadFile implements Serializable {
+     private static final long serialVersionUID = -1L;
+     
+     @Id(idType = IdType.AUTO_INCREMENT)
+     @Column(value = "id")
+     private Long id;
+     ...
+ }
+```
+|属性|类型|必须指定|默认值|描述|
+|---|---|---|---|---|
+| idType | String  |  是 | IdType.INPUT | 主键策略  |
+| value  | String  |  否 |  ""  | 若 idType 类型是 sequence， value 则代表的是sequence 序列的 sql 内容，此时必填  |
+
+##### IdType主键策略说明
+|值|描述|
+|---|---|
+| INPUT            | insert 前自行 set 主键值  |  
+| AUTO_INCREMENT   | 数据库 ID 自增 |  
+| OBJECT_ID        | 自动设置 MongoDb objectId 作为主键值 |  
+| ASSIGN_ID        | 自动设置 雪花ID 作为主键值 |  
+| UUID             | 自动设置 UUID 作为主键值 |  
+| SEQUENCE         | 自动设置 调用序列SQL结果 作为主键值 |  
+| CUSTOM           | 自定义主键ID生成器，需自行实现 IdGeneratorInterface 接口，详见[自定义ID生成器](#idGen) | 
+
+#### @Column
+- 描述：字段注解，标识实体类属性和字段的对应关系
+- 使用位置：实体类属性
+```java
+ @Table("b_upload_file")
+ public class UploadFile implements Serializable {
+     private static final long serialVersionUID = -1L;
+
+     @Id(idType = IdType.AUTO_INCREMENT)
+     @Column(value = "id")
+     private Long id;
+     
+     @Column("file_id")
+     private String fileId;
+
+ }
+```
+|属性|类型|必须指定|默认值|描述|
+|---|---|---|---|---|
+| value         | String  |  是 | ""    | 对应数据库字段名  |
+
+## 4、BaseDao CRUD接口说明
 
 ### 查询操作
 
@@ -339,7 +319,7 @@ public class UploadFileService {
 |`int delete(UpdateCriteria<T> criteria);`| 根据条件构造器，将作为where参数 |
 |`int delete(LambdaUpdateCriteria<T> criteria);`| 根据条件构造器（lambda），将作为where参数 |
 
-## 4、条件构造器
+## 5、条件构造器
 
 ### 使用说明
 
@@ -486,7 +466,7 @@ int num = projectInfoDao.update(project1, new LambdaUpdateCriteria<TProjectInfo>
 // 等价于 UPDATE xxxx SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 ```
 
-<h2 id="idGen"> 5、自定义ID生成器</h2>
+<h2 id="idGen"> 6、自定义ID生成器</h2>
 
 需要实现 IdGeneratorInterface 接口，并且声明为 Bean 供 Spring 扫描注入
 
@@ -523,7 +503,7 @@ public CustomIdGeneratorInterface idGenerator(){
 }
 ```
 
-## 5、一些示例
+## 7、一些示例
 创建 ProjectInfoDao
 ```java
 package org.example.mapper;
@@ -743,6 +723,6 @@ int result = baseDao.delete(criteria);
 ``` 
 
 
-## 6、安全说明
+## 8、安全说明
 使用`QueryCriteria`和`UpdateCriteria`时应避免前端传入字段名，防止`SQL注入`的风险；
 如若必须使用由前端传入的动态内容，如使用QueryCriteria.orderBy("任意前端传入字段")进行动态排序，推荐使用工具类 `SqlInjectionUtils.check(内容)` 先行验证字符串是否存在 `SQL注入`， 存在则拒绝操作。
