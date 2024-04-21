@@ -728,7 +728,7 @@ int result = baseDao.delete(criteria);
 如若必须使用由前端传入的动态内容，如使用QueryCriteria.orderBy("任意前端传入字段")进行动态排序，推荐使用工具类 `SqlInjectionUtils.check(内容)` 先行验证字符串是否存在 `SQL注入`， 存在则拒绝操作。
 
 
-## 9、SQL日志打印
+## 9、SQL日志打印分析
 **该功能依赖 p6spy 组件，需进行配置后方可使用**
 
 **注意！**
