@@ -21,7 +21,7 @@
     <a href="https://github.com/llllllxy/tiny-jdbc/issues">
         <img src="https://img.shields.io/github/issues/llllllxy/tiny-jdbc.svg?style=flat-square&logo=GitHub">
     </a>
-    <a href='https://gitee.com/leisureLXY/tiny-jdbc/releases'>
+    <a href='https://github.com/llllllxy/tiny-jdbc/releases'>
         <img src='https://img.shields.io/github/release/llllllxy/tiny-jdbc.svg?style=flat-square&logo=GitHub'>
     </a>
     <a href='https://gitee.com/leisureLXY/tiny-jdbc'>
