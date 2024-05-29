@@ -15,6 +15,7 @@ import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
+import org.tinycloud.jdbc.page.PageHandleResult;
 import org.tinycloud.jdbc.sql.SqlGenerator;
 import org.tinycloud.jdbc.sql.SqlProvider;
 import org.tinycloud.jdbc.util.StrUtils;
@@ -111,14 +112,13 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (page.getPageSize() <= 0) {
             throw new TinyJdbcException("pageSize must be greater than 0");
         }
-        String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
-        String countSql = getPageHandle().handlerCountSQL(sql);
+        PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
         // 查询数据列表
-        List<T> list = getJdbcTemplate().query(selectSql, rowMapper, params);
+        List<T> list = getJdbcTemplate().query(handleResult.getPageSql(), rowMapper, params);
         // 查询总共数量
-        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, params);
+        Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, params);
         page.setRecords(list);
-        page.setTotal(totalSize);
+        page.setTotal(count);
         return page;
     }
 
@@ -133,14 +133,13 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (page.getPageSize() <= 0) {
             throw new TinyJdbcException("pageSize must be greater than 0");
         }
-        String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
-        String countSql = getPageHandle().handlerCountSQL(sql);
+        PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
         // 查询数据列表
-        List<F> list = getJdbcTemplate().query(selectSql, new BeanPropertyRowMapper<>(clazz), params);
+        List<F> list = getJdbcTemplate().query(handleResult.getPageSql(), new BeanPropertyRowMapper<>(clazz), params);
         // 查询总共数量
-        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, params);
+        Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, params);
         page.setRecords(list);
-        page.setTotal(totalSize);
+        page.setTotal(count);
         return page;
     }
 
@@ -155,14 +154,13 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (page.getPageSize() <= 0) {
             throw new TinyJdbcException("pageSize must be greater than 0");
         }
-        String selectSql = getPageHandle().handlerPagingSQL(sql, page.getPageNum(), page.getPageSize());
-        String countSql = getPageHandle().handlerCountSQL(sql);
+        PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
         // 查询数据列表
-        List<Map<String, Object>> list = getJdbcTemplate().queryForList(selectSql, params);
+        List<Map<String, Object>> list = getJdbcTemplate().queryForList(handleResult.getPageSql(), params);
         // 查询总共数量
-        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, params);
+        Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, params);
         page.setRecords(list);
-        page.setTotal(totalSize);
+        page.setTotal(count);
         return page;
     }
 
@@ -276,14 +274,13 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("每页大小必须大于1");
         }
         SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
-        String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
-        String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
+        PageHandleResult handleResult = getPageHandle().handle(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
         // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, sqlProvider.getParameters().toArray());
+        List<T> resultList = getJdbcTemplate().query(handleResult.getPageSql(), rowMapper, sqlProvider.getParameters().toArray());
         // 查询总共数量
-        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, sqlProvider.getParameters().toArray());
+        Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, sqlProvider.getParameters().toArray());
         page.setRecords(resultList);
-        page.setTotal(totalSize);
+        page.setTotal(count);
         return page;
     }
 
@@ -302,12 +299,11 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("pageSize must be greater than 0");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCriteriaSql(criteria, entityClass);
-        String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
-        String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
+        PageHandleResult handleResult = getPageHandle().handle(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
         // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, sqlProvider.getParameters().toArray());
+        List<T> resultList = getJdbcTemplate().query(handleResult.getPageSql(), rowMapper, sqlProvider.getParameters().toArray());
         // 查询总共数量
-        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, sqlProvider.getParameters().toArray());
+        Long totalSize = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, sqlProvider.getParameters().toArray());
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
@@ -328,12 +324,11 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
             throw new TinyJdbcException("pageSize must be greater than 0");
         }
         SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
-        String selectSql = getPageHandle().handlerPagingSQL(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
-        String countSql = getPageHandle().handlerCountSQL(sqlProvider.getSql());
+        PageHandleResult handleResult = getPageHandle().handle(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
         // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(selectSql, rowMapper, sqlProvider.getParameters().toArray());
+        List<T> resultList = getJdbcTemplate().query(handleResult.getPageSql(), rowMapper, sqlProvider.getParameters().toArray());
         // 查询总共数量
-        long totalSize = getJdbcTemplate().queryForObject(countSql, Long.class, sqlProvider.getParameters().toArray());
+        Long totalSize = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, sqlProvider.getParameters().toArray());
         page.setRecords(resultList);
         page.setTotal(totalSize);
         return page;
