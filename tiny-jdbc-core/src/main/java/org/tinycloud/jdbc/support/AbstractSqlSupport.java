@@ -551,7 +551,6 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (CollectionUtils.isEmpty(collection)) {
             throw new TinyJdbcException("batchInsert collection cannot be null or empty");
         }
-        int[] row = null;
         List<Object[]> batchArgs = new ArrayList<>();
         String sql = "";
         for (T t : collection) {
@@ -564,8 +563,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (CollectionUtils.isEmpty(batchArgs)) {
             throw new TinyJdbcException("batchInsert batchArgs cannot be null");
         }
-        row = getJdbcTemplate().batchUpdate(sql, batchArgs);
-        return row;
+        return getJdbcTemplate().batchUpdate(sql, batchArgs);
     }
 
     @Override
