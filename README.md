@@ -470,6 +470,7 @@ int num = projectInfoDao.update(project1, new LambdaUpdateCriteria<TProjectInfo>
 // 等价于 UPDATE xxxx SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 ```
 
+
 <h2 id="idGen"> 6、自定义ID生成器</h2>
 
 需要实现 IdGeneratorInterface 接口，并且声明为 Bean 供 Spring 扫描注入
@@ -502,12 +503,70 @@ public class CustomIdGeneratorInterface implements IdGeneratorInterface {
 
 ```java
 @Bean
-public CustomIdGeneratorInterface idGenerator(){
-    return new CustomIdGeneratorInterface();
+public IdGeneratorInterface idGenerator(){
+        return new IdGeneratorInterface() {
+            @Override
+            public Object nextId(Object entity) {
+                // 可以将当前传入的class全类名来作为业务键,
+                // 或者通过反射获取表名进行业务Id调用生成
+                String bizKey = entity.getClass().getName();
+                // 自定义ID生成策略，推荐最终返回值使用包装类
+                Long id = ....;
+                // 返回生成的id值即可.
+                return id;
+            }
+        };
 }
 ```
 
-## 7、一些示例
+## 7、自定义雪花ID datacenterId和workerId
+
+需要实现 SequenceConfigInterface 接口，并且声明为 Bean 供 Spring 扫描注入
+
+### 方式一：使用@Component注册成bean
+
+```java
+package org.example.config;
+
+import org.springframework.stereotype.Component;
+import org.tinycloud.jdbc.id.CustomSequenceConfigInterface;
+
+@Component
+public class CustomSequenceConfigInterface implements SequenceConfigInterface {
+
+    @Override
+    public Pair<Long, Long> getDatacenterIdAndWorkerId() {
+        Pair<Long, Long> pair = new Pair<Long, Long>();
+        
+        // 自定义datacenterId和workerId生成逻辑
+        Long datacenterId = ....;
+        Long workerId = ....;
+        
+        pair.setLeft(datacenterId);
+        pair.setRight(workerId);
+        return pair;
+    }
+}
+```
+
+### 方式二：在@Configuration配置类中注册
+
+```java
+@Bean
+public SequenceConfigInterface sequenceConfigInterface() {
+        return new SequenceConfigInterface() {
+            @Override
+            public Pair<Long, Long> getDatacenterIdAndWorkerId() {
+                // 自定义datacenterId和workerId生成逻辑
+                Long datacenterId = ....;
+                Long workerId = ....;
+                return Pair.of(datacenterId, workerId); 
+            }
+        };
+}
+```
+
+## 8、一些示例
 创建 ProjectInfoDao
 ```java
 package org.example.mapper;
@@ -727,12 +786,12 @@ int result = baseDao.delete(criteria);
 ``` 
 
 
-## 8、安全说明
+## 9、安全说明
 使用`QueryCriteria`和`UpdateCriteria`时应避免前端传入字段名，防止`SQL注入`的风险；
 如若必须使用由前端传入的动态内容，如使用QueryCriteria.orderBy("任意前端传入字段")进行动态排序，推荐使用工具类 `SqlInjectionUtils.check(内容)` 先行验证字符串是否存在 `SQL注入`， 存在则拒绝操作。
 
 
-## 9、SQL日志打印分析
+## 10、SQL日志打印分析
 **该功能依赖 p6spy 组件，需进行配置后方可使用**
 
 **注意！**
