@@ -1,6 +1,8 @@
 package org.tinycloud.jdbc.id;
 
+import org.tinycloud.jdbc.config.GlobalConfigUtils;
 import org.tinycloud.jdbc.util.LocalHostUtils;
+import org.tinycloud.jdbc.util.Pair;
 
 import java.util.UUID;
 
@@ -27,7 +29,13 @@ public class IdUtils {
         if (sequenceObj == null) {
             synchronized (lock) {
                 if (sequenceObj == null) {
-                    sequenceObj = new Sequence(LocalHostUtils.getInetAddress());
+                    SequenceConfigInterface sequenceConfigInterface = GlobalConfigUtils.getGlobalConfig().getSequenceConfigInterface();
+                    if (sequenceConfigInterface != null) {
+                        Pair<Long, Long> datacenterIdAndWorkerId = sequenceConfigInterface.getDatacenterIdAndWorkerId();
+                        sequenceObj = new Sequence(datacenterIdAndWorkerId.getLeft(), datacenterIdAndWorkerId.getRight());
+                    } else {
+                        sequenceObj = new Sequence(LocalHostUtils.getInetAddress());
+                    }
                 }
             }
         }

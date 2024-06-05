@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc.config;
 
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
+import org.tinycloud.jdbc.id.SequenceConfigInterface;
 
 import java.io.Serializable;
 
@@ -24,6 +25,11 @@ public class GlobalConfig implements Serializable {
      */
     private IdGeneratorInterface idGeneratorInterface;
 
+    /**
+     * 雪花算法 workerId 和 datacenterId 配置
+     */
+    private SequenceConfigInterface sequenceConfigInterface;
+
     public boolean isBanner() {
         return banner;
     }
@@ -46,5 +52,13 @@ public class GlobalConfig implements Serializable {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public SequenceConfigInterface getSequenceConfigInterface() {
+        return sequenceConfigInterface;
+    }
+
+    public void setSequenceConfigInterface(SequenceConfigInterface sequenceConfigInterface) {
+        this.sequenceConfigInterface = sequenceConfigInterface;
     }
 }
