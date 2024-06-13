@@ -11,7 +11,7 @@ import org.tinycloud.jdbc.util.Pair;
  * @author liuxingyu01
  * @since 2024-05-30 11:46
  */
-public interface SequenceConfigInterface {
+public interface SnowflakeConfigInterface {
 
     /**
      * 获取datacenterId和workerId

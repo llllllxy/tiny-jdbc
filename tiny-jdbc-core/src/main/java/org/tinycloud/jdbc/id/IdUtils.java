@@ -17,29 +17,28 @@ import java.util.UUID;
 public class IdUtils {
 
     // 私有化示例要加上volatile，防止jvm重排序，导致空指针
-    private static volatile Sequence sequenceObj = null;
-    private static final Object lock = new Object();
+    private static volatile SnowflakeId snowflakeIdObj = null;
 
     /**
      * 获取单例（懒汉式单例，有线程安全问题，所以加锁）
      *
      * @return Sequence单例对象
      */
-    public static Sequence getInstance() {
-        if (sequenceObj == null) {
-            synchronized (lock) {
-                if (sequenceObj == null) {
-                    SequenceConfigInterface sequenceConfigInterface = GlobalConfigUtils.getGlobalConfig().getSequenceConfigInterface();
-                    if (sequenceConfigInterface != null) {
-                        Pair<Long, Long> datacenterIdAndWorkerId = sequenceConfigInterface.getDatacenterIdAndWorkerId();
-                        sequenceObj = new Sequence(datacenterIdAndWorkerId.getLeft(), datacenterIdAndWorkerId.getRight());
+    public static SnowflakeId getInstance() {
+        if (snowflakeIdObj == null) {
+            synchronized (IdUtils.class) {
+                if (snowflakeIdObj == null) {
+                    SnowflakeConfigInterface snowflakeConfigInterface = GlobalConfigUtils.getGlobalConfig().getSnowflakeConfigInterface();
+                    if (snowflakeConfigInterface != null) {
+                        Pair<Long, Long> datacenterIdAndWorkerId = snowflakeConfigInterface.getDatacenterIdAndWorkerId();
+                        snowflakeIdObj = new SnowflakeId(datacenterIdAndWorkerId.getLeft(), datacenterIdAndWorkerId.getRight());
                     } else {
-                        sequenceObj = new Sequence(LocalHostUtils.getInetAddress());
+                        snowflakeIdObj = new SnowflakeId(LocalHostUtils.getInetAddress());
                     }
                 }
             }
         }
-        return sequenceObj;
+        return snowflakeIdObj;
     }
 
 
@@ -87,4 +86,5 @@ public class IdUtils {
     public static String objectId() {
         return ObjectId.nextId();
     }
+
 }

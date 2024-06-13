@@ -478,10 +478,6 @@ int num = projectInfoDao.update(project1, new LambdaUpdateCriteria<TProjectInfo>
 ### 方式一：使用@Component注册成bean
 
 ```java
-package org.example.config;
-
-import org.springframework.stereotype.Component;
-import org.tinycloud.jdbc.id.IdGeneratorInterface;
 
 @Component
 public class CustomIdGeneratorInterface implements IdGeneratorInterface {
@@ -519,20 +515,16 @@ public IdGeneratorInterface idGenerator(){
 }
 ```
 
-## 7、自定义雪花ID datacenterId和workerId
+## 7、自定义雪花算法ID datacenterId和workerId
 
-需要实现 SequenceConfigInterface 接口，并且声明为 Bean 供 Spring 扫描注入
+需要实现 SnowflakeConfigInterface 接口，并且声明为 Bean 供 Spring 扫描注入
 
 ### 方式一：使用@Component注册成bean
 
 ```java
-package org.example.config;
-
-import org.springframework.stereotype.Component;
-import org.tinycloud.jdbc.id.CustomSequenceConfigInterface;
 
 @Component
-public class CustomSequenceConfigInterface implements SequenceConfigInterface {
+public class CustomSnowflakeConfigInterface implements SnowflakeConfigInterface {
 
     @Override
     public Pair<Long, Long> getDatacenterIdAndWorkerId() {
@@ -553,8 +545,8 @@ public class CustomSequenceConfigInterface implements SequenceConfigInterface {
 
 ```java
 @Bean
-public SequenceConfigInterface sequenceConfigInterface() {
-        return new SequenceConfigInterface() {
+public SnowflakeConfigInterface snowflakeConfigInterface() {
+        return new SnowflakeConfigInterface() {
             @Override
             public Pair<Long, Long> getDatacenterIdAndWorkerId() {
                 // 自定义datacenterId和workerId生成逻辑

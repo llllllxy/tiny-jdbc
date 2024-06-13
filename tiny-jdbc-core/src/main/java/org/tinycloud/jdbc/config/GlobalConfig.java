@@ -1,7 +1,7 @@
 package org.tinycloud.jdbc.config;
 
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
-import org.tinycloud.jdbc.id.SequenceConfigInterface;
+import org.tinycloud.jdbc.id.SnowflakeConfigInterface;
 
 import java.io.Serializable;
 
@@ -28,7 +28,7 @@ public class GlobalConfig implements Serializable {
     /**
      * 雪花算法 workerId 和 datacenterId 配置
      */
-    private SequenceConfigInterface sequenceConfigInterface;
+    private SnowflakeConfigInterface snowflakeConfigInterface;
 
     public boolean isBanner() {
         return banner;
@@ -54,11 +54,11 @@ public class GlobalConfig implements Serializable {
         this.version = version;
     }
 
-    public SequenceConfigInterface getSequenceConfigInterface() {
-        return sequenceConfigInterface;
+    public SnowflakeConfigInterface getSnowflakeConfigInterface() {
+        return snowflakeConfigInterface;
     }
 
-    public void setSequenceConfigInterface(SequenceConfigInterface sequenceConfigInterface) {
-        this.sequenceConfigInterface = sequenceConfigInterface;
+    public void setSnowflakeConfigInterface(SnowflakeConfigInterface snowflakeConfigInterface) {
+        this.snowflakeConfigInterface = snowflakeConfigInterface;
     }
 }
