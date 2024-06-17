@@ -224,9 +224,13 @@ public class SnowflakeId {
     }
 
     private void printLog() {
+        if (this.inetAddress != null) {
+            if (logger.isInfoEnabled()) {
+                logger.info("Initialization SnowflakeId network:" + this.inetAddress.getHostName() + "/" + this.inetAddress.getHostAddress());
+            }
+        }
         if (logger.isInfoEnabled()) {
-            logger.info("Initialization SnowflakeId network:" + inetAddress.getHostName() + "/" + inetAddress.getHostAddress());
-            logger.info("Initialization SnowflakeId datacenterId:" + this.datacenterId + " workerId:" + this.workerId);
+            logger.info("Initialization SnowflakeId datacenterId:" + this.datacenterId + ", workerId:" + this.workerId);
         }
     }
 }
