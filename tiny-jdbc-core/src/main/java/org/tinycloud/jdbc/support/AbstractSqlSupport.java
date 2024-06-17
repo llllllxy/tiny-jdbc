@@ -385,11 +385,9 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         }
         KeyHolder keyHolder = new GeneratedKeyHolder();
         final Object[] params = sqlProvider.getParameters().toArray();
-
         getJdbcTemplate().update(new PreparedStatementCreator() {
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                PreparedStatement ps = con.prepareStatement(sqlProvider.getSql(),
-                        PreparedStatement.RETURN_GENERATED_KEYS);
+                PreparedStatement ps = con.prepareStatement(sqlProvider.getSql(), PreparedStatement.RETURN_GENERATED_KEYS);
                 if (!ObjectUtils.isEmpty(params)) {
                     for (int i = 0; i < params.length; i++) {
                         ps.setObject(i + 1, params[i]);
