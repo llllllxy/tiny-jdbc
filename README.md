@@ -515,7 +515,7 @@ public IdGeneratorInterface idGenerator(){
 }
 ```
 
-## 7、自定义雪花算法ID datacenterId和workerId
+## 7、自定义雪花ID算法数据中心标识和机器标识
 
 需要实现 SnowflakeConfigInterface 接口，并且声明为 Bean 供 Spring 扫描注入
 
