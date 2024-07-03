@@ -28,7 +28,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
 
     public static boolean isValid(String hexString) {
         if (hexString == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("The hexadecimal can not be null");
         } else {
             int len = hexString.length();
             if (len != 24) {
@@ -40,7 +40,6 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
                         return false;
                     }
                 }
-
                 return true;
             }
         }
