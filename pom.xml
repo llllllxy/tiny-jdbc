@@ -42,7 +42,7 @@
 
     <properties>
         <!-- 项目版本 -->
-        <revision>1.7.6</revision>
+        <revision>1.7.7</revision>
         <!--编译配置-->
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
