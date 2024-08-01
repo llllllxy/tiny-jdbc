@@ -4,7 +4,7 @@
 
 <p align="center">
     <a href="https://github.com/llllllxy/tiny-jdbc/blob/master/LICENSE">
-        <img src="https://img.shields.io/github/license/llllllxy/tiny-jdbc-boot-starter.svg?style=flat-square">
+        <img src="https://img.shields.io/github/license/llllllxy/tiny-jdbc.svg?style=flat-square">
     </a>
 	<a target="_blank" href="https://www.oracle.com/technetwork/java/javase/downloads/index.html">
 		<img src="https://img.shields.io/badge/JDK-8+-blue.svg" />
@@ -33,7 +33,7 @@
 
 ## 1、简介
 
-`tiny-jdbc-boot-starter`是一个基于`Spring Data JDBC`开发的轻量、灵活、高性能的数据库ORM框架，
+`tiny-jdbc`是一个基于`Spring Data JDBC`开发的轻量、灵活、高性能的数据库ORM框架，
 在不改变原有功能的基础上，做了大量的增强，让操作数据库这件事变得更加简单！
 
 ### 优势
