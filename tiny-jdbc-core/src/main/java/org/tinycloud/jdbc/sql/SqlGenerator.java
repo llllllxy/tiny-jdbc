@@ -108,7 +108,7 @@ public class SqlGenerator {
                             throw new TinyJdbcException("inject field value fail : " + fieldName + ", field type must be String when uuid!", e);
                         }
                     } else if (idType == IdType.SEQUENCE) {
-                        if (Number.class.isAssignableFrom(fieldType)) {
+                        if (!Number.class.isAssignableFrom(fieldType)) {
                             throw new TinyJdbcException("The type of " + fieldName + " field must be assignable from Number when sequence!");
                         }
                         String sequenceSql = idAnnotation.value();
@@ -117,21 +117,27 @@ public class SqlGenerator {
                         try {
                             field.set(object, fieldValue);
                         } catch (IllegalArgumentException | IllegalAccessException e) {
-                            throw new TinyJdbcException("inject field value fail : " + fieldName + ", field type must be String when uuid!", e);
+                            throw new TinyJdbcException("inject field value fail : " + fieldName + ", field type must be assignable from Number when sequence!", e);
                         }
                     } else if (idType == IdType.CUSTOM) {
                         IdGeneratorInterface idGeneratorInterface = GlobalConfigUtils.getGlobalConfig().getIdGeneratorInterface();
                         Object id = idGeneratorInterface.nextId(object);
                         if (fieldType == id.getClass()) {
                             fieldValue = id;
-                        } else if (Integer.class == fieldType) {
-                            fieldValue = Integer.parseInt(id.toString());
-                        } else if (Long.class == fieldType) {
-                            fieldValue = Long.parseLong(id.toString());
-                        } else if (BigDecimal.class.isAssignableFrom(fieldType)) {
-                            fieldValue = new BigDecimal(id.toString());
-                        } else if (BigInteger.class.isAssignableFrom(fieldType)) {
-                            fieldValue = new BigInteger(id.toString());
+                        } else if (Number.class.isAssignableFrom(fieldType)) {
+                            if (Integer.class == fieldType) {
+                                fieldValue = Integer.parseInt(id.toString());
+                            } else if (Long.class == fieldType) {
+                                fieldValue = Long.parseLong(id.toString());
+                            } else if (Short.class == fieldType) {
+                                fieldValue = Short.parseShort(id.toString());
+                            } else if (BigDecimal.class.isAssignableFrom(fieldType)) {
+                                fieldValue = new BigDecimal(id.toString());
+                            } else if (BigInteger.class.isAssignableFrom(fieldType)) {
+                                fieldValue = new BigInteger(id.toString());
+                            } else {
+                                throw new TinyJdbcException("The fieldType of " + fieldName + " is not supported!");
+                            }
                         } else if (String.class.isAssignableFrom(fieldType)) {
                             fieldValue = id.toString();
                         } else {

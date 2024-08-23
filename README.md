@@ -226,7 +226,7 @@ public class UploadFile implements Serializable {
 ##### IdType主键策略说明
 |值|描述|
 |---|---|
-| INPUT            | insert 前自行 set 主键值  |  
+| INPUT            | 自行 set 主键值  |  
 | AUTO_INCREMENT   | 数据库 ID 自增 |  
 | OBJECT_ID        | 自动设置 MongoDb objectId 作为主键值 |  
 | ASSIGN_ID        | 自动设置 雪花ID 作为主键值 |  
