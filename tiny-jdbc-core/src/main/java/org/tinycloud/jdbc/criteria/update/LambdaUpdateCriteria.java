@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 
 /**
  * <p>
+ * 更新条件构造器-lambda
  * </p>
  *
  * @author liuxingyu01
@@ -16,20 +17,20 @@ public class LambdaUpdateCriteria<T> extends AbstractLambdaCriteria<T, LambdaUpd
 
     public <R> LambdaUpdateCriteria<T> set(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
-        updateFields.add(columnName + "=?");
+        updateFields.add(columnName + " = ?");
         parameters.add(value);
         return this;
     }
 
     public LambdaUpdateCriteria<T> setIncrement(TypeFunction<T, ?> field, Number value) {
         String columnName = getColumnName(field);
-        updateFields.add(columnName + "=" + columnName + "+" + (value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
+        updateFields.add(String.format("%s=%s + %s", columnName, columnName, value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
         return this;
     }
 
     public LambdaUpdateCriteria<T> setDecrement(TypeFunction<T, ?> field, Number value) {
         String columnName = getColumnName(field);
-        updateFields.add(columnName + "=" + columnName + "-" + (value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
+        updateFields.add(String.format("%s=%s - %s", columnName, columnName, value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
         return this;
     }
 

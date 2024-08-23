@@ -60,11 +60,11 @@ public abstract class Criteria<T> {
     }
 
     /**
-     * 根据条件生成对应的查询SQL
+     * 根据条件生成对应查询部分的SQL片段
      * <pre>
      *  如： id,create_time
      * <pre>
-     * @return 查询SQL
+     * @return 查询SQL片段
      */
     public String selectSql() {
         StringBuilder select = new StringBuilder();
@@ -75,11 +75,11 @@ public abstract class Criteria<T> {
     }
 
     /**
-     * 根据条件生成对应的跟新SQL
+     * 根据条件生成对应更新部分的SQL片段
      * <pre>
      *  如： id=?,create_time=?
      * <pre>
-     * @return 查询SQL
+     * @return 更新SQL片段
      */
     public String updateSql() {
         StringBuilder update = new StringBuilder();
@@ -90,11 +90,11 @@ public abstract class Criteria<T> {
     }
 
     /**
-     * 根据条件生成对应的条件SQL
+     * 根据条件生成对应的条件部分的SQL片段，带WHERE
      * <pre>
      *  如： WHERE age < 28 AND name IN ('Bob', 'John') AND created_at = '2023-08-05 16:08:11' ORDER BY age DESC
      * <pre>
-     * @return 条件SQL
+     * @return 条件SQL片段
      */
     public String whereSql() {
         StringBuilder sql = new StringBuilder();
@@ -119,9 +119,9 @@ public abstract class Criteria<T> {
     }
 
     /**
-     * 用于子构造器SQL的生成
+     * 用于构造子条件SQL片段的生成
      *
-     * @return 条件SQL
+     * @return 子条件SQL片段
      */
     public String children() {
         StringBuilder sql = new StringBuilder();
