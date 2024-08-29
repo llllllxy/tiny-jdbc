@@ -1075,3 +1075,7 @@ logMessageFormat=org.tinycloud.jdbc.p6spy.P6SpyLogger
 # (default is 60)
 #outagedetectioninterval=30
 ```
+
+
+## 11、许可证
+[Apache License 2.0](https://github.com/llllllxy/tiny-jdbc/blob/master/LICENSE) 免费用于个人和商业，请放心使用
