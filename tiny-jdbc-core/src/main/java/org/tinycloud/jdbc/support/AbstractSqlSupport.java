@@ -177,35 +177,17 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
 
     @Override
     public int insert(String sql, final Object... params) {
-        int num = 0;
-        if (ObjectUtils.isEmpty(params)) {
-            num = getJdbcTemplate().update(sql);
-        } else {
-            num = getJdbcTemplate().update(sql, params);
-        }
-        return num;
+        return execute(sql, params);
     }
 
     @Override
     public int update(String sql, final Object... params) {
-        int num = 0;
-        if (ObjectUtils.isEmpty(params)) {
-            num = getJdbcTemplate().update(sql);
-        } else {
-            num = getJdbcTemplate().update(sql, params);
-        }
-        return num;
+        return execute(sql, params);
     }
 
     @Override
     public int delete(String sql, final Object... params) {
-        int num = 0;
-        if (ObjectUtils.isEmpty(params)) {
-            num = getJdbcTemplate().update(sql);
-        } else {
-            num = getJdbcTemplate().update(sql, params);
-        }
-        return num;
+        return execute(sql, params);
     }
 
 
