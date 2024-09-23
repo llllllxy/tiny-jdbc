@@ -27,13 +27,13 @@ public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
         if (desc) {
             orderByString += " DESC";
         }
-        orderBy.add(orderByString);
+        orderBys.add(orderByString);
         return this;
     }
 
     public final QueryCriteria<T> orderBy(String field) {
         String orderByString = field;
-        orderBy.add(orderByString);
+        orderBys.add(orderByString);
         return this;
     }
 

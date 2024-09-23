@@ -6,10 +6,11 @@ import java.util.Collection;
 
 /**
  * <p>
+ *     数据访问和验证工具
  * </p>
  *
  * @author liuxingyu01
- * @since 2024-03-2024/3/31 22:43
+ * @since 2024-03-31 22:43
  */
 public class DataAccessUtils {
     public DataAccessUtils() {

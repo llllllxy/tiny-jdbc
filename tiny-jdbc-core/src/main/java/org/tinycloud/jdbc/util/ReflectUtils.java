@@ -185,7 +185,6 @@ public class ReflectUtils {
                 try {
                     declaredMethod.invoke(o, fieldValue);
                 } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
                     throw new RuntimeException("set field value fail : " + fieldName);
                 }
             }
@@ -207,7 +206,6 @@ public class ReflectUtils {
                 try {
                     object = declaredMethod.invoke(o);
                 } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
                     throw new RuntimeException("get field value fail : " + fieldName);
                 }
             }

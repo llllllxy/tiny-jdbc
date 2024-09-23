@@ -94,11 +94,11 @@ public class TableParserUtils {
     }
 
     /**
-     * 获取实体类对应数据库字段列表和主键字段值
+     * 获取实体类对应数据库字段名列表和主键字段名
      *
      * @param entity 实体类
      * @param <T>    泛型
-     * @return Pair，左数据库字段列表，右主键字段值
+     * @return Pair，左数据库字段名列表，右主键字段名
      */
     public static <T> Pair<List<String>, String> getTableColumn(T entity) {
         if (entity == null) {
@@ -109,11 +109,11 @@ public class TableParserUtils {
     }
 
     /**
-     * 获取实体类对应数据库字段列表和主键字段值
+     * 获取实体类对应数据库字段名列表和主键字段名
      *
      * @param clazz 实体类类型
      * @param <T>   泛型
-     * @return Pair，左数据库字段列表，右主键字段值
+     * @return Pair，左数据库字段名列表，右主键字段名
      */
     public static <T> Pair<List<String>, String> getTableColumn(Class<T> clazz) {
         Pair<List<String>, String> tableColumn = tableColumnCache.get(clazz);

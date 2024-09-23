@@ -30,13 +30,13 @@ public class LambdaQueryCriteria<T> extends AbstractLambdaCriteria<T, LambdaQuer
         if (desc) {
             columnName += " DESC";
         }
-        orderBy.add(columnName);
+        orderBys.add(columnName);
         return this;
     }
 
     public LambdaQueryCriteria<T> orderBy(TypeFunction<T, ?> field) {
         String columnName = getColumnName(field);
-        orderBy.add(columnName);
+        orderBys.add(columnName);
         return this;
     }
 
