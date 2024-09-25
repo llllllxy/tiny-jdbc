@@ -1,4 +1,4 @@
-package org.tinycloud.jdbc.util;
+package org.tinycloud.jdbc.util.tuple;
 
 import java.io.Serializable;
 

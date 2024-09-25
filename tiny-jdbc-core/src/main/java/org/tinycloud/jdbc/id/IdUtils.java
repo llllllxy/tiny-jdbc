@@ -2,7 +2,7 @@ package org.tinycloud.jdbc.id;
 
 import org.tinycloud.jdbc.config.GlobalConfigUtils;
 import org.tinycloud.jdbc.util.LocalHostUtils;
-import org.tinycloud.jdbc.util.Pair;
+import org.tinycloud.jdbc.util.tuple.Pair;
 
 import java.util.UUID;
 

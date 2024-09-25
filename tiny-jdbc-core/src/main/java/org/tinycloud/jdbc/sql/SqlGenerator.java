@@ -13,7 +13,7 @@ import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.IdUtils;
-import org.tinycloud.jdbc.util.Pair;
+import org.tinycloud.jdbc.util.tuple.Pair;
 import org.tinycloud.jdbc.util.ReflectUtils;
 import org.tinycloud.jdbc.util.StrUtils;
 import org.tinycloud.jdbc.util.TableParserUtils;

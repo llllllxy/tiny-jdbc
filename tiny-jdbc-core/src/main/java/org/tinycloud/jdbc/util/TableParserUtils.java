@@ -4,6 +4,7 @@ import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Id;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
+import org.tinycloud.jdbc.util.tuple.Pair;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
