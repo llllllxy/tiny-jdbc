@@ -9,6 +9,7 @@ import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.Page;
 import org.tinycloud.jdbc.util.DataAccessUtils;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.List;
  * @author liuxingyu01
  * @since 2023-07-28-16:49
  **/
-public interface IObjectSupport<T, ID> {
+public interface IObjectSupport<T, ID extends Serializable> {
     /**
      * 持久化插入给定的实例（默认忽略null值）
      *

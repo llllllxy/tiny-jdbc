@@ -20,6 +20,7 @@ import org.tinycloud.jdbc.sql.SqlGenerator;
 import org.tinycloud.jdbc.sql.SqlProvider;
 import org.tinycloud.jdbc.util.StrUtils;
 
+import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,7 +37,7 @@ import java.util.Map;
  * @author liuxingyu01
  * @since 2022-03-11-16:49
  **/
-public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, IObjectSupport<T, ID> {
+public abstract class AbstractSqlSupport<T, ID extends Serializable> implements ISqlSupport<T, ID>, IObjectSupport<T, ID> {
 
     protected abstract JdbcTemplate getJdbcTemplate();
 
@@ -210,7 +211,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (CollectionUtils.isEmpty(ids)) {
             throw new TinyJdbcException("selectByIds ids cannot be null or empty");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectByIdsSql(entityClass, (List<Object>) ids);
+        SqlProvider sqlProvider = SqlGenerator.selectByIdsSql(entityClass, new ArrayList<>(ids));
         return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
     }
 
@@ -519,7 +520,7 @@ public abstract class AbstractSqlSupport<T, ID> implements ISqlSupport<T, ID>, I
         if (CollectionUtils.isEmpty(ids)) {
             throw new TinyJdbcException("deleteByIds ids cannot be null or empty");
         }
-        SqlProvider sqlProvider = SqlGenerator.deleteByIdsSql(entityClass, (List<Object>) ids);
+        SqlProvider sqlProvider = SqlGenerator.deleteByIdsSql(entityClass, new ArrayList<>(ids));
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("deleteById parameters cannot be null");
         }

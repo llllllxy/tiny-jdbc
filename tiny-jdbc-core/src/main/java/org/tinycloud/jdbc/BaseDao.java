@@ -5,6 +5,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.support.AbstractSqlSupport;
 
+import java.io.Serializable;
+
 /**
  * <p>
  * baseDao基础类，dao层继承该接口即可获得增强的CURD功能
@@ -18,7 +20,7 @@ import org.tinycloud.jdbc.support.AbstractSqlSupport;
  * @param <T>
  * @param <ID>
  */
-public class BaseDao<T, ID> extends AbstractSqlSupport<T, ID> {
+public class BaseDao<T, ID extends Serializable> extends AbstractSqlSupport<T, ID> {
 
     /**
      * JdbcTemplate

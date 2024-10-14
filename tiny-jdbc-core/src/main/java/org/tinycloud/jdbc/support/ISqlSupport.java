@@ -3,6 +3,7 @@ package org.tinycloud.jdbc.support;
 import org.tinycloud.jdbc.page.Page;
 import org.tinycloud.jdbc.util.DataAccessUtils;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +15,7 @@ import java.util.Map;
  * @author liuxingyu01
  * @since 2023-07-19
  **/
-public interface ISqlSupport<T, ID> {
+public interface ISqlSupport<T, ID extends Serializable> {
 
     /**
      * 使用提供的SQL语句和提供的参数，执行增删改
