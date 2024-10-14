@@ -4,12 +4,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.config.GlobalConfigUtils;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
@@ -83,6 +85,14 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
             logger.info("Tiny-Jdbc started successfully, version: {}!", version);
         }
         return pageHandle;
+    }
+
+
+    @ConditionalOnBean({IPageHandle.class, JdbcTemplate.class})
+    @Bean
+    public JdbcTemplateHelper jdbcTemplateHelper(@Autowired IPageHandle pageHandle,
+                                                 @Autowired JdbcTemplate jdbcTemplate) {
+        return new JdbcTemplateHelper(jdbcTemplate, pageHandle);
     }
 
     /**
