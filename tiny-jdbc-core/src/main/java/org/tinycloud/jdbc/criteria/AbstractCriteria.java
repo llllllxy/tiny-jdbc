@@ -1,6 +1,6 @@
 package org.tinycloud.jdbc.criteria;
 
-
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -21,323 +21,495 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
     protected final Children typedThis = (Children) this;
 
     public <R> Children lt(String field, R value) {
-        String condition = " AND " + field + " < " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return lt(true, field, value);
+    }
+
+    public <R> Children lt(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " < " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children orLt(String field, R value) {
-        String condition = " OR " + field + " < " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return orLt(true, field, value);
+    }
+
+    public <R> Children orLt(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " < " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children lte(String field, R value) {
-        String condition = " AND " + field + " <= " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return lte(true, field, value);
+    }
+
+    public <R> Children lte(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " <= " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children orLte(String field, R value) {
-        String condition = " OR " + field + " <= " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return orLte(true, field, value);
+    }
+
+    public <R> Children orLte(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " <= " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children gt(String field, R value) {
-        String condition = " AND " + field + " > " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return gt(true, field, value);
+    }
+
+    public <R> Children gt(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " > " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children orGt(String field, R value) {
-        String condition = " OR " + field + " > " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return orGt(true, field, value);
+    }
+
+    public <R> Children orGt(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " > " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children gte(String field, R value) {
-        String condition = " AND " + field + " >= " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return gte(true, field, value);
+    }
+
+    public <R> Children gte(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " >= " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children orGte(String field, R value) {
-        String condition = " OR " + field + " >= " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return orGte(true, field, value);
+    }
+
+    public <R> Children orGte(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " >= " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children eq(String field, R value) {
-        String condition = " AND " + field + " = " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return eq(true, field, value);
+    }
+
+    public <R> Children eq(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " = " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children orEq(String field, R value) {
-        String condition = " OR " + field + " = " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return orEq(true, field, value);
+    }
+
+    public <R> Children orEq(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " = " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children notEq(String field, R value) {
-        String condition = " AND " + field + " <> " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return notEq(true, field, value);
+    }
+
+    public <R> Children notEq(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " <> " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children orNotEq(String field, R value) {
-        String condition = " OR " + field + " = " + "?";
-        conditions.add(condition);
-        parameters.add(value);
-        return typedThis;
+        return orNotEq(true, field, value);
+    }
+
+    public <R> Children orNotEq(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " <> " + "?";
+            conditions.add(condition);
+            parameters.add(value);
+        });
     }
 
     public <R> Children isNull(String field) {
-        String condition = " AND " + field + " IS NULL";
-        conditions.add(condition);
-        return typedThis;
+        return isNull(true, field);
+    }
+
+    public <R> Children isNull(boolean whether, String field) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " IS NULL";
+            conditions.add(condition);
+        });
     }
 
     public <R> Children orIsNull(String field) {
-        String condition = " OR " + field + " IS NULL";
-        conditions.add(condition);
-        return typedThis;
+        return orIsNull(true, field);
+    }
+
+    public <R> Children orIsNull(boolean whether, String field) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " IS NULL";
+            conditions.add(condition);
+        });
     }
 
     public <R> Children isNotNull(String field) {
-        String condition = " AND " + field + " IS NOT NULL";
-        conditions.add(condition);
-        return typedThis;
+        return isNotNull(true, field);
+    }
+
+    public <R> Children isNotNull(boolean whether, String field) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " IS NOT NULL";
+            conditions.add(condition);
+        });
     }
 
     public <R> Children orIsNotNull(String field) {
-        String condition = " OR " + field + " IS NOT NULL";
-        conditions.add(condition);
-        return typedThis;
+        return orIsNotNull(true, field);
+    }
+
+    public <R> Children orIsNotNull(boolean whether, String field) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " IS NOT NULL";
+            conditions.add(condition);
+        });
     }
 
     public <R> Children in(String field, List<R> values) {
-        StringBuilder condition = new StringBuilder();
-        condition.append(" AND ").append(field).append(" IN (");
-        for (int i = 0; i < values.size(); i++) {
-            if (i > 0) {
-                condition.append(", ");
-            }
-            condition.append("?");
-        }
-        condition.append(")");
-        conditions.add(condition.toString());
-        parameters.addAll(values);
-        return typedThis;
+        return in(true, field, values);
+    }
+
+    public <R> Children in(boolean whether, String field, List<R> values) {
+        return whetherDo(whether, () -> {
+            StringBuilder condition = new StringBuilder();
+            condition.append(" AND ").append(field).append(" IN (");
+            condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
+            condition.append(")");
+            conditions.add(condition.toString());
+            parameters.addAll(values);
+        });
     }
 
     public <R> Children orIn(String field, List<R> values) {
-        StringBuilder condition = new StringBuilder();
-        condition.append(" OR ").append(field).append(" IN (");
-        for (int i = 0; i < values.size(); i++) {
-            if (i > 0) {
-                condition.append(", ");
-            }
-            condition.append("?");
-        }
-        condition.append(")");
-        conditions.add(condition.toString());
-        parameters.addAll(values);
-        return typedThis;
+        return orIn(true, field, values);
+    }
+
+    public <R> Children orIn(boolean whether, String field, List<R> values) {
+        return whetherDo(whether, () -> {
+            StringBuilder condition = new StringBuilder();
+            condition.append(" OR ").append(field).append(" IN (");
+            condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
+            condition.append(")");
+            conditions.add(condition.toString());
+            parameters.addAll(values);
+        });
     }
 
     public <R> Children notIn(String field, List<R> values) {
-        StringBuilder condition = new StringBuilder();
-        condition.append(" AND ").append(field).append(" NOT IN (");
-        for (int i = 0; i < values.size(); i++) {
-            if (i > 0) {
-                condition.append(", ");
-            }
-            condition.append("?");
-        }
-        condition.append(")");
-        conditions.add(condition.toString());
-        parameters.addAll(values);
-        return typedThis;
+        return notIn(true, field, values);
+    }
+
+    public <R> Children notIn(boolean whether, String field, List<R> values) {
+        return whetherDo(whether, () -> {
+            StringBuilder condition = new StringBuilder();
+            condition.append(" AND ").append(field).append(" NOT IN (");
+            condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
+            condition.append(")");
+            conditions.add(condition.toString());
+            parameters.addAll(values);
+        });
     }
 
     public <R> Children orNotIn(String field, List<R> values) {
-        StringBuilder condition = new StringBuilder();
-        condition.append(" OR ").append(field).append(" NOT IN (");
-        for (int i = 0; i < values.size(); i++) {
-            if (i > 0) {
-                condition.append(", ");
-            }
-            condition.append("?");
-        }
-        condition.append(")");
-        conditions.add(condition.toString());
-        parameters.addAll(values);
-        return typedThis;
+        return orNotIn(true, field, values);
+    }
+
+    public <R> Children orNotIn(boolean whether, String field, List<R> values) {
+        return whetherDo(whether, () -> {
+            StringBuilder condition = new StringBuilder();
+            condition.append(" OR ").append(field).append(" NOT IN (");
+            condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
+            condition.append(")");
+            conditions.add(condition.toString());
+            parameters.addAll(values);
+        });
     }
 
     public <R> Children like(String field, R value) {
-        String condition = " AND " + field + " LIKE ?";
-        conditions.add(condition);
-        parameters.add("%" + value + "%");
-        return typedThis;
+        return like(true, field, value);
+    }
+
+    public <R> Children like(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " LIKE ?";
+            conditions.add(condition);
+            parameters.add("%" + value + "%");
+        });
     }
 
     public <R> Children orLike(String field, R value) {
-        String condition = " OR " + field + " LIKE ?";
-        conditions.add(condition);
-        parameters.add("%" + value + "%");
-        return typedThis;
+        return orLike(true, field, value);
+    }
+
+    public <R> Children orLike(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " LIKE ?";
+            conditions.add(condition);
+            parameters.add("%" + value + "%");
+        });
     }
 
     public <R> Children notLike(String field, R value) {
-        String condition = " AND " + field + " NOT LIKE ?";
-        conditions.add(condition);
-        parameters.add("%" + value + "%");
-        return typedThis;
+        return notLike(true, field, value);
+    }
+
+    public <R> Children notLike(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " NOT LIKE ?";
+            conditions.add(condition);
+            parameters.add("%" + value + "%");
+        });
     }
 
     public <R> Children orNotLike(String field, R value) {
-        String condition = " OR " + field + " NOT LIKE ?";
-        conditions.add(condition);
-        parameters.add("%" + value + "%");
-        return typedThis;
+        return orNotLike(true, field, value);
     }
 
+    public <R> Children orNotLike(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " NOT LIKE ?";
+            conditions.add(condition);
+            parameters.add("%" + value + "%");
+        });
+    }
+
+
     public <R> Children leftLike(String field, R value) {
-        String condition = " AND " + field + " LIKE ?";
-        conditions.add(condition);
-        parameters.add("%" + value);
-        return typedThis;
+        return leftLike(true, field, value);
+    }
+
+    public <R> Children leftLike(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " LIKE ?";
+            conditions.add(condition);
+            parameters.add("%" + value);
+        });
     }
 
     public <R> Children orLeftLike(String field, R value) {
-        String condition = " OR " + field + " LIKE ?";
-        conditions.add(condition);
-        parameters.add("%" + value);
-        return typedThis;
+        return orLeftLike(true, field, value);
+    }
+
+    public <R> Children orLeftLike(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " LIKE ?";
+            conditions.add(condition);
+            parameters.add("%" + value);
+        });
     }
 
     public <R> Children notLeftLike(String field, R value) {
-        String condition = " AND " + field + " NOT LIKE ?";
-        conditions.add(condition);
-        parameters.add("%" + value);
-        return typedThis;
+        return notLeftLike(true, field, value);
+    }
+
+    public <R> Children notLeftLike(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " NOT LIKE ?";
+            conditions.add(condition);
+            parameters.add("%" + value);
+        });
     }
 
     public <R> Children orNotLeftLike(String field, R value) {
-        String condition = " OR " + field + " NOT LIKE ?";
-        conditions.add(condition);
-        parameters.add("%" + value);
-        return typedThis;
+        return orNotLeftLike(true, field, value);
+    }
+
+    public <R> Children orNotLeftLike(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " NOT LIKE ?";
+            conditions.add(condition);
+            parameters.add("%" + value);
+        });
     }
 
     public <R> Children rightLike(String field, R value) {
-        String condition = " AND " + field + " LIKE ?";
-        conditions.add(condition);
-        parameters.add(value + "%");
-        return typedThis;
+        return rightLike(true, field, value);
+    }
+
+    public <R> Children rightLike(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " LIKE ?";
+            conditions.add(condition);
+            parameters.add(value + "%");
+        });
     }
 
     public <R> Children orRightLike(String field, R value) {
-        String condition = " OR " + field + " LIKE ?";
-        conditions.add(condition);
-        parameters.add(value + "%");
-        return typedThis;
+        return orRightLike(true, field, value);
+    }
+
+    public <R> Children orRightLike(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " LIKE ?";
+            conditions.add(condition);
+            parameters.add(value + "%");
+        });
     }
 
     public <R> Children notRightLike(String field, R value) {
-        String condition = " AND " + field + " NOT LIKE ?";
-        conditions.add(condition);
-        parameters.add(value + "%");
-        return typedThis;
+        return notRightLike(true, field, value);
+    }
+
+    public <R> Children notRightLike(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + field + " NOT LIKE ?";
+            conditions.add(condition);
+            parameters.add(value + "%");
+        });
     }
 
     public <R> Children orNotRightLike(String field, R value) {
-        String condition = " OR " + field + " NOT LIKE ?";
-        conditions.add(condition);
-        parameters.add(value + "%");
-        return typedThis;
+        return orNotRightLike(true, field, value);
     }
 
+    public <R> Children orNotRightLike(boolean whether, String field, R value) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + field + " NOT LIKE ?";
+            conditions.add(condition);
+            parameters.add(value + "%");
+        });
+    }
+
+
     public <R> Children between(String field, R start, R end) {
-        String condition = " AND " + "(" + field + " BETWEEN " +
-                "?" +
-                " AND " +
-                "?" + ")";
-        conditions.add(condition);
-        parameters.add(start);
-        parameters.add(end);
-        return typedThis;
+        return between(true, field, start, end);
+    }
+
+    public <R> Children between(boolean whether, String field, R start, R end) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + "(" + field + " BETWEEN " + "?" + " AND " + "?" + ")";
+            conditions.add(condition);
+            parameters.add(start);
+            parameters.add(end);
+        });
     }
 
     public <R> Children orBetween(String field, R start, R end) {
-        String condition = " OR " + "(" + field + " BETWEEN " +
-                "?" +
-                " AND " +
-                "?" + ")";
-        conditions.add(condition);
-        parameters.add(start);
-        parameters.add(end);
-        return typedThis;
+        return orBetween(true, field, start, end);
+    }
+
+    public <R> Children orBetween(boolean whether, String field, R start, R end) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + "(" + field + " BETWEEN " + "?" + " AND " + "?" + ")";
+            conditions.add(condition);
+            parameters.add(start);
+            parameters.add(end);
+        });
     }
 
     public <R> Children notBetween(String field, R start, R end) {
-        String condition = " AND " + "(" + field + " NOT BETWEEN " +
-                "?" +
-                " AND " +
-                "?" + ")";
-        conditions.add(condition);
-        parameters.add(start);
-        parameters.add(end);
-        return typedThis;
+        return notBetween(true, field, start, end);
+    }
+
+    public <R> Children notBetween(boolean whether, String field, R start, R end) {
+        return whetherDo(whether, () -> {
+            String condition = " AND " + "(" + field + " NOT BETWEEN " + "?" + " AND " + "?" + ")";
+            conditions.add(condition);
+            parameters.add(start);
+            parameters.add(end);
+        });
     }
 
     public <R> Children orNotBetween(String field, R start, R end) {
-        String condition = " OR " + "(" + field + " NOT BETWEEN " +
-                "?" +
-                " AND " +
-                "?" + ")";
-        conditions.add(condition);
-        parameters.add(start);
-        parameters.add(end);
-        return typedThis;
+        return orNotBetween(true, field, start, end);
+    }
+
+    public <R> Children orNotBetween(boolean whether, String field, R start, R end) {
+        return whetherDo(whether, () -> {
+            String condition = " OR " + "(" + field + " NOT BETWEEN " + "?" + " AND " + "?" + ")";
+            conditions.add(condition);
+            parameters.add(start);
+            parameters.add(end);
+        });
     }
 
     public <R> Children and(Consumer<Children> consumer) {
-        final Children instance = instance();
-        consumer.accept(instance);
+        return and(true, consumer);
+    }
 
-        String condition = " AND " + instance.children();
-        conditions.add(condition);
-        parameters.addAll(instance.parameters);
-        return typedThis;
+    public <R> Children and(boolean whether, Consumer<Children> consumer) {
+        return whetherDo(whether, () -> {
+            final Children instance = instance();
+            consumer.accept(instance);
+            String condition = " AND " + instance.children();
+            conditions.add(condition);
+            parameters.addAll(instance.parameters);
+        });
     }
 
     public <R> Children or(Consumer<Children> consumer) {
-        final Children instance = instance();
-        consumer.accept(instance);
+        return or(true, consumer);
+    }
 
-        String condition = " OR " + instance.children();
-        conditions.add(condition);
-        parameters.addAll(instance.parameters);
-        return typedThis;
+    public <R> Children or(boolean whether, Consumer<Children> consumer) {
+        return whetherDo(whether, () -> {
+            final Children instance = instance();
+            consumer.accept(instance);
+            String condition = " OR " + instance.children();
+            conditions.add(condition);
+            parameters.addAll(instance.parameters);
+        });
     }
 
     /**
      * 子类返回一个自己的新对象
      */
     protected abstract Children instance();
+
+    /**
+     * 函数化的做事
+     *
+     * @param whether   做不做
+     * @param something 做什么
+     * @return Children
+     */
+    protected final Children whetherDo(boolean whether, DoSomething something) {
+        if (whether) {
+            something.doIt();
+        }
+        return typedThis;
+    }
 }
