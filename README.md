@@ -311,7 +311,7 @@ public class UploadFile implements Serializable {
 |`int update(UpdateCriteria<T> criteria);`|只根据条件构造器来更新数据，配合.set方法来使用|
 |`int update(LambdaUpdateCriteria<T> criteria);`|只根据条件构造器（lambda）来更新数据，配合.set方法来使用|
 
-#### 删除操作
+### 删除操作
 
 |方法|说明|
 |---|---|
@@ -325,11 +325,13 @@ public class UploadFile implements Serializable {
 
 ## 5、条件构造器
 
-### 使用说明
+### 功能使用说明
 
 #### 条件构造器(AbstractCriteria & AbstractLambdaCriteria)
 > QueryCriteria(LambdaQueryCriteria) 和 UpdateCriteria(LambdaUpdateCriteria) 的父类
 > 用于生成 sql 的 where 条件
+> 
+> 其中带Lambda字样的构造器 是基于 Lambda 表达式的条件构造器，它允许你使用 Lambda 表达式来指定字段，避免了硬编码字段名的问题。
 
 |方法|说明|示例|lambda示例|
 |---|---|---|---|
@@ -397,15 +399,15 @@ public class UploadFile implements Serializable {
 
     QueryCriteria<Person> criteria = new QueryCriteria<>();
     criteria.lt("age", 28);
-    criteria.eq("created_at", new java.util.Date());
+    criteria.eq("created_at", new Date());
     criteria.in("id", ids);
     criteria.orderBy("age", true);
-// 等价于 WHERE age < 28 AND created_at = '2023-08-05 17:31:26' AND id IN (1,2,3) ORDER BY age DESC
+// 等价于 SELECT 所有字段 FROM person WHERE age < 28 AND created_at = '2023-08-05 17:31:26' AND id IN (1,2,3) ORDER BY age DESC
 
     QueryCriteria<Person> criteria = new QueryCriteria<>();
     criteria.select("id", "name");
     criteria.lt("age",28);
-// 等价于 SELECT id,name FROM xxxx WHERE age < 28
+// 等价于 SELECT id,name FROM person WHERE age < 28
 ```
 
 ##### LambdaQueryCriteria示例
@@ -423,7 +425,7 @@ public class UploadFile implements Serializable {
   criteria.in(UploadFile::getId, ids);
   criteria.orderBy(UploadFile::getCreatedAt, true);
 
-// 等价于  WHERE file_id < '1000' AND file_md5 = 'b8394b15e02c50b508b3e46cc120f0f5' AND id IN (1,2,3) ORDER BY created_at DESC
+// 等价于 SELECT 所有字段 FROM b_upload_file WHERE file_id < '1000' AND file_md5 = 'b8394b15e02c50b508b3e46cc120f0f5' AND id IN (1,2,3) ORDER BY created_at DESC
 
   LambdaQueryCriteria<UploadFile> criteria = new LambdaQueryCriteria<>();
   criteria.select(UploadFile::getFileId, UploadFile::getFileMd5);
@@ -446,13 +448,13 @@ int num = projectInfoDao.update(new UpdateCriteria<TProjectInfo>()
                 .set("created_at", new Date())
                 .set("updated_by", "admin3")
                 .eq("project_name", "批量项目1"));
-// 等价于 UPDATE xxxx SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
+// 等价于 UPDATE t_project_info SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 
 TProjectInfo project1 = new TProjectInfo();
 project1.setCreatedAt(new Date());
 project1.setUpdatedBy("admin3");
 int num = projectInfoDao.update(project1, new UpdateCriteria<TProjectInfo>().eq("project_name", "批量项目1"));
-// 等价于 UPDATE xxxx SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
+// 等价于 UPDATE t_project_info SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 ```
 
 ##### LambdaUpdateCriteria示例
@@ -461,15 +463,23 @@ int num = projectInfoDao.update(new LambdaUpdateCriteria<TProjectInfo>()
                         .set(TProjectInfo::getEnableAt, new Date())
                         .set(TProjectInfo::getUpdatedBy, "admin2")
                 .eq(TProjectInfo::getProjectName, "批量项目1"));
-// 等价于 UPDATE xxxx SET enable_at = '2023-08-05 17:31:26', updated_by = 'admin2' WHERE project_name = '批量项目1'
+// 等价于 UPDATE t_project_info SET enable_at = '2023-08-05 17:31:26', updated_by = 'admin2' WHERE project_name = '批量项目1'
 
 TProjectInfo project1 = new TProjectInfo();
 project1.setCreatedAt(new Date());
 project1.setUpdatedBy("admin3");
 int num = projectInfoDao.update(project1, new LambdaUpdateCriteria<TProjectInfo>().eq(TProjectInfo::getProjectName, "批量项目1"));
-// 等价于 UPDATE xxxx SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
+// 等价于 UPDATE t_project_info SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 ```
 
+#### CriteriaBuilder的使用和示例
+Tiny-Jdbc 提供了 CriteriaBuilder 类，它是一个静态工厂类，用于快速创建 QueryCriteria、LambdaQueryCriteria、UpdateCriteria 和 LambdaUpdateCriteria 的实例。使用 CriteriaBuilder 可以减少代码量，提高开发效率。
+```java
+ LambdaQueryCriteria queryCriteria = CriteriaBuilder.<TProjectInfo>lambdaQuery()
+                        .select(TProjectInfo::getId, TProjectInfo::getProjectName, TProjectInfo::getCreatedAt)
+                        .eq(TProjectInfo::getProjectName, "xxxx")
+                        .eq(TProjectInfo::getId, 1709630713614L);
+```
 
 <h2 id="idGen"> 6、自定义ID生成器</h2>
 
@@ -558,10 +568,34 @@ public SnowflakeConfigInterface snowflakeConfigInterface() {
 }
 ```
 
-## 8、一些示例
+## 8、无实体类操作
+Tiny-Jdbc 额外提供了 JdbcTemplateHelper 工具类，无需实体类映射和继承BaseDao，用于操作无实体类的多表联合查询、分页查询、插入、更新、删除等操作，方便业务的灵活性。
+使用时直接注入即可。
+
+#### 使用示例
+```java
+@Bean
+@Repository
+public class OtherDao {
+
+    @Autowired
+    private JdbcTemplateHelper helper;
+
+    public List<ProjectInfo> select() {
+        return helper.select("select id, project_name, enable_at from t_project_info where id = ?", ProjectInfo.class, 1L);
+    }
+    
+    public Page<ProjectInfo> paginate() {
+        Page<ProjectInfo> page = new Page<>(1, 10);
+        return helper.paginate("select id, project_name, enable_at from t_project_info where id = ?", ProjectInfo.class, page, 1L);
+    }
+
+}
+```
+
+## 9、一些使用示例
 创建 ProjectInfoDao
 ```java
-package org.example.mapper;
 
 import org.example.entity.TProjectInfo;
 import org.springframework.stereotype.Repository;
@@ -657,12 +691,11 @@ List<TProjectInfo> projectList = projectDao.select(criteria);
 
 
 // 根据条件构造器查询记录数量，等价于 `SELECT COUNT(*) FROM t_project_info WHERE id = 1695713712801116162`
-LambdaQueryCriteria<TProjectInfo> criteria = new LambdaQueryCriteria<>().eq(Project::getId,1695713712801116162L);
+LambdaQueryCriteria<TProjectInfo> criteria = new LambdaQueryCriteria<>().eq(Project::getId, 1695713712801116162L);
 Long count=projectDao.selectCount(criteria);
 
 // 根据条件构造器查询记录是否存在，等价于 `SELECT COUNT(*) FROM t_project_info WHERE id = 1695713712801116162`，然后再判断结果count是否大于0
-LambdaQueryCriteria<TProjectInfo> criteria = new LambdaQueryCriteria<>().eq(Project::getId,1695713712801116162L);
-boolean result = projectDao.exists(criteria)
+boolean result = projectDao.exists(CriteriaBuilder.<TProjectInfo>lambdaQuery().eq(Project::getId, 1695713712801116162L));
 
 ```
 
@@ -778,12 +811,12 @@ int result = baseDao.delete(criteria);
 ``` 
 
 
-## 9、安全说明
+## 10、安全使用说明
 使用`QueryCriteria`和`UpdateCriteria`时应避免前端传入字段名，防止`SQL注入`的风险；
 如若必须使用由前端传入的动态内容，如使用QueryCriteria.orderBy("任意前端传入字段")进行动态排序，推荐使用工具类 `SqlInjectionUtils.check(内容)` 先行验证字符串是否存在 `SQL注入`， 存在则拒绝操作。
 
 
-## 10、SQL日志打印分析
+## 11、SQL日志打印分析
 **该功能依赖 p6spy 组件，需进行配置后方可使用**
 
 **注意！**
@@ -1077,5 +1110,5 @@ logMessageFormat=org.tinycloud.jdbc.p6spy.P6SpyLogger
 ```
 
 
-## 11、许可证
+## 12、许可证
 [Apache License 2.0](https://github.com/llllllxy/tiny-jdbc/blob/master/LICENSE) 免费用于个人和商业，请放心使用
