@@ -40,6 +40,11 @@ public abstract class Criteria<T> {
     protected final List<String> orderBys;
 
     /**
+     * 排序的条件
+     */
+    protected final List<String> lastSqls;
+
+    /**
      * 构造方法
      */
     public Criteria() {
@@ -48,6 +53,7 @@ public abstract class Criteria<T> {
         this.conditions = new ArrayList<>();
         this.orderBys = new ArrayList<>();
         this.parameters = new ArrayList<>();
+        this.lastSqls = new ArrayList<>();;
     }
 
     /**
@@ -114,6 +120,9 @@ public abstract class Criteria<T> {
         if (!this.orderBys.isEmpty()) {
             sql.append(" ORDER BY ");
             sql.append(String.join(",", this.orderBys));
+        }
+        if (!this.lastSqls.isEmpty()) {
+            sql.append(" ").append(this.lastSqls.get(0));
         }
         return sql.toString();
     }

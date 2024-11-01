@@ -22,9 +22,9 @@ public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
         return this;
     }
 
-    public final QueryCriteria<T> orderBy(String field, boolean desc) {
+    public final QueryCriteria<T> orderBy(String field, boolean isDesc) {
         String orderByString = field;
-        if (desc) {
+        if (isDesc) {
             orderByString += " DESC";
         }
         orderBys.add(orderByString);
@@ -34,6 +34,12 @@ public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
     public final QueryCriteria<T> orderBy(String field) {
         String orderByString = field;
         orderBys.add(orderByString);
+        return this;
+    }
+
+    public final QueryCriteria<T> last(String lastSql) {
+        lastSqls.clear();
+        lastSqls.add(lastSql);
         return this;
     }
 

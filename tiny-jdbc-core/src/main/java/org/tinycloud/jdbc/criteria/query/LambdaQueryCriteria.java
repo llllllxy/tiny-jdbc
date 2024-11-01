@@ -25,9 +25,9 @@ public class LambdaQueryCriteria<T> extends AbstractLambdaCriteria<T, LambdaQuer
         return this;
     }
 
-    public LambdaQueryCriteria<T> orderBy(TypeFunction<T, ?> field, boolean desc) {
+    public LambdaQueryCriteria<T> orderBy(TypeFunction<T, ?> field, boolean isDesc) {
         String columnName = getColumnName(field);
-        if (desc) {
+        if (isDesc) {
             columnName += " DESC";
         }
         orderBys.add(columnName);
@@ -37,6 +37,12 @@ public class LambdaQueryCriteria<T> extends AbstractLambdaCriteria<T, LambdaQuer
     public LambdaQueryCriteria<T> orderBy(TypeFunction<T, ?> field) {
         String columnName = getColumnName(field);
         orderBys.add(columnName);
+        return this;
+    }
+
+    public final LambdaQueryCriteria<T> last(String lastSql) {
+        lastSqls.clear();
+        lastSqls.add(lastSql);
         return this;
     }
 
