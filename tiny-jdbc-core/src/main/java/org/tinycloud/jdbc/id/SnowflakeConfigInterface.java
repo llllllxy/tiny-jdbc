@@ -2,6 +2,8 @@ package org.tinycloud.jdbc.id;
 
 import org.tinycloud.jdbc.util.tuple.Pair;
 
+import java.net.InetAddress;
+
 /**
  * <p>
  * 雪花ID自定义workerId和datacenterId
@@ -19,5 +21,5 @@ public interface SnowflakeConfigInterface {
      *
      * @return datacenterId和workerId
      */
-    Pair<Long, Long> getDatacenterIdAndWorkerId();
+    DatacenterAndWorkerProvider getDatacenterIdAndWorkerId();
 }
