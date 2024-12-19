@@ -62,7 +62,7 @@
 <dependency>
     <groupId>top.lxyccc</groupId>
     <artifactId>tiny-jdbc-boot-starter</artifactId>
-    <version>1.8.0</version>
+    <version>1.8.1</version>
 </dependency>
 ```
 
@@ -537,16 +537,16 @@ public IdGeneratorInterface idGenerator(){
 public class CustomSnowflakeConfigInterface implements SnowflakeConfigInterface {
 
     @Override
-    public Pair<Long, Long> getDatacenterIdAndWorkerId() {
-        Pair<Long, Long> pair = new Pair<Long, Long>();
+    public DatacenterAndWorkerProvider getDatacenterIdAndWorkerId() {
+        DatacenterAndWorkerProvider provider = new DatacenterAndWorkerProvider();
         
         // 自定义datacenterId和workerId生成逻辑
         Long datacenterId = ....;
         Long workerId = ....;
-        
-        pair.setLeft(datacenterId);
-        pair.setRight(workerId);
-        return pair;
+
+        provider.setDatacenterId(datacenterId);
+        provider.setWorkerId(workerId);
+        return provider;
     }
 }
 ```
@@ -558,11 +558,14 @@ public class CustomSnowflakeConfigInterface implements SnowflakeConfigInterface 
 public SnowflakeConfigInterface snowflakeConfigInterface() {
         return new SnowflakeConfigInterface() {
             @Override
-            public Pair<Long, Long> getDatacenterIdAndWorkerId() {
+            public DatacenterAndWorkerProvider getDatacenterIdAndWorkerId() {
+                DatacenterAndWorkerProvider provider = new DatacenterAndWorkerProvider();
                 // 自定义datacenterId和workerId生成逻辑
                 Long datacenterId = ....;
                 Long workerId = ....;
-                return Pair.of(datacenterId, workerId); 
+                provider.setDatacenterId(datacenterId);
+                provider.setWorkerId(workerId);
+                return provider;
             }
         };
 }
