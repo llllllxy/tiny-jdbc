@@ -7,6 +7,7 @@ import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -25,6 +26,8 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class SnowflakeId {
     private static final Logger logger = LoggerFactory.getLogger(SnowflakeId.class);
+
+    public static long MAX_START_INTERVAL_TIME = TimeUnit.SECONDS.toNanos(5L);
 
     /*
      * 时间起始标记点，作为基准，一般取系统的最近时间（一旦确定不能变动）
@@ -94,8 +97,13 @@ public class SnowflakeId {
      */
     public SnowflakeId(InetAddress inetAddress) {
         this.inetAddress = inetAddress;
+        long start = System.nanoTime();
         this.datacenterId = getDatacenterId(MAX_DATACENTER_ID);
-        this.workerId = getWorkerId(datacenterId, MAX_WORKER_ID);
+        this.workerId = getWorkerId(this.datacenterId, MAX_WORKER_ID);
+        long end = System.nanoTime();
+        if (end - start > MAX_START_INTERVAL_TIME) {
+            logger.warn("Initialization SnowflakeId Very Slow!");
+        }
         this.printLog();
     }
 
@@ -118,7 +126,7 @@ public class SnowflakeId {
     }
 
     /**
-     * 获取 maxWorkerId
+     * 获取 workerId
      */
     protected long getWorkerId(long datacenterId, long maxWorkerId) {
         StringBuilder mpId = new StringBuilder();
@@ -133,7 +141,7 @@ public class SnowflakeId {
     }
 
     /**
-     * 数据标识id部分
+     * 获取 datacenterId
      */
     protected long getDatacenterId(long maxDatacenterId) {
         long id = 0L;
