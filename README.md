@@ -381,12 +381,12 @@ public class UploadFile implements Serializable {
 #### 查询构造器(QueryCriteria & LambdaQueryCriteria)
 > 继承自条件构造器，可额外自定义查询的排序和字段内容，查询接口适用
 
-|方法|说明|示例|lambda示例|
-|---|---|---|---|
-|orderBy    |排序，true=desc| orderBy("name", true) ---> ORDER BY name DESC  | orderBy(User::getName, true) ---> ORDER BY name DESC|
-|orderBy    |排序，false=asc| orderBy("name") ---> ORDER BY name | orderBy(User::getName) ---> ORDER BY name |
-|select     |设置查询字段| select("name", "age") ---> SELECT name,age | select(User::getName, User::getAge) ---> SELECT name,age |
-
+| 方法         | 说明           | 示例                                     | lambda示例                                                 |
+|------------|--------------|----------------------------------------|----------------------------------------------------------|
+| orderBy    | 排序，true=desc | orderBy("name", true) ---> ORDER BY name DESC | orderBy(User::getName, true) ---> ORDER BY name DESC     |
+| orderBy    | 排序，false=asc | orderBy("name") ---> ORDER BY name     | orderBy(User::getName) ---> ORDER BY name                |
+| select     | 设置查询字段       | select("name", "age") ---> SELECT name,age | select(User::getName, User::getAge) ---> SELECT name,age |
+| last       | 直接在查询的最后添加一个 SQL 片段      | last("limit 1") ---> limit 1   | last("limit 1") ---> limit 1                             |
 
 ##### QueryCriteria示例
 
