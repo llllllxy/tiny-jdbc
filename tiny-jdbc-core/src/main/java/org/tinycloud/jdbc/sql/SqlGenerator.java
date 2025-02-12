@@ -69,7 +69,7 @@ public class SqlGenerator {
             }
             // 如果是主键列
             if (idAnnotation != null) {
-                // 只有用户没有自己设置主键值时，才走自动生成的策略
+                // 只有用户没有自己设置主键值时，才需要走自动生成的策略
                 if (ObjectUtils.isEmpty(fieldValue)) {
                     IdType idType = idAnnotation.idType();
                     if (idType == IdType.AUTO_INCREMENT) {
@@ -155,7 +155,7 @@ public class SqlGenerator {
             }
 
             // 判断是否忽略null
-            if (ignoreNulls && fieldValue == null) {
+            if (ignoreNulls && ObjectUtils.isEmpty(fieldValue)) {
                 continue;
             }
             columns.append(column).append(",");
