@@ -143,7 +143,7 @@ public class DbTypeUtils {
             return DbType.REDSHIFT;
         } else if (jdbcUrl.contains(":opengauss:")) {
             return DbType.OPENGAUSS;
-        } else if (jdbcUrl.contains(":taos:") || jdbcUrl.contains(":taos-rs:")) {
+        } else if (jdbcUrl.contains(":taos:") || jdbcUrl.contains(":taos-rs:") || jdbcUrl.contains(":taos-ws:")) {
             return DbType.TDENGINE;
         } else if (jdbcUrl.contains(":informix")) {
             return DbType.INFORMIX;
