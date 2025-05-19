@@ -4,6 +4,7 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.util.CollectionUtils;
@@ -42,6 +43,8 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     protected abstract JdbcTemplate getJdbcTemplate();
 
     protected abstract IPageHandle getPageHandle();
+
+    protected abstract NamedParameterJdbcTemplate getNamedParameterJdbcTemplate();
 
     /**
      * 泛型

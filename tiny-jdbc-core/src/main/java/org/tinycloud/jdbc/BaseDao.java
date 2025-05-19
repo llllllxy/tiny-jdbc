@@ -2,6 +2,7 @@ package org.tinycloud.jdbc;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.support.AbstractSqlSupport;
 
@@ -42,5 +43,11 @@ public class BaseDao<T, ID extends Serializable> extends AbstractSqlSupport<T, I
     @Override
     protected IPageHandle getPageHandle() {
         return this.pageHandle;
+    }
+
+    @Override
+    protected NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
+        NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(getJdbcTemplate());
+        return namedJdbcTemplate;
     }
 }

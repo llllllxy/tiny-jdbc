@@ -2,6 +2,7 @@ package org.tinycloud.jdbc;
 
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.IPageHandle;
@@ -13,7 +14,7 @@ import java.util.Map;
 
 /**
  * <p>
- *     JdbcTemplate增强工具类
+ * JdbcTemplate增强工具类
  * </p>
  *
  * @author liuxingyu01
@@ -28,6 +29,12 @@ public class JdbcTemplateHelper {
     public JdbcTemplate getJdbcTemplate() {
         return jdbcTemplate;
     }
+
+    public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
+        NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+        return namedJdbcTemplate;
+    }
+
 
     private final IPageHandle getPageHandle() {
         return pageHandle;
