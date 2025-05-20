@@ -5,7 +5,7 @@ import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Id;
 import org.tinycloud.jdbc.annotation.IdType;
-import org.tinycloud.jdbc.config.GlobalConfigUtils;
+import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
@@ -120,7 +120,7 @@ public class SqlGenerator {
                             throw new TinyJdbcException("inject field value fail : " + fieldName + ", field type must be assignable from Number when sequence!", e);
                         }
                     } else if (idType == IdType.CUSTOM) {
-                        IdGeneratorInterface idGeneratorInterface = GlobalConfigUtils.getGlobalConfig().getIdGeneratorInterface();
+                        IdGeneratorInterface idGeneratorInterface = GlobalConfig.getConfig().getIdGeneratorInterface();
                         Object id = idGeneratorInterface.nextId(object);
                         if (fieldType == id.getClass()) {
                             fieldValue = id;

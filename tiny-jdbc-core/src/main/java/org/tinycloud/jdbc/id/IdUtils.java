@@ -1,10 +1,8 @@
 package org.tinycloud.jdbc.id;
 
-import org.tinycloud.jdbc.config.GlobalConfigUtils;
+import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.util.LocalHostUtils;
-import org.tinycloud.jdbc.util.tuple.Pair;
 
-import java.net.InetAddress;
 import java.util.UUID;
 
 /**
@@ -31,7 +29,7 @@ public class IdUtils {
                 if (snowflakeIdObj == null) {
 
                     // 根据配置初始化雪花ID生成器单例
-                    SnowflakeConfigInterface snowflakeConfigInterface = GlobalConfigUtils.getGlobalConfig().getSnowflakeConfigInterface();
+                    SnowflakeConfigInterface snowflakeConfigInterface = GlobalConfig.getConfig().getSnowflakeConfigInterface();
                     if (snowflakeConfigInterface != null) {
                         DatacenterAndWorkerProvider provider = snowflakeConfigInterface.getDatacenterIdAndWorkerId();
                         if (provider != null && provider.getDatacenterId() != null && provider.getWorkerId() != null) {

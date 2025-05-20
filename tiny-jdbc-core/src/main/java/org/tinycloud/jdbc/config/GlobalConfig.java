@@ -4,9 +4,12 @@ import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.SnowflakeConfigInterface;
 
 import java.io.Serializable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>
+ *     全局配置文件
  * </p>
  *
  * @author liuxingyu01
@@ -61,4 +64,53 @@ public class GlobalConfig implements Serializable {
     public void setSnowflakeConfigInterface(SnowflakeConfigInterface snowflakeConfigInterface) {
         this.snowflakeConfigInterface = snowflakeConfigInterface;
     }
+
+
+    /* -----------------------静态方法和变量开始-------------------------------------- */
+    /**
+     * 缓存全局配置信息
+     */
+    private static final Map<String, GlobalConfig> GLOBAL_CONFIG = new ConcurrentHashMap<>(1);
+    private static final String GLOBAL_CONFIG_KEY = "global_config_key";
+
+    /**
+     * <p>
+     *  配置全局设置
+     * <p/>
+     *
+     * @param globalConfig 全局配置
+     */
+    public static void setConfig(GlobalConfig globalConfig) {
+        // 设置全局设置
+        GLOBAL_CONFIG.putIfAbsent(GLOBAL_CONFIG_KEY, globalConfig);
+        if (globalConfig.isBanner()) {
+            printBanner();
+        }
+    }
+
+    /**
+     * 获取MybatisGlobalConfig (统一所有入口)
+     */
+    public static GlobalConfig getConfig() {
+        return GLOBAL_CONFIG.get(GLOBAL_CONFIG_KEY);
+    }
+
+    /**
+     * <p>
+     *  输出banner
+     * <p/>
+     */
+    public static void printBanner() {
+        String banner = "  _______ _                    _     _ _          \n" +
+                " |__   __(_)                  | |   | | |         \n" +
+                "    | |   _ _ __  _   _       | | __| | |__   ___ \n" +
+                "    | |  | | '_ \\| | | |  _   | |/ _` | '_ \\ / __|\n" +
+                "    | |  | | | | | |_| | | |__| | (_| | |_) | (__ \n" +
+                "    |_|  |_|_| |_|\\__, |  \\____/ \\__,_|_.__/ \\___|\n" +
+                "                   __/ |                          \n" +
+                "                  |___/                           " + "\n" +
+                getConfig().getVersion();
+        System.out.println(banner);
+    }
+
 }
