@@ -33,6 +33,14 @@ public class ReflectUtils {
      */
     private static final Map<Class<?>, Field[]> declaredFieldsCache = new ConcurrentHashMap<>(128);
 
+    /**
+     * 缓存清除方法
+     */
+    public static void clearCache() {
+        declaredMethodsCache.clear();
+        declaredFieldsCache.clear();
+    }
+
 
     /**
      * 根据类对象获取其属性列表(包括祖宗类)
@@ -372,5 +380,13 @@ public class ReflectUtils {
             throw new RuntimeException("load class " + clazz.getCanonicalName() + " fail");
         }
         return o;
+    }
+
+    /**
+     * 判断是否为public static final类型
+     */
+    public static boolean isPublicStaticFinal(Field field) {
+        int modifiers = field.getModifiers();
+        return Modifier.isPublic(modifiers) && Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers);
     }
 }
