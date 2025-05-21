@@ -1,4 +1,4 @@
-package org.tinycloud.jdbc.sql;
+package org.tinycloud.jdbc.support;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.ObjectUtils;

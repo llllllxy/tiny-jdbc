@@ -17,8 +17,6 @@ import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
 import org.tinycloud.jdbc.page.PageHandleResult;
-import org.tinycloud.jdbc.sql.SqlGenerator;
-import org.tinycloud.jdbc.sql.SqlProvider;
 import org.tinycloud.jdbc.util.StrUtils;
 
 import java.io.Serializable;
