@@ -111,7 +111,7 @@ public abstract class Criteria<T> {
                     if (this.conditions.get(i).startsWith(" OR ")) {
                         throw new TinyJdbcException("Criteria can not start with a function orXXX!");
                     }
-                    sql.append(this.conditions.get(i).replace(" AND ", ""));
+                    sql.append(this.conditions.get(i).replaceFirst(" AND ", ""));
                 } else {
                     sql.append(this.conditions.get(i));
                 }
@@ -141,7 +141,7 @@ public abstract class Criteria<T> {
                     if (this.conditions.get(i).startsWith(" OR ")) {
                         throw new TinyJdbcException("Criteria can not start with a function orXXX!");
                     }
-                    sql.append(this.conditions.get(i).replace(" AND ", ""));
+                    sql.append(this.conditions.get(i).replaceFirst(" AND ", ""));
                 } else {
                     sql.append(this.conditions.get(i));
                 }

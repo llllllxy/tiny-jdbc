@@ -693,9 +693,22 @@ LambdaQueryCriteria<TProjectInfo> criteria = new LambdaQueryCriteria<>()
 List<TProjectInfo> projectList = projectDao.select(criteria);
 
 
+// 根据条件构造器构建复杂查询条件
+// 等价于：SELECT id,project_name,enable_at,remark,del_flag,created_by,updated_by,created_at,updated_at FROM t_project_info WHERE (del_flag = 1 AND project_name = 'xxx') OR (del_flag = 1 AND project_name = 'yyy') ORDER BY id
+List<TProjectInfo> tProjectInfo2s = projectInfoDao.select(
+        new QueryCriteria<TProjectInfo>()
+                .and(i -> i.eq("del_flag", 1)
+                        .eq("project_name", "xxx")
+                )
+                .or(i -> i.eq("del_flag", 1)
+                        .eq("project_name", "yyy")
+                )
+                .orderBy("id"));
+
+
 // 根据条件构造器查询记录数量，等价于 `SELECT COUNT(*) FROM t_project_info WHERE id = 1695713712801116162`
 LambdaQueryCriteria<TProjectInfo> criteria = new LambdaQueryCriteria<>().eq(Project::getId, 1695713712801116162L);
-Long count=projectDao.selectCount(criteria);
+Long count = projectDao.selectCount(criteria);
 
 // 根据条件构造器查询记录是否存在，等价于 `SELECT COUNT(*) FROM t_project_info WHERE id = 1695713712801116162`，然后再判断结果count是否大于0
 boolean result = projectDao.exists(CriteriaBuilder.<TProjectInfo>lambdaQuery().eq(Project::getId, 1695713712801116162L));
