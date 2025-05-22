@@ -52,12 +52,12 @@ public class ConditionGroup {
         return this;
     }
 
-    public ConditionGroup ne(String column, Object value) {
+    public ConditionGroup notEq(String column, Object value) {
         elements.add(new SimpleCondition(column, "!=", value, defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup ne(TypeFunction<T, R> field, Object value) {
+    public <T, R> ConditionGroup notEq(TypeFunction<T, R> field, Object value) {
         String column = getColumnName(field);
         elements.add(new SimpleCondition(column, "!=", value, defaultJoinType));
         return this;
@@ -119,6 +119,17 @@ public class ConditionGroup {
         return this;
     }
 
+    public ConditionGroup notLike(String column, String value) {
+        elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value + "%", defaultJoinType));
+        return this;
+    }
+
+    public <T, R> ConditionGroup notLike(TypeFunction<T, R> field, String value) {
+        String column = getColumnName(field);
+        elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value + "%", defaultJoinType));
+        return this;
+    }
+
     public ConditionGroup leftLike(String column, String value) {
         elements.add(new SimpleCondition(column, "LIKE", value + "%", defaultJoinType));
         return this;
@@ -127,6 +138,17 @@ public class ConditionGroup {
     public <T, R> ConditionGroup leftLike(TypeFunction<T, R> field, String value) {
         String column = getColumnName(field);
         elements.add(new SimpleCondition(column, "LIKE", value + "%", defaultJoinType));
+        return this;
+    }
+
+    public ConditionGroup notLeftLike(String column, String value) {
+        elements.add(new SimpleCondition(column, "NOT LIKE", value + "%", defaultJoinType));
+        return this;
+    }
+
+    public <T, R> ConditionGroup notLeftLike(TypeFunction<T, R> field, String value) {
+        String column = getColumnName(field);
+        elements.add(new SimpleCondition(column, "NOT LIKE", value + "%", defaultJoinType));
         return this;
     }
 
@@ -141,27 +163,61 @@ public class ConditionGroup {
         return this;
     }
 
+    public ConditionGroup notRightLike(String column, String value) {
+        elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value, defaultJoinType));
+        return this;
+    }
+
+    public <T, R> ConditionGroup notRightLike(TypeFunction<T, R> field, String value) {
+        String column = getColumnName(field);
+        elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value, defaultJoinType));
+        return this;
+    }
+
     public ConditionGroup in(String column, List<?> values) {
-        elements.add(new InCondition(column, values, defaultJoinType));
+        elements.add(new InCondition(column, values, false, defaultJoinType));
         return this;
     }
 
     public <T, R> ConditionGroup in(TypeFunction<T, R> field, List<?> values) {
         String column = getColumnName(field);
-        elements.add(new InCondition(column, values, defaultJoinType));
+        elements.add(new InCondition(column, values, false, defaultJoinType));
+        return this;
+    }
+
+    public ConditionGroup notIn(String column, List<?> values) {
+        elements.add(new InCondition(column, values, true, defaultJoinType));
+        return this;
+    }
+
+    public <T, R> ConditionGroup notIn(TypeFunction<T, R> field, List<?> values) {
+        String column = getColumnName(field);
+        elements.add(new InCondition(column, values, true, defaultJoinType));
         return this;
     }
 
     public ConditionGroup betweenAnd(String column, Object value1, Object value2) {
-        elements.add(new BetweenCondition(column, value1, value2, defaultJoinType));
+        elements.add(new BetweenCondition(column, value1, value2, false, defaultJoinType));
         return this;
     }
 
     public <T, R> ConditionGroup betweenAnd(TypeFunction<T, R> field, Object value1, Object value2) {
         String column = getColumnName(field);
-        elements.add(new BetweenCondition(column, value1, value2, defaultJoinType));
+        elements.add(new BetweenCondition(column, value1, value2, false, defaultJoinType));
         return this;
     }
+
+    public ConditionGroup notBetweenAnd(String column, Object value1, Object value2) {
+        elements.add(new BetweenCondition(column, value1, value2, true, defaultJoinType));
+        return this;
+    }
+
+    public <T, R> ConditionGroup notBetweenAnd(TypeFunction<T, R> field, Object value1, Object value2) {
+        String column = getColumnName(field);
+        elements.add(new BetweenCondition(column, value1, value2, true, defaultJoinType));
+        return this;
+    }
+
 
     public ConditionGroup isNull(String column) {
         elements.add(new NullCondition(column, true, defaultJoinType));

@@ -14,18 +14,20 @@ public class BetweenCondition implements ConditionElement {
     private final String column;
     private final Object value1;
     private final Object value2;
-    private JoinType joinType;
+    private final boolean isNot;
+    private final JoinType joinType;
 
-    public BetweenCondition(String column, Object value1, Object value2, JoinType joinType) {
+    public BetweenCondition(String column, Object value1, Object value2, boolean isNot, JoinType joinType) {
         this.column = column;
         this.value1 = value1;
         this.value2 = value2;
+        this.isNot = isNot;
         this.joinType = joinType;
     }
 
     @Override
     public String toSql() {
-        return column + " BETWEEN ? AND ?";
+        return column + (isNot ? " NOT BETWEEN ? AND ?" : " BETWEEN ? AND ?");
     }
 
     @Override

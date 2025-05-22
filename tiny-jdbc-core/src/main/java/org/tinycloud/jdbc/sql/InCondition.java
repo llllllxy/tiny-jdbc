@@ -11,19 +11,21 @@ import java.util.List;
  * @since 2025-05-21 14:04
  */
 public class InCondition implements ConditionElement {
-    private String column;
-    private List<?> values;
-    private JoinType joinType;
+    private final String column;
+    private final List<?> values;
+    private final JoinType joinType;
+    private final boolean isNot;
 
-    public InCondition(String column, List<?> values, JoinType joinType) {
+    public InCondition(String column, List<?> values, boolean isNot, JoinType joinType) {
         this.column = column;
         this.values = values;
         this.joinType = joinType;
+        this.isNot = isNot;
     }
 
     @Override
     public String toSql() {
-        StringBuilder sb = new StringBuilder(column).append(" IN (");
+        StringBuilder sb = new StringBuilder(column).append((isNot ? " NOT IN (" : "IN ("));
         for (int i = 0; i < values.size(); i++) {
             sb.append("?");
             if (i < values.size() - 1) {
