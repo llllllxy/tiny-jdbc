@@ -102,7 +102,7 @@ public class SQL {
 
     public SQL groupBy(String... columns) {
         if (operation != Operation.SELECT) {
-            throw new IllegalStateException("GROUP BY只能用于SELECT语句");
+            throw new IllegalStateException("GROUP BY 只能用于 SELECT 语句");
         }
         this.groupByColumns.addAll(Arrays.asList(columns));
         return this;
@@ -111,7 +111,7 @@ public class SQL {
     @SafeVarargs
     public final <T> SQL groupBy(TypeFunction<T, ?>... fields) {
         if (operation != Operation.SELECT) {
-            throw new IllegalStateException("GROUP BY只能用于SELECT语句");
+            throw new IllegalStateException("GROUP BY 只能用于 SELECT 语句");
         }
         for (TypeFunction<T, ?> field : fields) {
             String column = LambdaUtils.getLambdaColumnName(field);
@@ -176,13 +176,15 @@ public class SQL {
     }
 
     public SQL values(Object... values) {
+        if (operation != Operation.INSERT) {
+            throw new IllegalStateException("values() 方法只能在 insert() 之后调用");
+        }
         if (insertValues.isEmpty()) {
             throw new IllegalStateException("请先调用 insert() 方法指定列");
         }
         if (values.length != insertValues.size()) {
             throw new IllegalArgumentException("值的数量与列的数量不匹配");
         }
-
         int i = 0;
         for (String column : insertValues.keySet()) {
             insertValues.put(column, values[i++]);
@@ -221,6 +223,9 @@ public class SQL {
 
     // ------------------------ 通用方法 ------------------------
     public SQL where(Consumer<ConditionGroup> conditions) {
+        if (operation == null) {
+            throw new IllegalStateException("请先调用 select()、update() 或 delete() 方法");
+        }
         if (operation == Operation.INSERT) {
             throw new IllegalStateException("INSERT 语句不能使用 WHERE 子句");
         }
@@ -364,91 +369,59 @@ public class SQL {
 
     // 测试用例
     public static void main(String[] args) {
-        // 测试用例 1：INSERT
-        SQL insertSql = SQL.table("user")
-                .insert("id", "name", "age")
-                .values(1, "张三", 25);
+        // 测试用例 1：嵌套 AND/OR 条件
+        SQL sql1 = SQL.table("user")
+                .select("id", "birthday")
+                .where(i -> i.and(j -> j.eq("name", "李白").eq("status", "alive"))
+                        .or(j -> j.eq("name", "杜甫").eq("status", "alive")))
+                .orderBy("updated_at").desc()
+                .orderBy("id");
 
-        printTestResult(insertSql);
+        printTestResult(sql1);
 
-        // 测试用例 2：UPDATE
-        SQL updateSql = SQL.table("user")
-                .update()
-                .set("name", "李四")
-                .set("age", 30)
-                .where(i -> i.eq("id", 1));
+        // 测试用例 2：多层嵌套条件
+        SQL sql2 = SQL.table("article").select()
+                .where(i -> i.and(j -> j.eq("category", "java").like("title", "spring"))
+                        .or(j -> j.eq("author", "张三").and(k -> k.lt("views", 1000).ge("comments", 5))))
+                .limit(20);
 
-        printTestResult(updateSql);
+        printTestResult(sql2);
 
-        // 测试用例 3：DELETE
-        SQL deleteSql = SQL.table("user")
-                .delete()
-                .where(i -> i.eq("id", 1).or(j -> j.eq("name", "测试")));
+        // 测试用例 3：混合条件
+        SQL sql3 = SQL.table("product")
+                .select("id", "name", "price")
+                .where(i -> i.eq("status", "active")
+                        .and(j -> j.gt("price", 100).or(k -> k.like("name", "pro")))
+                        .and(j -> j.in("category", Arrays.asList("electronics", "books"))))
+                .orderBy("price").desc()
+                .limit(10).offset(5);
 
-        printTestResult(deleteSql);
+        printTestResult(sql3);
 
-        // 测试用例 4：SELECT with WHERE
-        SQL selectSql = SQL.table("user")
-                .select("id", "name")
-                .where(i -> i.leftLike("name", "张")
-                        .and().ge("age", 20)
-                        .and().in("status", Arrays.asList("ACTIVE", "PENDING")))
-                .orderBy("age").desc()
-                .limit(10);
+        // 测试用例 4：复杂 OR 分组
+        SQL sql4 = SQL.table("order").select("id", "order_no", "amount", "create_time")
+                .where(i -> i.or(j -> j.eq("status", "paid").eq("amount", 1000))
+                        .or(j -> j.eq("status", "pending").gt("amount", 5000))
+                        .or(j -> j.eq("status", "cancelled").le("create_time", "2023-01-01")))
+                .orderBy("create_time").desc();
 
-        printTestResult(selectSql);
-
-        // 使用类和方法引用的示例
-        SQL selectSql6 = SQL.table(User.class)
-                .select(User::getId, User::getName)
-                .where(i -> i.eq(User::getAge, 25)
-                        .or(j -> j.like(User::getName, "张")))
-                .orderBy(User::getId)
-                .desc()
-                .limit(10);
-        printTestResult(selectSql6);
-
-        // 使用类和方法引用的示例
-        SQL selectSql7 = SQL.table(User.class)
-                .select(User::getId, User::getName)
-                .where(i -> i.eq(User::getAge, 25)
-                        .or().eq(User::getAge, 30))
-                .orderBy(User::getId)
-                .desc()
-                .orderBy(User::getAge);
-        printTestResult(selectSql7);
+        printTestResult(sql4);
 
 
-        // 示例1：使用group()方法添加括号
-        SQL selectSql8 = SQL.table("user")
-                .select("*")
-                .where(i -> i.group(j -> j.eq("age", 25).or().eq("age", 30))
-                        .and().like("name", "张"));
-        printTestResult(selectSql8);
+        // 测试用例 3：混合 like
+        SQL sql5 = SQL.table("article").select("title", "spring", "books")
+                .where(i -> i.like("title", "spring")
+                        .and().leftLike("author", "张")
+                        .and().rightLike("category", "java"));
 
+        printTestResult(sql5);
 
-        // 示例2：嵌套括号
-        SQL complexSql9 = SQL.table("user")
-                .select("*")
-                .where(i -> i.group(j -> j.eq("status", "ACTIVE")
-                                .and().group(k -> k.gt("age", 18).and().lt("age", 60)))
-                        .or().eq("role", "ADMIN"));
-        printTestResult(complexSql9);
+        // 测试用例 4：复杂嵌套 with like
+        SQL sql6 = SQL.table("order")//.select("id", "order_no", "amount", "create_time")
+                .where(i -> i.and(j -> j.eq("status", "paid").leftLike("order_no", "ORD2023"))
+                        .or(j -> j.rightLike("customer_name", "先生").gt("amount", 1000)));
 
-        SQL complexSql10 = SQL.table("user")
-                // 传入多个列名和表达式（顺序任意）
-                .select(Expression.of("id"),
-                        Expression.of("birthday"),
-                        Expression.of(User::getEmail),
-                        Expression.max("age").as("maxAge"), // 带别名的聚合表达式
-                        Expression.count("*").as("total") // 带别名的聚合表达式
-                )
-                .where(i -> i.eq("status", "active"))
-                .groupBy("name", "status") // GROUP BY多个列
-                .having(i -> i.gt(Expression.max("age").toString(), 25))
-                .orderBy("maxAge").desc();
-
-        printTestResult(complexSql10);
+        printTestResult(sql6);
     }
 
     private static void printTestResult(SQL sql) {
