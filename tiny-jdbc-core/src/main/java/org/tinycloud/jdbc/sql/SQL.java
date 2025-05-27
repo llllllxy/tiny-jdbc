@@ -3,6 +3,8 @@ package org.tinycloud.jdbc.sql;
 import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.criteria.TypeFunction;
+import org.tinycloud.jdbc.sql.enums.ClauseState;
+import org.tinycloud.jdbc.sql.enums.Operation;
 import org.tinycloud.jdbc.util.LambdaUtils;
 
 import java.util.ArrayList;
@@ -12,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SQL {
     private final String table;
@@ -21,8 +25,14 @@ public class SQL {
     private final Map<String, Object> updateValues = new LinkedHashMap<>();
     private final ConditionGroup whereCondition = new ConditionGroup();
     private final List<OrderBy> orderByClauses = new ArrayList<>();
+    private final List<String> groupByColumns = new ArrayList<>();
+    private final ConditionGroup havingCondition = new ConditionGroup();
     private Integer limit;
     private Integer offset;
+
+    // 记录各子句的调用状态
+    private volatile ClauseState whereState = ClauseState.NOT_CALLED;
+    private volatile ClauseState havingState = ClauseState.NOT_CALLED;
 
     private SQL(String table) {
         this.table = table;
@@ -41,10 +51,6 @@ public class SQL {
     }
 
 
-    public <T, R> String getColumnName(TypeFunction<T, R> field) {
-        return LambdaUtils.getLambdaColumnName(field);
-    }
-
     // ------------------------ SELECT ------------------------
 
     public SQL select() {
@@ -60,12 +66,93 @@ public class SQL {
     }
 
     @SafeVarargs
-    public final <T, R> SQL select(TypeFunction<T, R>... fields) {
+    public final <T> SQL select(TypeFunction<T, ?>... fields) {
         validateOperation(Operation.SELECT);
         for (TypeFunction<T, ?> field : fields) {
-            String columnName = getColumnName(field);
+            String columnName = LambdaUtils.getLambdaColumnName(field);
             this.selectFields.add(columnName);
         }
+        return this;
+    }
+
+    public SQL select(Expression... expressions) {
+        validateOperation(Operation.SELECT);
+        for (Expression expr : expressions) {
+            selectFields.add(expr.toString());
+        }
+        return this;
+    }
+
+    public <T> SQL orderBy(TypeFunction<T, ?> field) {
+        if (operation != Operation.SELECT) {
+            throw new IllegalStateException("ORDER BY 只能用于 SELECT 语句");
+        }
+        String column = LambdaUtils.getLambdaColumnName(field);
+        this.orderByClauses.add(new OrderBy(column, false));
+        return this;
+    }
+
+    public SQL orderBy(String column) {
+        if (operation != Operation.SELECT) {
+            throw new IllegalStateException("ORDER BY 只能用于 SELECT 语句");
+        }
+        this.orderByClauses.add(new OrderBy(column, false));
+        return this;
+    }
+
+    public SQL groupBy(String... columns) {
+        if (operation != Operation.SELECT) {
+            throw new IllegalStateException("GROUP BY只能用于SELECT语句");
+        }
+        this.groupByColumns.addAll(Arrays.asList(columns));
+        return this;
+    }
+
+    @SafeVarargs
+    public final <T> SQL groupBy(TypeFunction<T, ?>... fields) {
+        if (operation != Operation.SELECT) {
+            throw new IllegalStateException("GROUP BY只能用于SELECT语句");
+        }
+        for (TypeFunction<T, ?> field : fields) {
+            String column = LambdaUtils.getLambdaColumnName(field);
+            this.groupByColumns.add(column);
+        }
+        return this;
+    }
+
+    public SQL having(Consumer<ConditionGroup> conditions) {
+        if (operation != Operation.SELECT) {
+            throw new IllegalStateException("HAVING 子句只能用于 SELECT 语句");
+        }
+        if (havingState == ClauseState.CALLED) {
+            throw new IllegalStateException("HAVING 子句已被调用，不能重复调用");
+        }
+        havingState = ClauseState.CALLED;
+        conditions.accept(havingCondition);
+        return this;
+    }
+
+    public SQL desc() {
+        if (!orderByClauses.isEmpty()) {
+            OrderBy lastOrder = orderByClauses.get(orderByClauses.size() - 1);
+            orderByClauses.set(orderByClauses.size() - 1, new OrderBy(lastOrder.column, true));
+        }
+        return this;
+    }
+
+    public SQL limit(int limit) {
+        if (operation != Operation.SELECT) {
+            throw new IllegalStateException("LIMIT 只能用于 SELECT 语句");
+        }
+        this.limit = limit;
+        return this;
+    }
+
+    public SQL offset(int offset) {
+        if (operation != Operation.SELECT) {
+            throw new IllegalStateException("OFFSET 只能用于 SELECT 语句");
+        }
+        this.offset = offset;
         return this;
     }
 
@@ -79,10 +166,10 @@ public class SQL {
     }
 
     @SafeVarargs
-    public final <T, R> SQL insert(TypeFunction<T, R>... fields) {
+    public final <T> SQL insert(TypeFunction<T, ?>... fields) {
         validateOperation(Operation.INSERT);
         for (TypeFunction<T, ?> field : fields) {
-            String columnName = getColumnName(field);
+            String columnName = LambdaUtils.getLambdaColumnName(field);
             this.insertValues.put(columnName, null);// 占位
         }
         return this;
@@ -117,11 +204,11 @@ public class SQL {
         return this;
     }
 
-    public <T, R> SQL set(TypeFunction<T, R> field, Object value) {
+    public <T> SQL set(TypeFunction<T, ?> field, Object value) {
         if (operation != Operation.UPDATE) {
             throw new IllegalStateException("set() 方法只能在 update() 之后调用");
         }
-        String column = getColumnName(field);
+        String column = LambdaUtils.getLambdaColumnName(field);
         updateValues.put(column, value);
         return this;
     }
@@ -137,48 +224,11 @@ public class SQL {
         if (operation == Operation.INSERT) {
             throw new IllegalStateException("INSERT 语句不能使用 WHERE 子句");
         }
+        if (whereState == ClauseState.CALLED) {
+            throw new IllegalStateException("WHERE 子句已被调用，不能重复调用");
+        }
+        whereState = ClauseState.CALLED;
         conditions.accept(whereCondition);
-        return this;
-    }
-
-    public <T, R> SQL orderBy(TypeFunction<T, R> field) {
-        if (operation != Operation.SELECT) {
-            throw new IllegalStateException("ORDER BY 只能用于 SELECT 语句");
-        }
-        String column = getColumnName(field);
-        orderByClauses.add(new OrderBy(column, false));
-        return this;
-    }
-
-    public SQL orderBy(String column) {
-        if (operation != Operation.SELECT) {
-            throw new IllegalStateException("ORDER BY 只能用于 SELECT 语句");
-        }
-        orderByClauses.add(new OrderBy(column, false));
-        return this;
-    }
-
-    public SQL desc() {
-        if (!orderByClauses.isEmpty()) {
-            OrderBy lastOrder = orderByClauses.get(orderByClauses.size() - 1);
-            orderByClauses.set(orderByClauses.size() - 1, new OrderBy(lastOrder.column, true));
-        }
-        return this;
-    }
-
-    public SQL limit(int limit) {
-        if (operation != Operation.SELECT) {
-            throw new IllegalStateException("LIMIT 只能用于 SELECT 语句");
-        }
-        this.limit = limit;
-        return this;
-    }
-
-    public SQL offset(int offset) {
-        if (operation != Operation.SELECT) {
-            throw new IllegalStateException("OFFSET 只能用于 SELECT 语句");
-        }
-        this.offset = offset;
         return this;
     }
 
@@ -204,13 +254,11 @@ public class SQL {
         switch (operation) {
             case SELECT:
             case DELETE:
-                return whereCondition.getParameters();
+                return Stream.concat(whereCondition.getParameters().stream(), havingCondition.getParameters().stream()).collect(Collectors.toList());
             case INSERT:
                 return new ArrayList<>(insertValues.values());
             case UPDATE:
-                List<Object> params = new ArrayList<>(updateValues.values());
-                params.addAll(whereCondition.getParameters());
-                return params;
+                return Stream.concat(updateValues.values().stream(), whereCondition.getParameters().stream()).collect(Collectors.toList());
             default:
                 throw new IllegalArgumentException("不支持的操作类型: " + operation);
         }
@@ -235,6 +283,15 @@ public class SQL {
         if (!whereCondition.isEmpty()) {
             sql.append(" WHERE ").append(whereCondition.toSql());
         }
+        // 添加GROUP BY子句
+        if (!groupByColumns.isEmpty()) {
+            sql.append(" GROUP BY ").append(String.join(", ", groupByColumns));
+        }
+        // 添加 HAVING 子句
+        if (!havingCondition.isEmpty()) {
+            sql.append(" HAVING ").append(havingCondition.toSql());
+        }
+        // 添加ORDER BY子句
         if (!orderByClauses.isEmpty()) {
             sql.append(" ORDER BY ");
             StringJoiner orderJoiner = new StringJoiner(", ");
@@ -243,6 +300,7 @@ public class SQL {
             }
             sql.append(orderJoiner);
         }
+        // 添加LIMIT和OFFSET子句
         if (limit != null) {
             sql.append(" LIMIT ").append(limit);
         }
@@ -356,7 +414,8 @@ public class SQL {
                 .where(i -> i.eq(User::getAge, 25)
                         .or().eq(User::getAge, 30))
                 .orderBy(User::getId)
-                .desc().orderBy(User::getAge);
+                .desc()
+                .orderBy(User::getAge);
         printTestResult(selectSql7);
 
 
@@ -375,6 +434,21 @@ public class SQL {
                                 .and().group(k -> k.gt("age", 18).and().lt("age", 60)))
                         .or().eq("role", "ADMIN"));
         printTestResult(complexSql9);
+
+        SQL complexSql10 = SQL.table("user")
+                // 传入多个列名和表达式（顺序任意）
+                .select(Expression.of("id"),
+                        Expression.of("birthday"),
+                        Expression.of(User::getEmail),
+                        Expression.max("age").as("maxAge"), // 带别名的聚合表达式
+                        Expression.count("*").as("total") // 带别名的聚合表达式
+                )
+                .where(i -> i.eq("status", "active"))
+                .groupBy("name", "status") // GROUP BY多个列
+                .having(i -> i.gt(Expression.max("age").toString(), 25))
+                .orderBy("maxAge").desc();
+
+        printTestResult(complexSql10);
     }
 
     private static void printTestResult(SQL sql) {

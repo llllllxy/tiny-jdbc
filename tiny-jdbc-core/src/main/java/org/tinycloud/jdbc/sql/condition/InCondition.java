@@ -1,4 +1,6 @@
-package org.tinycloud.jdbc.sql;
+package org.tinycloud.jdbc.sql.condition;
+
+import org.tinycloud.jdbc.sql.enums.JoinType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,7 @@ public class InCondition implements ConditionElement {
 
     @Override
     public String toSql() {
-        StringBuilder sb = new StringBuilder(column).append((isNot ? " NOT IN (" : "IN ("));
+        StringBuilder sb = new StringBuilder(column).append((isNot ? " NOT IN (" : " IN ("));
         for (int i = 0; i < values.size(); i++) {
             sb.append("?");
             if (i < values.size() - 1) {

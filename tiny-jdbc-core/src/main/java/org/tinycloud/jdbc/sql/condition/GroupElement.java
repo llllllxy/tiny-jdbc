@@ -1,4 +1,7 @@
-package org.tinycloud.jdbc.sql;
+package org.tinycloud.jdbc.sql.condition;
+
+import org.tinycloud.jdbc.sql.ConditionGroup;
+import org.tinycloud.jdbc.sql.enums.JoinType;
 
 import java.util.List;
 
