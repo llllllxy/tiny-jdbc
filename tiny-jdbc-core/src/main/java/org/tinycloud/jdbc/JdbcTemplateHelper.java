@@ -3,7 +3,6 @@ package org.tinycloud.jdbc;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
@@ -46,14 +45,7 @@ public class JdbcTemplateHelper {
     }
 
     public <F> List<F> select(String sql, Class<F> clazz, Object... params) {
-        List<F> resultList;
-        if (!ObjectUtils.isEmpty(params)) {
-            resultList = getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz), params);
-        } else {
-            // BeanPropertyRowMapper是自动映射实体类的
-            resultList = getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz));
-        }
-        return resultList;
+        return getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz), params);
     }
 
     public List<Map<String, Object>> selectMap(String sql, Object... params) {
@@ -61,13 +53,7 @@ public class JdbcTemplateHelper {
     }
 
     public <F> F selectOneColumn(String sql, Class<F> clazz, Object... params) {
-        F result;
-        if (ObjectUtils.isEmpty(params)) {
-            result = getJdbcTemplate().queryForObject(sql, clazz);
-        } else {
-            result = getJdbcTemplate().queryForObject(sql, clazz, params);
-        }
-        return result;
+        return getJdbcTemplate().queryForObject(sql, clazz, params);
     }
 
     public <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params) {
@@ -111,13 +97,7 @@ public class JdbcTemplateHelper {
     }
 
     public int execute(String sql, final Object... params) {
-        int num = 0;
-        if (ObjectUtils.isEmpty(params)) {
-            num = getJdbcTemplate().update(sql);
-        } else {
-            num = getJdbcTemplate().update(sql, params);
-        }
-        return num;
+        return getJdbcTemplate().update(sql, params);
     }
 
     public int insert(String sql, final Object... params) {
