@@ -9,6 +9,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
@@ -16,8 +17,9 @@ import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
+import org.tinycloud.jdbc.page.PageCheck;
 import org.tinycloud.jdbc.page.PageHandleResult;
-import org.tinycloud.jdbc.util.StrUtils;
+import org.tinycloud.jdbc.sql.SQL;
 
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
@@ -61,30 +63,16 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         rowMapper = BeanPropertyRowMapper.newInstance(entityClass);
     }
 
-    // ---------------------------------ISqlSupport开始---------------------------------
+    // ---------------------------------ISqlSupport（纯sql实现）实现开始---------------------------------
 
     @Override
     public List<T> select(String sql, Object... params) {
-        List<T> resultList;
-        if (!ObjectUtils.isEmpty(params)) {
-            resultList = getJdbcTemplate().query(sql, rowMapper, params);
-        } else {
-            // BeanPropertyRowMapper是自动映射实体类的
-            resultList = getJdbcTemplate().query(sql, rowMapper);
-        }
-        return resultList;
+        return getJdbcTemplate().query(sql, rowMapper);
     }
 
     @Override
     public <F> List<F> select(String sql, Class<F> clazz, Object... params) {
-        List<F> resultList;
-        if (!ObjectUtils.isEmpty(params)) {
-            resultList = getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz), params);
-        } else {
-            // BeanPropertyRowMapper是自动映射实体类的
-            resultList = getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz));
-        }
-        return resultList;
+        return getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz));
     }
 
     @Override
@@ -93,27 +81,13 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     }
 
     @Override
-    public <F> F selectOneColumn(String sql, Class<F> clazz, Object... params) {
-        F result;
-        if (ObjectUtils.isEmpty(params)) {
-            result = getJdbcTemplate().queryForObject(sql, clazz);
-        } else {
-            result = getJdbcTemplate().queryForObject(sql, clazz, params);
-        }
-        return result;
+    public <F> F selectForObject(String sql, Class<F> clazz, Object... params) {
+        return getJdbcTemplate().queryForObject(sql, clazz, params);
     }
 
     @Override
     public Page<T> paginate(String sql, Page<T> page, final Object... params) {
-        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
-            throw new TinyJdbcException("paginate page cannot be null");
-        }
-        if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("pageNum must be greater than 0");
-        }
-        if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("pageSize must be greater than 0");
-        }
+        PageCheck.check(page);
         PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
         // 查询数据列表
         List<T> list = getJdbcTemplate().query(handleResult.getPageSql(), rowMapper, params);
@@ -126,15 +100,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
 
     @Override
     public <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params) {
-        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
-            throw new TinyJdbcException("paginate page cannot be null");
-        }
-        if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("pageNum must be greater than 0");
-        }
-        if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("pageSize must be greater than 0");
-        }
+        PageCheck.check(page);
         PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
         // 查询数据列表
         List<F> list = getJdbcTemplate().query(handleResult.getPageSql(), new BeanPropertyRowMapper<>(clazz), params);
@@ -147,15 +113,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
 
     @Override
     public Page<Map<String, Object>> paginateMap(String sql, Page<Map<String, Object>> page, Object... params) {
-        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
-            throw new TinyJdbcException("paginate page cannot be null");
-        }
-        if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("pageNum must be greater than 0");
-        }
-        if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("pageSize must be greater than 0");
-        }
+        PageCheck.check(page);
         PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
         // 查询数据列表
         List<Map<String, Object>> list = getJdbcTemplate().queryForList(handleResult.getPageSql(), params);
@@ -168,13 +126,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
 
     @Override
     public int execute(String sql, final Object... params) {
-        int num = 0;
-        if (ObjectUtils.isEmpty(params)) {
-            num = getJdbcTemplate().update(sql);
-        } else {
-            num = getJdbcTemplate().update(sql, params);
-        }
-        return num;
+        return getJdbcTemplate().update(sql, params);
     }
 
     @Override
@@ -192,19 +144,47 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         return execute(sql, params);
     }
 
+    // ---------------------------------ISqlSupport（SQL构造器实现）实现开始---------------------------------
 
-    // ---------------------------------IObjectSupport开始---------------------------------
+    @Override
+    public int execute(SQL sql) {
+        return execute(sql.toSql(), sql.getParameters().toArray());
+    }
+
+    @Override
+    public List<T> select(SQL sql) {
+        return select(sql.toSql(), sql.getParameters().toArray());
+    }
+
+    @Override
+    public <F> List<F> select(SQL sql, Class<F> clazz) {
+        return select(sql.toSql(), clazz, sql.getParameters().toArray());
+    }
+
+    @Override
+    public Page<T> paginate(SQL sql, Page<T> page) {
+        return paginate(sql.toSql(), page, sql.getParameters().toArray());
+    }
+
+    @Override
+    public <F> Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page) {
+        return paginate(sql.toSql(), clazz, page, sql.getParameters().toArray());
+    }
+
+    @Override
+    public <F> F selectForObject(SQL sql, Class<F> clazz) {
+        return selectForObject(sql.toSql(), clazz, sql.getParameters().toArray());
+    }
+
+
+    // ---------------------------------IObjectSupport实现开始---------------------------------
     @Override
     public T selectById(ID id) {
         if (id == null) {
             throw new TinyJdbcException("selectById id cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectByIdSql(id, entityClass);
-        List<T> list = getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
-        if (!CollectionUtils.isEmpty(list)) {
-            return list.get(0);
-        }
-        return null;
+        return selectOne(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -213,7 +193,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("selectByIds ids cannot be null or empty");
         }
         SqlProvider sqlProvider = SqlGenerator.selectByIdsSql(entityClass, new ArrayList<>(ids));
-        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
+        return select(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -222,7 +202,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("select entity cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
-        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
+        return select(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -231,7 +211,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("select criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCriteriaSql(criteria, entityClass);
-        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
+        return select(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -240,7 +220,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("select lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
-        return getJdbcTemplate().query(sqlProvider.getSql(), rowMapper, sqlProvider.getParameters().toArray());
+        return select(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -248,24 +228,9 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (entity == null) {
             throw new TinyJdbcException("paginate entity cannot be null");
         }
-        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
-            throw new TinyJdbcException("paginate page cannot be null");
-        }
-        if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("当前页数必须大于1");
-        }
-        if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("每页大小必须大于1");
-        }
+        PageCheck.check(page);
         SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
-        PageHandleResult handleResult = getPageHandle().handle(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
-        // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(handleResult.getPageSql(), rowMapper, sqlProvider.getParameters().toArray());
-        // 查询总共数量
-        Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, sqlProvider.getParameters().toArray());
-        page.setRecords(resultList);
-        page.setTotal(count);
-        return page;
+        return paginate(sqlProvider.getSql(), page, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -273,24 +238,9 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             throw new TinyJdbcException("paginate criteria cannot be null");
         }
-        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
-            throw new TinyJdbcException("paginate page cannot be null");
-        }
-        if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("pageNum must be greater than 0");
-        }
-        if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("pageSize must be greater than 0");
-        }
+        PageCheck.check(page);
         SqlProvider sqlProvider = SqlGenerator.selectCriteriaSql(criteria, entityClass);
-        PageHandleResult handleResult = getPageHandle().handle(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
-        // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(handleResult.getPageSql(), rowMapper, sqlProvider.getParameters().toArray());
-        // 查询总共数量
-        Long totalSize = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, sqlProvider.getParameters().toArray());
-        page.setRecords(resultList);
-        page.setTotal(totalSize);
-        return page;
+        return paginate(sqlProvider.getSql(), page, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -298,24 +248,9 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (lambdaCriteria == null) {
             throw new TinyJdbcException("paginate lambdaCriteria cannot be null");
         }
-        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
-            throw new TinyJdbcException("paginate page cannot be null");
-        }
-        if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("pageNum must be greater than 0");
-        }
-        if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("pageSize must be greater than 0");
-        }
+        PageCheck.check(page);
         SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
-        PageHandleResult handleResult = getPageHandle().handle(sqlProvider.getSql(), page.getPageNum(), page.getPageSize());
-        // 查询数据列表
-        List<T> resultList = getJdbcTemplate().query(handleResult.getPageSql(), rowMapper, sqlProvider.getParameters().toArray());
-        // 查询总共数量
-        Long totalSize = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, sqlProvider.getParameters().toArray());
-        page.setRecords(resultList);
-        page.setTotal(totalSize);
-        return page;
+        return paginate(sqlProvider.getSql(), page, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -324,7 +259,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCountCriteriaSql(criteria, entityClass);
-        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
+        return selectForObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -333,7 +268,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCountLambdaCriteriaSql(lambdaCriteria, entityClass);
-        return getJdbcTemplate().queryForObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
+        return selectForObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -350,7 +285,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("insert parameters cannot be null");
         }
-        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return insert(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -401,7 +336,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
-        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -426,7 +361,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
-        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -441,7 +376,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
-        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -453,7 +388,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
-        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -465,7 +400,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
-        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -477,7 +412,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("delete parameters cannot be null");
         }
-        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return delete(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -489,7 +424,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("deleteById parameters cannot be null");
         }
-        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return delete(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -501,7 +436,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("deleteById parameters cannot be null");
         }
-        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return delete(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -513,7 +448,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("deleteById parameters cannot be null");
         }
-        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return delete(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -525,7 +460,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("deleteById parameters cannot be null");
         }
-        return getJdbcTemplate().update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+        return delete(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -537,7 +472,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         String sql = "";
         for (T t : collection) {
             SqlProvider sqlProvider = SqlGenerator.insertSql(t, true, getJdbcTemplate());
-            if (StrUtils.isEmpty(sql)) {
+            if (StringUtils.hasLength(sql)) {
                 sql = sqlProvider.getSql();
             }
             batchArgs.add(sqlProvider.getParameters().toArray());
@@ -551,6 +486,6 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     @Override
     public int truncate() {
         SqlProvider sqlProvider = SqlGenerator.truncateSql(entityClass);
-        return getJdbcTemplate().update(sqlProvider.getSql());
+        return execute(sqlProvider.getSql());
     }
 }

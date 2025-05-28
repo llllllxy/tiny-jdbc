@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc.support;
 
 import org.tinycloud.jdbc.page.Page;
+import org.tinycloud.jdbc.sql.SQL;
 import org.tinycloud.jdbc.util.DataAccessUtils;
 
 import java.io.Serializable;
@@ -120,7 +121,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
     }
 
     /**
-     * 查询一个值（经常用于查count）
+     * 查询一个值，经常用于查count(*)这种
      *
      * @param sql    要执行的SQL查询
      * @param clazz  实体类
@@ -128,7 +129,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param <F>    泛型
      * @return F
      */
-    <F> F selectOneColumn(String sql, Class<F> clazz, Object... params);
+    <F> F selectForObject(String sql, Class<F> clazz, Object... params);
 
     /**
      * 分页查询
@@ -156,4 +157,26 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @return Page<F>
      */
     <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params);
+
+    int execute(SQL sql);
+
+    List<T> select(SQL sql);
+
+    default T selectOne(SQL sql) {
+        List<T> resultList = this.select(sql);
+        return DataAccessUtils.singleResult(resultList);
+    }
+
+    <F> List<F> select(SQL sql, Class<F> clazz);
+
+    default <F> F selectOne(SQL sql, Class<F> clazz) {
+        List<F> resultList = this.select(sql, clazz);
+        return DataAccessUtils.singleResult(resultList);
+    }
+
+    Page<T> paginate(SQL sql, Page<T> page);
+
+    <F> Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page);
+    
+    <F> F selectForObject(SQL sql, Class<F> clazz);
 }

@@ -47,7 +47,6 @@ public class BaseDao<T, ID extends Serializable> extends AbstractSqlSupport<T, I
 
     @Override
     protected NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
-        NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(getJdbcTemplate());
-        return namedJdbcTemplate;
+        return new NamedParameterJdbcTemplate(getJdbcTemplate());
     }
 }

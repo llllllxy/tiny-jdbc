@@ -323,7 +323,7 @@ public class UploadFile implements Serializable {
 |`int delete(UpdateCriteria<T> criteria);`| 根据条件构造器，将作为where参数 |
 |`int delete(LambdaUpdateCriteria<T> criteria);`| 根据条件构造器（lambda），将作为where参数 |
 
-## 5、条件构造器
+## 5、条件构造器（Criteria）
 
 ### 功能使用说明
 
@@ -481,7 +481,11 @@ Tiny-Jdbc 提供了 CriteriaBuilder 类，它是一个静态工厂类，用于�
                         .eq(TProjectInfo::getId, 1709630713614L);
 ```
 
-<h2 id="idGen"> 6、自定义ID生成器</h2>
+## 6、SQL构造器（SQL）
+Tiny-Jdbc 提供了 SQL 类，它是一个静态工厂类，用于快速创建 SQL 的实例。使用 SQL 可以减少代码量，提高开发效率。
+[使用文档](SQL.md)
+
+<h2 id="idGen"> 7、自定义ID生成器</h2>
 
 需要实现 IdGeneratorInterface 接口，并且声明为 Bean 供 Spring 扫描注入
 
@@ -525,7 +529,7 @@ public IdGeneratorInterface idGenerator(){
 }
 ```
 
-## 7、自定义雪花ID算法数据中心标识和机器标识
+## 8、自定义雪花ID算法数据中心标识和机器标识
 
 需要实现 SnowflakeConfigInterface 接口，并且声明为 Bean 供 Spring 扫描注入
 
@@ -571,7 +575,7 @@ public SnowflakeConfigInterface snowflakeConfigInterface() {
 }
 ```
 
-## 8、无实体类操作
+## 9、无实体类操作
 Tiny-Jdbc 额外提供了 JdbcTemplateHelper 工具类，无需实体类映射和继承BaseDao，用于操作无实体类的多表联合查询、分页查询、插入、更新、删除等操作，方便业务的灵活性。
 使用时直接注入即可。
 
@@ -596,7 +600,7 @@ public class OtherDao {
 }
 ```
 
-## 9、一些使用示例
+## 10、一些使用示例
 创建 ProjectInfoDao
 ```java
 
@@ -827,12 +831,12 @@ int result = baseDao.delete(criteria);
 ``` 
 
 
-## 10、安全使用说明
+## 11、安全使用说明
 使用`QueryCriteria`和`UpdateCriteria`时应避免前端传入字段名，防止`SQL注入`的风险；
 如若必须使用由前端传入的动态内容，如使用QueryCriteria.orderBy("任意前端传入字段")进行动态排序，推荐使用工具类 `SqlInjectionUtils.check(内容)` 先行验证字符串是否存在 `SQL注入`， 存在则拒绝操作。
 
 
-## 11、SQL日志打印分析
+## 12、SQL日志打印分析
 **该功能依赖 p6spy 组件，需进行配置后方可使用**
 
 **注意！**
@@ -1126,5 +1130,5 @@ logMessageFormat=org.tinycloud.jdbc.p6spy.P6SpyLogger
 ```
 
 
-## 12、许可证
+## 13、许可证
 [Apache License 2.0](https://github.com/llllllxy/tiny-jdbc/blob/master/LICENSE) 免费用于个人和商业，请放心使用

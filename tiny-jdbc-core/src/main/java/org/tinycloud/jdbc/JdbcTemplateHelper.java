@@ -3,9 +3,9 @@ package org.tinycloud.jdbc;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
+import org.tinycloud.jdbc.page.PageCheck;
 import org.tinycloud.jdbc.page.PageHandleResult;
 
 import java.util.List;
@@ -30,10 +30,8 @@ public class JdbcTemplateHelper {
     }
 
     public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
-        NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-        return namedJdbcTemplate;
+        return new NamedParameterJdbcTemplate(jdbcTemplate);
     }
-
 
     private final IPageHandle getPageHandle() {
         return pageHandle;
@@ -52,20 +50,12 @@ public class JdbcTemplateHelper {
         return getJdbcTemplate().queryForList(sql, params);
     }
 
-    public <F> F selectOneColumn(String sql, Class<F> clazz, Object... params) {
+    public <F> F selectForObject(String sql, Class<F> clazz, Object... params) {
         return getJdbcTemplate().queryForObject(sql, clazz, params);
     }
 
     public <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params) {
-        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
-            throw new TinyJdbcException("paginate page cannot be null");
-        }
-        if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("pageNum must be greater than 0");
-        }
-        if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("pageSize must be greater than 0");
-        }
+        PageCheck.check(page);
         PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
         // 查询数据列表
         List<F> list = getJdbcTemplate().query(handleResult.getPageSql(), new BeanPropertyRowMapper<>(clazz), params);
@@ -77,15 +67,7 @@ public class JdbcTemplateHelper {
     }
 
     public Page<Map<String, Object>> paginateMap(String sql, Page<Map<String, Object>> page, Object... params) {
-        if (page == null || page.getPageNum() == null || page.getPageSize() == null) {
-            throw new TinyJdbcException("paginate page cannot be null");
-        }
-        if (page.getPageNum() <= 0) {
-            throw new TinyJdbcException("pageNum must be greater than 0");
-        }
-        if (page.getPageSize() <= 0) {
-            throw new TinyJdbcException("pageSize must be greater than 0");
-        }
+        PageCheck.check(page);
         PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
         // 查询数据列表
         List<Map<String, Object>> list = getJdbcTemplate().queryForList(handleResult.getPageSql(), params);
