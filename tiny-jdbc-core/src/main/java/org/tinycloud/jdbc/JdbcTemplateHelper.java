@@ -7,6 +7,8 @@ import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
 import org.tinycloud.jdbc.page.PageCheck;
 import org.tinycloud.jdbc.page.PageHandleResult;
+import org.tinycloud.jdbc.sql.SQL;
+import org.tinycloud.jdbc.util.DataAccessUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,11 @@ public class JdbcTemplateHelper {
 
     public <F> List<F> select(String sql, Class<F> clazz, Object... params) {
         return getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz), params);
+    }
+
+    public <F> F selectOne(String sql, Class<F> clazz, Object... params) {
+        List<F> resultList = select(sql, clazz, params);
+        return DataAccessUtils.singleResult(resultList);
     }
 
     public List<Map<String, Object>> selectMap(String sql, Object... params) {
@@ -92,5 +99,38 @@ public class JdbcTemplateHelper {
 
     public int delete(String sql, final Object... params) {
         return execute(sql, params);
+    }
+
+    public int execute(SQL sql) {
+        return execute(sql.toSql(), sql.getParameters().toArray());
+    }
+
+    public int insert(SQL sql) {
+        return insert(sql.toSql(), sql.getParameters().toArray());
+    }
+
+    public int update(SQL sql) {
+        return update(sql.toSql(), sql.getParameters().toArray());
+    }
+
+    public int delete(SQL sql) {
+        return delete(sql.toSql(), sql.getParameters().toArray());
+    }
+
+    public <F> List<F> select(SQL sql, Class<F> clazz) {
+        return select(sql.toSql(), clazz, sql.getParameters().toArray());
+    }
+
+    public <F> Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page) {
+        return paginate(sql.toSql(), clazz, page, sql.getParameters().toArray());
+    }
+
+    public <F> F selectForObject(SQL sql, Class<F> clazz) {
+        return selectForObject(sql.toSql(), clazz, sql.getParameters().toArray());
+    }
+
+    public <F> F selectOne(SQL sql, Class<F> clazz) {
+        List<F> resultList = select(sql, clazz);
+        return DataAccessUtils.singleResult(resultList);
     }
 }

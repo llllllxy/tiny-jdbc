@@ -259,49 +259,49 @@ public class UploadFile implements Serializable {
 
 ### 查询操作
 
-|方法|说明|
-|---|---|
-|`<F> List<F> select(String sql, Class<F> classz, Object... params);` |根据给定的sql和实体类型和参数，查询数据库并返回实体类对象列表|
-|`List<T> select(String sql, Object... params);` |根据给定的sql和参数，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
-|`<F> F selectOne(String sql, Class<F> classz, Object... params);`|根据给定的sql和实体类型和参数，查询数据并返回一个实体类对象|
-|`T selectOne(String sql, Object... params);`|根据给定的sql和参数，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
-|`List<Map<String, Object>> selectMap(String sql, Object... params);`|根据给定的sql和参数，查询数据库并返回Map<String, Object>列表|
-|`Map<String, Object> selectOneMap(String sql, Object... params);`|根据给定的sql和参数，查询数据并返回一个Map<String, Object>对象|
-|`<T> T selectOneColumn(String sql, Class<T> clazz, Object... params);`|根据给定的sql和实体类型和参数，查询数据并返回一个值（常用于查count）|
-|`Page<F> paginate(String sql, Class<F> clazz, Page<F> page, Object... params);`|执行分页查询，返回Page对象，类型使用的Class<F>传入的自定义类型|
-|`Page<T> paginate(String sql, Page<T> page, Object... params);`|执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
-|`T selectById(Object id);`|根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
-|`T selectByIds(List<ID> ids);`|根据主键ID值列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
-|`T selectByIds(ID... id);`|根据主键ID值可变参数列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
-|`List<T> select(T entity);`|实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型|
-|`List<T> select(QueryCriteria<T> criteria);`|根据查询构造器查询，返回多条，类型使用的是xxxDao<T>的类型|
-|`List<T> select(LambdaQueryCriteria<T> lambdaCriteria);`|根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
-|`T selectOne(T entity);`|实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型|
-|`T selectOne(QueryCriteria<T> criteria);`|根据查询构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型|
-|`T selectOne(LambdaQueryCriteria<T> lambdaCriteria);`|根据查询构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(T entity, Page<T> page);`|根据实体类里面非null的属性作为查询条件，执行分页查询，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(QueryCriteria<T> criteria, Page<T> page);`|根据查询构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
-|`Page<T> paginate(LambdaQueryCriteria<T> lambdaCriteria, Page<T> page);`|根据查询构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型|
-|`Long selectCount(QueryCriteria<T> criteria);`|根据查询构造器执行总记录数查询，返回符合条件的总记录数量|
-|`Long selectCount(LambdaQueryCriteria<T> lambdaCriteria);`|根据查询构造器(lambda)执行总记录数查询，返回符合条件的总记录数量|
-|`boolean exists(QueryCriteria<T> criteria);`|根据查询构造器执行查询记录是否存在，返回true或者false|
-|`boolean exists(LambdaQueryCriteria<T> lambdaCriteria);`|根据查询构造器(lambda)执行查询记录是否存在，返回true或者false|
+|方法| 说明                                                       |
+|---|----------------------------------------------------------|
+|`<F> List<F> select(String sql, Class<F> classz, Object... params);` | 根据给定的sql语句和实体类型和参数，查询数据库并返回实体类对象列表                         |
+|`List<T> select(String sql, Object... params);` | 根据给定的sq语句l和参数，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型           |
+|`<F> F selectOne(String sql, Class<F> classz, Object... params);`| 根据给定的sql语句和实体类型和参数，查询数据并返回一个实体类对象                          |
+|`T selectOne(String sql, Object... params);`| 根据给定的sql语句和参数，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型            |
+|`List<Map<String, Object>> selectMap(String sql, Object... params);`| 根据给定的sql语句和参数，查询数据库并返回Map<String, Object>列表                |
+|`Map<String, Object> selectOneMap(String sql, Object... params);`| 根据给定的sql语句和参数，查询数据并返回一个Map<String, Object>对象               |
+|`<T> T selectForObject(String sql, Class<T> clazz, Object... params);`| 根据给定的sql语句和实体类型和参数，查询数据并返回一个值（常用于查count）                   |
+|`Page<F> paginate(String sql, Class<F> clazz, Page<F> page, Object... params);`| 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的Class<F>传入的自定义类型                    |
+|`Page<T> paginate(String sql, Page<T> page, Object... params);`| 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型                       |
+|`T selectById(Object id);`| 根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型                |
+|`T selectByIds(List<ID> ids);`| 根据主键ID值列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型              |
+|`T selectByIds(ID... id);`| 根据主键ID值可变参数列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型          |
+|`List<T> select(T entity);`| 实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型   |
+|`List<T> select(QueryCriteria<T> criteria);`| 根据查询构造器查询，返回多条，类型使用的是xxxDao<T>的类型                        |
+|`List<T> select(LambdaQueryCriteria<T> lambdaCriteria);`| 根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型 |
+|`T selectOne(T entity);`| 实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型    |
+|`T selectOne(QueryCriteria<T> criteria);`| 根据查询构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型                      |
+|`T selectOne(LambdaQueryCriteria<T> lambdaCriteria);`| 根据查询构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型              |
+|`Page<T> paginate(T entity, Page<T> page);`| 根据实体类里面非null的属性作为查询条件，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型 |
+|`Page<T> paginate(QueryCriteria<T> criteria, Page<T> page);`| 根据查询构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型                |
+|`Page<T> paginate(LambdaQueryCriteria<T> lambdaCriteria, Page<T> page);`| 根据查询构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型        |
+|`Long selectCount(QueryCriteria<T> criteria);`| 根据查询构造器执行总记录数查询，返回符合条件的总记录数量                             |
+|`Long selectCount(LambdaQueryCriteria<T> lambdaCriteria);`| 根据查询构造器(lambda)执行总记录数查询，返回符合条件的总记录数量                     |
+|`boolean exists(QueryCriteria<T> criteria);`| 根据查询构造器执行查询记录是否存在，返回true或者false                          |
+|`boolean exists(LambdaQueryCriteria<T> lambdaCriteria);`| 根据查询构造器(lambda)执行查询记录是否存在，返回true或者false                  |
 
 ### 插入操作
 
-|方法|说明|
-|---|---|
-|`int insert(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行插入|
-|`int insert(T entity);`|插入entity里的数据，忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值|
-|`int insert(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值|
-|`Long insertReturnAutoIncrement(T entity);`|插入entity里的数据，将忽略entity里属性值为null的属性，并且返回自增的主键|
-|`Long insertReturnAutoIncrement(T entity, boolean ignoreNulls);`|插入entity里的数据，可选择是否忽略entity里值为null的属性，并且返回自增的主键|
+|方法| 说明                                                                                             |
+|---|------------------------------------------------------------------------------------------------|
+|`int insert(String sql, Object... params);`| 根据提供的sql语句和提供的参数，执行插入                                                                          |
+|`int insert(T entity);`| 插入entity里的数据，忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值      |
+|`int insert(T entity, boolean ignoreNulls);`| 插入entity里的数据，可选择是否忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值 |
+|`Long insertReturnAutoIncrement(T entity);`| 插入entity里的数据，将忽略entity里属性值为null的属性，并且返回自增的主键                                                   |
+|`Long insertReturnAutoIncrement(T entity, boolean ignoreNulls);`| 插入entity里的数据，可选择是否忽略entity里值为null的属性，并且返回自增的主键                                                 |
 
 ### 更新操作
 
 |方法|说明|
 |---|---|
-|`int update(String sql, final Object... params);`|根据提供的SQL语句和提供的参数，执行修改|
+|`int update(String sql, Object... params);`|根据提供的SQL语句和提供的参数，执行修改|
 |`int updateById(T entity);`|根据entity内的主键值作为条件更新数据，默认忽略entity里值为null的属性|
 |`int updateById(T entity, boolean ignoreNulls);`|根据entity内的主键值更新数据，可选择是否忽略entity里值为null的属性|
 |`int update(T entity, UpdateCriteria<T> criteria);`|根据entity里的值和条件构造器，执行修改，默认忽略entity里值为null的属性|
@@ -313,15 +313,32 @@ public class UploadFile implements Serializable {
 
 ### 删除操作
 
-|方法|说明|
-|---|---|
-|`int delete(String sql, final Object... params);` | 根据提供的SQL语句和提供的参数，执行删除 |
-|`int deleteById(ID id);` | 根据主键ID进行删除，类型使用的是xxxDao<T, ID>的类型 |
-|`int deleteByIds(List<ID> ids);` | 根据主键ID列表进行删除，类型使用的是xxxDao<T, ID>的类型 |
-|`int deleteByIds(ID... ids);` | 根据主键ID可变参数列表进行删除，类型使用的是xxxDao<T, ID>的类型 |
-|`int delete(T entity);`| 根据entity里的属性值进行删除，entity里不为null的属性，将作为where参数 |
-|`int delete(UpdateCriteria<T> criteria);`| 根据条件构造器，将作为where参数 |
-|`int delete(LambdaUpdateCriteria<T> criteria);`| 根据条件构造器（lambda），将作为where参数 |
+| 方法                                              |说明|
+|-------------------------------------------------|---|
+| `int delete(String sql, Object... params);`     | 根据提供的SQL语句和提供的参数，执行删除 |
+| `int deleteById(ID id);`                        | 根据主键ID进行删除，类型使用的是xxxDao<T, ID>的类型 |
+| `int deleteByIds(List<ID> ids);`                | 根据主键ID列表进行删除，类型使用的是xxxDao<T, ID>的类型 |
+| `int deleteByIds(ID... ids);`                   | 根据主键ID可变参数列表进行删除，类型使用的是xxxDao<T, ID>的类型 |
+| `int delete(T entity);`                         | 根据entity里的属性值进行删除，entity里不为null的属性，将作为where参数 |
+| `int delete(UpdateCriteria<T> criteria);`       | 根据条件构造器，将作为where参数 |
+| `int delete(LambdaUpdateCriteria<T> criteria);` | 根据条件构造器（lambda），将作为where参数 |
+
+
+### 使用SQL构造器进行操作（`1.8.2`版本新增）
+
+|方法| 说明                                       |
+|---|------------------------------------------|
+|`int execute(SQL sql);` | 根据提供的SQL构造器，执行删除、新增、或更新操作                |
+|`int delete(SQL sql);` | 根据提供的SQL构造器，执行删除操作                       |
+|`int update(SQL sql);` | 根据提供的SQL构造器，执行更新操作                       |
+|`int insert(SQL sql);` | 根据提供的SQL构造器，执行新增操作                       |
+|`<F> List<F> select(String SQL, Class<F> classz);` | 根据给定的SQL构造器和实体类型数，查询数据库并返回实体类对象列表        |
+|`List<T> select(SQL sql)` | 根据给定的SQL构造器，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型 |
+|`Page<T> paginate(SQL sql, Page<T> page);`| 根据给定的SQL构造器，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型 |
+|`Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page);`| 根据给定的SQL构造器，执行分页查询，返回Page对象，类型使用的Class<F>传入的自定义类型 |
+|`T selectOne(SQL sql);`| 根据给定的SQL构造器，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型 |
+|`<F> F selectOne(SQL sql, Class<F> clazz);`| 根据给定的SQL构造器，查询数据并返回一个实体类对象，类型使用的Class<F>传入的自定义类型 |
+
 
 ## 5、条件构造器（Criteria）
 
@@ -575,7 +592,7 @@ public SnowflakeConfigInterface snowflakeConfigInterface() {
 }
 ```
 
-## 9、无实体类操作
+## 9、无Entity实体类操作
 Tiny-Jdbc 额外提供了 JdbcTemplateHelper 工具类，无需实体类映射和继承BaseDao，用于操作无实体类的多表联合查询、分页查询、插入、更新、删除等操作，方便业务的灵活性。
 使用时直接注入即可。
 
@@ -642,7 +659,7 @@ List<TProjectInfo> projectList = projectDao.select("select * from t_project_info
 TProjectInfo project = projectDao.selectOne("select * from t_project_info where id = ? ", 1);
 
 // 查询记录数
-Integer count = projectDao.selectOneColumn("select count(*) from t_project_info order by created_at desc", Integer.class));
+Integer count = projectDao.selectForObject("select count(*) from t_project_info order by created_at desc", Integer.class));
 
 // 分页查询id>100的记录，第一页，每页10个
 Page<TProjectInfo> page = projectDao.paginate("select * from t_project_info order by created_at desc where id > ?",new Page<TProjectInfo>(1,10),100));

@@ -129,21 +129,6 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         return getJdbcTemplate().update(sql, params);
     }
 
-    @Override
-    public int insert(String sql, final Object... params) {
-        return execute(sql, params);
-    }
-
-    @Override
-    public int update(String sql, final Object... params) {
-        return execute(sql, params);
-    }
-
-    @Override
-    public int delete(String sql, final Object... params) {
-        return execute(sql, params);
-    }
-
     // ---------------------------------ISqlSupport（SQL构造器实现）实现开始---------------------------------
 
     @Override

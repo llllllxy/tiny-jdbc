@@ -34,7 +34,9 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param params 要绑定到SQL的参数
      * @return int 受影响的行数
      */
-    int delete(String sql, final Object... params);
+    default int delete(String sql, final Object... params) {
+        return this.execute(sql, params);
+    }
 
     /**
      * 使用提供的SQL语句和提供的参数，执行改
@@ -43,7 +45,9 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param params 要绑定到SQL的参数
      * @return int 受影响的行数
      */
-    int update(String sql, final Object... params);
+    default int update(String sql, final Object... params) {
+        return this.execute(sql, params);
+    }
 
     /**
      * 使用提供的SQL语句和提供的参数，执行增
@@ -52,7 +56,9 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param params 要绑定到SQL的参数
      * @return int 受影响的行数
      */
-    int insert(String sql, final Object... params);
+    default int insert(String sql, final Object... params) {
+        return this.execute(sql, params);
+    }
 
 
     /**
@@ -159,6 +165,18 @@ public interface ISqlSupport<T, ID extends Serializable> {
     <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params);
 
     int execute(SQL sql);
+
+    default int delete(SQL sql) {
+        return this.execute(sql);
+    }
+
+    default int update(SQL sql) {
+        return this.execute(sql);
+    }
+
+    default int insert(SQL sql) {
+        return this.execute(sql);
+    }
 
     List<T> select(SQL sql);
 
