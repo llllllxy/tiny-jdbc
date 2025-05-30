@@ -67,12 +67,12 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
 
     @Override
     public List<T> select(String sql, Object... params) {
-        return getJdbcTemplate().query(sql, rowMapper);
+        return getJdbcTemplate().query(sql, rowMapper, params);
     }
 
     @Override
     public <F> List<F> select(String sql, Class<F> clazz, Object... params) {
-        return getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz));
+        return getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz), params);
     }
 
     @Override
