@@ -17,7 +17,7 @@ public class UpdateCriteria<T> extends AbstractCriteria<T, UpdateCriteria<T>> {
 
     public final <R> UpdateCriteria<T> set(String field, R value) {
         updateFields.add(field + " = ?");
-        parameters.add(value);
+        updateParameters.add(value);
         return this;
     }
 

@@ -18,7 +18,7 @@ public class LambdaUpdateCriteria<T> extends AbstractLambdaCriteria<T, LambdaUpd
     public <R> LambdaUpdateCriteria<T> set(TypeFunction<T, ?> field, R value) {
         String columnName = getColumnName(field);
         updateFields.add(columnName + " = ?");
-        parameters.add(value);
+        updateParameters.add(value);
         return this;
     }
 

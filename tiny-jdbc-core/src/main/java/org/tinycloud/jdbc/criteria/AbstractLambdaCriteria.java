@@ -31,7 +31,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " < " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -44,7 +44,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " < " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -57,7 +57,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " <= " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -70,7 +70,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " <= " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -83,7 +83,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " > " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -96,7 +96,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " > " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -109,7 +109,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " >= " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -122,7 +122,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " >= " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -135,7 +135,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " = " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -148,7 +148,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " = " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -161,7 +161,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " <> " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -174,7 +174,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " <> " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -238,7 +238,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
             condition.append(")");
             conditions.add(condition.toString());
-            parameters.addAll(values);
+            whereParameters.addAll(values);
         });
     }
 
@@ -254,7 +254,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
             condition.append(")");
             conditions.add(condition.toString());
-            parameters.addAll(values);
+            whereParameters.addAll(values);
         });
     }
 
@@ -270,7 +270,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
             condition.append(")");
             conditions.add(condition.toString());
-            parameters.addAll(values);
+            whereParameters.addAll(values);
         });
     }
 
@@ -286,7 +286,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
             condition.append(")");
             conditions.add(condition.toString());
-            parameters.addAll(values);
+            whereParameters.addAll(values);
         });
     }
 
@@ -299,7 +299,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value + "%");
+            whereParameters.add("%" + value + "%");
         });
     }
 
@@ -312,7 +312,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value + "%");
+            whereParameters.add("%" + value + "%");
         });
     }
 
@@ -325,7 +325,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value + "%");
+            whereParameters.add("%" + value + "%");
         });
     }
 
@@ -338,7 +338,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value + "%");
+            whereParameters.add("%" + value + "%");
         });
     }
 
@@ -351,7 +351,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value);
+            whereParameters.add("%" + value);
         });
     }
 
@@ -364,7 +364,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value);
+            whereParameters.add("%" + value);
         });
     }
 
@@ -377,7 +377,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value);
+            whereParameters.add("%" + value);
         });
     }
 
@@ -390,7 +390,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value);
+            whereParameters.add("%" + value);
         });
     }
 
@@ -403,7 +403,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " LIKE ?";
             conditions.add(condition);
-            parameters.add(value + "%");
+            whereParameters.add(value + "%");
         });
     }
 
@@ -416,7 +416,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " LIKE ?";
             conditions.add(condition);
-            parameters.add(value + "%");
+            whereParameters.add(value + "%");
         });
     }
 
@@ -429,7 +429,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + columnName + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add(value + "%");
+            whereParameters.add(value + "%");
         });
     }
 
@@ -442,7 +442,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + columnName + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add(value + "%");
+            whereParameters.add(value + "%");
         });
     }
 
@@ -455,8 +455,8 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + "(" + columnName + " BETWEEN " + "?" + " AND " + "?" + ")";
             conditions.add(condition);
-            parameters.add(start);
-            parameters.add(end);
+            whereParameters.add(start);
+            whereParameters.add(end);
         });
     }
 
@@ -469,8 +469,8 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + "(" + columnName + " BETWEEN " + "?" + " AND " + "?" + ")";
             conditions.add(condition);
-            parameters.add(start);
-            parameters.add(end);
+            whereParameters.add(start);
+            whereParameters.add(end);
         });
     }
 
@@ -483,8 +483,8 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " AND " + "(" + columnName + " NOT BETWEEN " + "?" + " AND " + "?" + ")";
             conditions.add(condition);
-            parameters.add(start);
-            parameters.add(end);
+            whereParameters.add(start);
+            whereParameters.add(end);
         });
     }
 
@@ -497,8 +497,8 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             String columnName = getColumnName(field);
             String condition = " OR " + "(" + columnName + " NOT BETWEEN " + "?" + " AND " + "?" + ")";
             conditions.add(condition);
-            parameters.add(start);
-            parameters.add(end);
+            whereParameters.add(start);
+            whereParameters.add(end);
         });
     }
 
@@ -512,7 +512,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             consumer.accept(instance);
             String condition = " AND " + instance.children();
             conditions.add(condition);
-            parameters.addAll(instance.parameters);
+            whereParameters.addAll(instance.whereParameters);
         });
     }
 
@@ -526,7 +526,7 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             consumer.accept(instance);
             String condition = " OR " + instance.children();
             conditions.add(condition);
-            parameters.addAll(instance.parameters);
+            whereParameters.addAll(instance.whereParameters);
         });
     }
 

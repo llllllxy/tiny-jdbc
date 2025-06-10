@@ -28,7 +28,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " < " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -40,7 +40,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " < " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -52,7 +52,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " <= " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -64,7 +64,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " <= " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -76,7 +76,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " > " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -88,7 +88,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " > " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -100,7 +100,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " >= " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -112,7 +112,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " >= " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -124,7 +124,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " = " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -136,7 +136,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " = " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -148,7 +148,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " <> " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -160,7 +160,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " <> " + "?";
             conditions.add(condition);
-            parameters.add(value);
+            whereParameters.add(value);
         });
     }
 
@@ -219,7 +219,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
             condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
             condition.append(")");
             conditions.add(condition.toString());
-            parameters.addAll(values);
+            whereParameters.addAll(values);
         });
     }
 
@@ -234,7 +234,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
             condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
             condition.append(")");
             conditions.add(condition.toString());
-            parameters.addAll(values);
+            whereParameters.addAll(values);
         });
     }
 
@@ -249,7 +249,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
             condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
             condition.append(")");
             conditions.add(condition.toString());
-            parameters.addAll(values);
+            whereParameters.addAll(values);
         });
     }
 
@@ -264,7 +264,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
             condition.append(String.join(", ", Collections.nCopies(values.size(), "?")));
             condition.append(")");
             conditions.add(condition.toString());
-            parameters.addAll(values);
+            whereParameters.addAll(values);
         });
     }
 
@@ -276,7 +276,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value + "%");
+            whereParameters.add("%" + value + "%");
         });
     }
 
@@ -288,7 +288,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value + "%");
+            whereParameters.add("%" + value + "%");
         });
     }
 
@@ -300,7 +300,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value + "%");
+            whereParameters.add("%" + value + "%");
         });
     }
 
@@ -312,7 +312,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value + "%");
+            whereParameters.add("%" + value + "%");
         });
     }
 
@@ -325,7 +325,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value);
+            whereParameters.add("%" + value);
         });
     }
 
@@ -337,7 +337,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value);
+            whereParameters.add("%" + value);
         });
     }
 
@@ -349,7 +349,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value);
+            whereParameters.add("%" + value);
         });
     }
 
@@ -361,7 +361,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add("%" + value);
+            whereParameters.add("%" + value);
         });
     }
 
@@ -373,7 +373,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " LIKE ?";
             conditions.add(condition);
-            parameters.add(value + "%");
+            whereParameters.add(value + "%");
         });
     }
 
@@ -385,7 +385,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " LIKE ?";
             conditions.add(condition);
-            parameters.add(value + "%");
+            whereParameters.add(value + "%");
         });
     }
 
@@ -397,7 +397,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + field + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add(value + "%");
+            whereParameters.add(value + "%");
         });
     }
 
@@ -409,7 +409,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + field + " NOT LIKE ?";
             conditions.add(condition);
-            parameters.add(value + "%");
+            whereParameters.add(value + "%");
         });
     }
 
@@ -422,8 +422,8 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + "(" + field + " BETWEEN " + "?" + " AND " + "?" + ")";
             conditions.add(condition);
-            parameters.add(start);
-            parameters.add(end);
+            whereParameters.add(start);
+            whereParameters.add(end);
         });
     }
 
@@ -435,8 +435,8 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + "(" + field + " BETWEEN " + "?" + " AND " + "?" + ")";
             conditions.add(condition);
-            parameters.add(start);
-            parameters.add(end);
+            whereParameters.add(start);
+            whereParameters.add(end);
         });
     }
 
@@ -448,8 +448,8 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " AND " + "(" + field + " NOT BETWEEN " + "?" + " AND " + "?" + ")";
             conditions.add(condition);
-            parameters.add(start);
-            parameters.add(end);
+            whereParameters.add(start);
+            whereParameters.add(end);
         });
     }
 
@@ -461,8 +461,8 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return whetherDo(whether, () -> {
             String condition = " OR " + "(" + field + " NOT BETWEEN " + "?" + " AND " + "?" + ")";
             conditions.add(condition);
-            parameters.add(start);
-            parameters.add(end);
+            whereParameters.add(start);
+            whereParameters.add(end);
         });
     }
 
@@ -476,7 +476,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
             consumer.accept(instance);
             String condition = " AND " + instance.children();
             conditions.add(condition);
-            parameters.addAll(instance.parameters);
+            whereParameters.addAll(instance.whereParameters);
         });
     }
 
@@ -490,7 +490,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
             consumer.accept(instance);
             String condition = " OR " + instance.children();
             conditions.add(condition);
-            parameters.addAll(instance.parameters);
+            whereParameters.addAll(instance.whereParameters);
         });
     }
 

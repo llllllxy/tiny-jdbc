@@ -5,6 +5,8 @@ import org.tinycloud.jdbc.exception.TinyJdbcException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 条件构造器抽象类，抽象了一些公共的方法
@@ -32,7 +34,12 @@ public abstract class Criteria<T> {
     /**
      * 查询条件-值
      */
-    protected final List<Object> parameters;
+    protected final List<Object> whereParameters;
+
+    /**
+     * 更新set-值
+     */
+    protected final List<Object> updateParameters;
 
     /**
      * 排序的条件
@@ -52,8 +59,9 @@ public abstract class Criteria<T> {
         this.selectFields = new ArrayList<>();
         this.conditions = new ArrayList<>();
         this.orderBys = new ArrayList<>();
-        this.parameters = new ArrayList<>();
-        this.lastSqls = new ArrayList<>();;
+        this.whereParameters = new ArrayList<>();
+        this.updateParameters = new ArrayList<>();
+        this.lastSqls = new ArrayList<>();
     }
 
     /**
@@ -62,7 +70,7 @@ public abstract class Criteria<T> {
      * @return 参数列表
      */
     public List<Object> getParameters() {
-        return this.parameters;
+        return Stream.concat(this.updateParameters.stream(), this.whereParameters.stream()).collect(Collectors.toList());
     }
 
     /**
