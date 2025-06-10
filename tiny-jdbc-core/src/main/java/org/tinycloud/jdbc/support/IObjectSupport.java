@@ -242,6 +242,16 @@ public interface IObjectSupport<T, ID extends Serializable> {
      */
     List<T> select(QueryCriteria<T> criteria);
 
+
+    /**
+     * 查询给定的实例，返回全部实例列表
+     *
+     * @return List<T> 实例列表
+     */
+    default List<T> selectAll() {
+        return this.select(new QueryCriteria<T>());
+    }
+
     /**
      * 查询给定的实例，返回实例列表
      *
