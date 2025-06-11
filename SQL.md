@@ -55,18 +55,24 @@ sql.delete()
 ### 2.1 基本条件
 ```java
 .where(i -> i
-    .eq("name", "张三")      // 等于
-    .ne("status", "deleted") // 不等于
-    .gt("age", 18)          // 大于
-    .lt("age", 60)          // 小于
-    .ge("score", 90)        // 大于等于
-    .le("score", 100)       // 小于等于
-    .like("title", "Java")  // 模糊匹配 %Java%
-    .leftLike("code", "P")  // 左匹配 P%
-    .rightLike("email", "@") // 右匹配 %@
-    .in("category", Arrays.asList("book", "electronics")) // IN条件
-    .isNull("deleted_at")   // IS NULL
+    .eq("name", "张三")      // =
+    .notEq("status", "deleted") // !=
+    .gt("age", 18)          // >
+    .lt("age", 60)          // <
+    .ge("score", 90)        // >=
+    .le("score", 100)       // <=
+    .like("title", "Java")  // LIKE '%Java%'
+    .notLike("title", "Java")  // NOT LIKE '%Java%'
+    .leftLike("code", "P")  // 左匹配（后缀匹配） LIKE '%P'
+    .notLeftLike("code", "P") // 左匹配（后缀匹配） NOT LIKE '%P'
+    .rightLike("email", "@") // 右匹配（前导匹配）LIKE '@%'
+    .notRightLike("email", "@") // 右匹配（前导匹配）NOT LIKE '@%'
+    .in("category", Arrays.asList("book", "electronics")) // IN ('book', 'electronics')
+    .notIn("category", Arrays.asList("book", "electronics")) // NOT IN ('book', 'electronics')
+    .isNull("deleted_at")   // IS NULL 
     .isNotNull("created_at") // IS NOT NULL
+    .betweenAnd("create_time", "2023-01-01", "2023-02-01") // BETWEEN '2023-01-01' AND '2023-02-01'
+    .notBetweenAnd("create_time", "2023-01-01", "2023-02-01") // NOT BETWEEN '2023-01-01' AND '2023-02-01'
 )
 ```
 
@@ -79,9 +85,8 @@ sql.delete()
 )
 
 // 显式AND连接
-.where(i -> i
-    .eq("status", "active")
-    .and().eq("type", "vip")
+.where(i -> i.and().eq("status", "active")
+             .and().eq("type", "vip")
 )
 
 // OR条件
@@ -197,25 +202,84 @@ System.out.println("Parameters: " + parameters);
 ```
 
 ## 6. 完整示例
-### 6.1 复杂 SELECT 查询
-```java
+### 6.1 SELECT 语句
 
+```java
+// 示例：简单条件
+SQL sql1 = SQL.table("user")
+        .select("id", "name")
+        .where(i -> i.leftLike("name", "张")
+                .ge("age", 20)
+                .in("status", Arrays.asList("ACTIVE", "PENDING"))
+                .betweenAnd("create_time", "2023-01-01", "2023-02-01"));
+// SQL: SELECT id, name FROM user WHERE name LIKE ? AND age >= ? AND status IN (?, ?) AND create_time BETWEEN ? AND ?
+// Parameters: [%张, 20, ACTIVE, PENDING, 2023-01-01, 2023-02-01]
 ```
 
 ```java
-
+// 示例： 简单条件(使用OR)
+SQL selectSql7 = SQL.table(User.class)
+                .select(User::getId, User::getName)
+                .where(i -> i.eq(User::getAge, 25)
+                        .or().eq(User::getAge, 30));
+                
+// SQL: SELECT id, username FROM users WHERE age = ? OR age = ? 
+// Parameters: [25, 30]
 ```
 
 ```java
-
+// 示例：嵌套 AND/OR 条件
+SQL sql1 = SQL.table("user")
+        .select("id", "birthday")
+        .where(i -> i.and(j -> j.eq("name", "李白").eq("status", "alive"))
+                .or(j -> j.eq("name", "杜甫").eq("status", "alive")))
+        .orderBy("updated_at").desc()
+        .orderBy("id");
+// SQL: SELECT id, birthday FROM user WHERE (name = ? AND status = ?) OR (name = ? AND status = ?) ORDER BY updated_at DESC, id ASC
+// Parameters: [李白, alive, 杜甫, alive]
 ```
 
 ```java
+// 示例：多层嵌套条件
+SQL sql2 = SQL.table("article").select()
+        .where(i -> i.and(j -> j.eq("category", "java").like("title", "spring"))
+                .or(j -> j.eq("author", "张三").and(k -> k.lt("views", 1000).ge("comments", 5))))
+        .limit(20);
 
+// SQL: SELECT * FROM article WHERE (category = ? AND title LIKE ?) OR (author = ? AND (views < ? AND comments >= ?)) LIMIT 20
+// Parameters: [java, %spring%, 张三, 1000, 5]
 ```
 
 ```java
+// 示例：混合条件
+        SQL sql3 = SQL.table("product")
+                .select("id", "name", "price")
+                .where(i -> i.eq("status", "active")
+                        .and(j -> j.gt("price", 100).or(k -> k.like("name", "pro")))
+                        .and(j -> j.in("category", Arrays.asList("electronics", "books"))))
+                .orderBy("price").desc();
+// SELECT id, name, price FROM product WHERE status = ? AND (price > ? OR (name LIKE ?)) AND (category IN (?, ?)) ORDER BY price DESC
+// Parameters: [active, 100, %pro%, electronics, books]
+```
 
+```java
+// 示例：复杂 OR 分组
+        SQL sql4 = SQL.table("order").select("id", "order_no", "amount", "create_time")
+                .where(i -> i.or(j -> j.eq("status", "paid").eq("amount", 1000))
+                        .or(j -> j.eq("status", "pending").gt("amount", 5000))
+                        .or(j -> j.eq("status", "cancelled").le("create_time", "2023-01-01")))
+                .orderBy("create_time").desc();
+// SQL: SELECT id, order_no, amount, create_time FROM order WHERE (status = ? AND amount = ?) OR (status = ? AND amount > ?) OR (status = ? AND create_time <= ?) ORDER BY create_time DESC
+// Parameters: [paid, 1000, pending, 5000, cancelled, 2023-01-01]
+```
+
+```java
+// 示例：复杂嵌套 with like
+SQL sql6 = SQL.table("order").select("id", "order_no", "amount", "create_time")
+        .where(i -> i.and(j -> j.eq("status", "paid").leftLike("order_no", "ORD2023"))
+                .or(j -> j.rightLike("customer_name", "先生").gt("amount", 1000)));
+// SELECT id, order_no, amount, create_time FROM order WHERE (status = ? AND order_no LIKE ?) OR (customer_name LIKE ? AND amount > ?)
+// [paid, %ORD2023, 先生%, 1000]
 ```
 
 ```java
@@ -245,17 +309,6 @@ SQL selectSql = SQL.table("user")
 
 ```java
 // 示例： 使用group()方法添加括号
-SQL selectSql7 = SQL.table(User.class)
-                .select(User::getId, User::getName)
-                .where(i -> i.eq(User::getAge, 25)
-                        .or().eq(User::getAge, 30));
-                
-// SQL: SELECT id, username FROM users WHERE age = ? OR age = ? 
-// Parameters: [25, 30]
-```
-
-```java
-// 示例： 使用group()方法添加括号
 SQL selectSql8 = SQL.table("user")
         .select("*")
         .where(i -> i.group(j -> j.eq("age", 25).or().eq("age", 30))
@@ -263,7 +316,6 @@ SQL selectSql8 = SQL.table("user")
 // SQL: SELECT * FROM user WHERE (age = ? OR age = ?) AND name LIKE ?
 // Parameters: [25, 30, %张%]
 ```
-
 
 ```java
 // 示例：嵌套括号
@@ -275,7 +327,6 @@ SQL complexSql9 = SQL.table("user")
 // SQL: SELECT * FROM user WHERE (status = ? AND (age > ? AND age < ?)) OR role = ?
 // Parameters: [ACTIVE, 18, 60, ADMIN]
 ```
-
 
 ```java
 // 示例：使用表达式配合GROUP BY、聚合函数、AS使用
@@ -293,7 +344,6 @@ SQL complexSql10 = SQL.table("user")
 // SQL: SELECT id, birthday, email, MAX(age) AS maxAge, COUNT(*) AS total FROM user WHERE status = ? GROUP BY name, status ORDER BY maxAge DESC
 // Parameters: [active]
 ```
-
 
 ```java
 // 示例：使用GROUP BY 和 HAVING子句
@@ -331,9 +381,6 @@ SQL sql = SQL.table("user")
 // Parameters: [active, 25]
 ```
 
-```java
-
-```
 
 ### 6.2 INSERT 语句
 ```java

@@ -133,46 +133,46 @@ public class ConditionGroup {
     }
 
     public ConditionGroup leftLike(String column, String value) {
-        elements.add(new SimpleCondition(column, "LIKE", value + "%", defaultJoinType));
+        elements.add(new SimpleCondition(column, "LIKE", "%" + value, defaultJoinType));
         return this;
     }
 
     public <T, R> ConditionGroup leftLike(TypeFunction<T, R> field, String value) {
         String column = getColumnName(field);
-        elements.add(new SimpleCondition(column, "LIKE", value + "%", defaultJoinType));
+        elements.add(new SimpleCondition(column, "LIKE", "%" + value, defaultJoinType));
         return this;
     }
 
     public ConditionGroup notLeftLike(String column, String value) {
-        elements.add(new SimpleCondition(column, "NOT LIKE", value + "%", defaultJoinType));
+        elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value, defaultJoinType));
         return this;
     }
 
     public <T, R> ConditionGroup notLeftLike(TypeFunction<T, R> field, String value) {
         String column = getColumnName(field);
-        elements.add(new SimpleCondition(column, "NOT LIKE", value + "%", defaultJoinType));
+        elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value, defaultJoinType));
         return this;
     }
 
     public ConditionGroup rightLike(String column, String value) {
-        elements.add(new SimpleCondition(column, "LIKE", "%" + value, defaultJoinType));
+        elements.add(new SimpleCondition(column, "LIKE", value + "%", defaultJoinType));
         return this;
     }
 
     public <T, R> ConditionGroup rightLike(TypeFunction<T, R> field, String value) {
         String column = getColumnName(field);
-        elements.add(new SimpleCondition(column, "LIKE", "%" + value, defaultJoinType));
+        elements.add(new SimpleCondition(column, "LIKE", value + "%", defaultJoinType));
         return this;
     }
 
     public ConditionGroup notRightLike(String column, String value) {
-        elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value, defaultJoinType));
+        elements.add(new SimpleCondition(column, "NOT LIKE", value + "%", defaultJoinType));
         return this;
     }
 
     public <T, R> ConditionGroup notRightLike(TypeFunction<T, R> field, String value) {
         String column = getColumnName(field);
-        elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value, defaultJoinType));
+        elements.add(new SimpleCondition(column, "NOT LIKE", value + "%", defaultJoinType));
         return this;
     }
 

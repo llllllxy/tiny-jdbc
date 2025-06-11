@@ -1,6 +1,5 @@
 package org.tinycloud.jdbc.sql;
 
-import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.criteria.TypeFunction;
 import org.tinycloud.jdbc.sql.enums.ClauseState;
@@ -365,103 +364,6 @@ public class SQL {
 
         return sql.toString();
     }
-
-
-    // 测试用例
-    public static void main(String[] args) {
-        // 测试用例 1：嵌套 AND/OR 条件
-        SQL sql1 = SQL.table("user")
-                .select("id", "birthday")
-                .where(i -> i.and(j -> j.eq("name", "李白").eq("status", "alive"))
-                        .or(j -> j.eq("name", "杜甫").eq("status", "alive")))
-                .orderBy("updated_at").desc()
-                .orderBy("id");
-
-        printTestResult(sql1);
-
-        // 测试用例 2：多层嵌套条件
-        SQL sql2 = SQL.table("article").select()
-                .where(i -> i.and(j -> j.eq("category", "java").like("title", "spring"))
-                        .or(j -> j.eq("author", "张三").and(k -> k.lt("views", 1000).ge("comments", 5))))
-                .limit(20);
-
-        printTestResult(sql2);
-
-        // 测试用例 3：混合条件
-        SQL sql3 = SQL.table("product")
-                .select("id", "name", "price")
-                .where(i -> i.eq("status", "active")
-                        .and(j -> j.gt("price", 100).or(k -> k.like("name", "pro")))
-                        .and(j -> j.in("category", Arrays.asList("electronics", "books"))))
-                .orderBy("price").desc()
-                .limit(10).offset(5);
-
-        printTestResult(sql3);
-
-        // 测试用例 4：复杂 OR 分组
-        SQL sql4 = SQL.table("order").select("id", "order_no", "amount", "create_time")
-                .where(i -> i.or(j -> j.eq("status", "paid").eq("amount", 1000))
-                        .or(j -> j.eq("status", "pending").gt("amount", 5000))
-                        .or(j -> j.eq("status", "cancelled").le("create_time", "2023-01-01")))
-                .orderBy("create_time").desc();
-
-        printTestResult(sql4);
-
-
-        // 测试用例 3：混合 like
-        SQL sql5 = SQL.table("article").select("title", "spring", "books")
-                .where(i -> i.like("title", "spring")
-                        .and().leftLike("author", "张")
-                        .and().rightLike("category", "java"));
-
-        printTestResult(sql5);
-
-        // 测试用例 4：复杂嵌套 with like
-        SQL sql6 = SQL.table("order")//.select("id", "order_no", "amount", "create_time")
-                .where(i -> i.and(j -> j.eq("status", "paid").leftLike("order_no", "ORD2023"))
-                        .or(j -> j.rightLike("customer_name", "先生").gt("amount", 1000)));
-
-        printTestResult(sql6);
-    }
-
-    private static void printTestResult(SQL sql) {
-        try {
-            System.out.println("SQL: " + sql.toSql());
-            System.out.println("Parameters: " + sql.getParameters());
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-        System.out.println("------------------------");
-    }
 }
 
 
-// 示例实体类
-@Table("users")
-class User {
-    private Long id;
-
-    @Column("username")
-    private String name;
-
-    private Integer age;
-
-    private String email;
-
-    // getters and setters
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public Integer getAge() {
-        return age;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-}
