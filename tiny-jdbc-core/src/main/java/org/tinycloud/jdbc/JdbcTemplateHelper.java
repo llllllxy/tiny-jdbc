@@ -10,6 +10,7 @@ import org.tinycloud.jdbc.page.PageHandleResult;
 import org.tinycloud.jdbc.sql.SQL;
 import org.tinycloud.jdbc.util.DataAccessUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -64,11 +65,15 @@ public class JdbcTemplateHelper {
     public <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params) {
         PageCheck.check(page);
         PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
-        // 查询数据列表
-        List<F> list = getJdbcTemplate().query(handleResult.getPageSql(), new BeanPropertyRowMapper<>(clazz), params);
         // 查询总共数量
         Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, params);
-        page.setRecords(list);
+        List<F> records;
+        if (count != null && count > 0L) {
+            records = getJdbcTemplate().query(handleResult.getPageSql(), new BeanPropertyRowMapper<>(clazz), params);
+        } else {
+            records = new ArrayList<>();
+        }
+        page.setRecords(records);
         page.setTotal(count);
         return page;
     }
@@ -76,11 +81,15 @@ public class JdbcTemplateHelper {
     public Page<Map<String, Object>> paginateMap(String sql, Page<Map<String, Object>> page, Object... params) {
         PageCheck.check(page);
         PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
-        // 查询数据列表
-        List<Map<String, Object>> list = getJdbcTemplate().queryForList(handleResult.getPageSql(), params);
         // 查询总共数量
         Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, params);
-        page.setRecords(list);
+        List<Map<String, Object>> records;
+        if (count != null && count > 0L) {
+            records = getJdbcTemplate().queryForList(handleResult.getPageSql(), params);
+        } else {
+            records = new ArrayList<>();
+        }
+        page.setRecords(records);
         page.setTotal(count);
         return page;
     }

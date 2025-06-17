@@ -89,11 +89,15 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     public Page<T> paginate(String sql, Page<T> page, final Object... params) {
         PageCheck.check(page);
         PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
-        // 查询数据列表
-        List<T> list = getJdbcTemplate().query(handleResult.getPageSql(), rowMapper, params);
         // 查询总共数量
         Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, params);
-        page.setRecords(list);
+        List<T> records;
+        if (count != null && count > 0L) {
+            records = getJdbcTemplate().query(handleResult.getPageSql(), rowMapper, params);
+        } else {
+            records = new ArrayList<>();
+        }
+        page.setRecords(records);
         page.setTotal(count);
         return page;
     }
@@ -102,11 +106,15 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     public <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params) {
         PageCheck.check(page);
         PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
-        // 查询数据列表
-        List<F> list = getJdbcTemplate().query(handleResult.getPageSql(), new BeanPropertyRowMapper<>(clazz), params);
         // 查询总共数量
         Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, params);
-        page.setRecords(list);
+        List<F> records;
+        if (count != null && count > 0L) {
+            records = getJdbcTemplate().query(handleResult.getPageSql(), new BeanPropertyRowMapper<>(clazz), params);
+        } else {
+            records = new ArrayList<>();
+        }
+        page.setRecords(records);
         page.setTotal(count);
         return page;
     }
@@ -115,11 +123,15 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     public Page<Map<String, Object>> paginateMap(String sql, Page<Map<String, Object>> page, Object... params) {
         PageCheck.check(page);
         PageHandleResult handleResult = getPageHandle().handle(sql, page.getPageNum(), page.getPageSize());
-        // 查询数据列表
-        List<Map<String, Object>> list = getJdbcTemplate().queryForList(handleResult.getPageSql(), params);
         // 查询总共数量
         Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, params);
-        page.setRecords(list);
+        List<Map<String, Object>> records;
+        if (count != null && count > 0L) {
+            records = getJdbcTemplate().queryForList(handleResult.getPageSql(), params);
+        } else {
+            records = new ArrayList<>();
+        }
+        page.setRecords(records);
         page.setTotal(count);
         return page;
     }
@@ -213,7 +225,6 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (entity == null) {
             throw new TinyJdbcException("paginate entity cannot be null");
         }
-        PageCheck.check(page);
         SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
         return paginate(sqlProvider.getSql(), page, sqlProvider.getParameters().toArray());
     }
@@ -223,7 +234,6 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             throw new TinyJdbcException("paginate criteria cannot be null");
         }
-        PageCheck.check(page);
         SqlProvider sqlProvider = SqlGenerator.selectCriteriaSql(criteria, entityClass);
         return paginate(sqlProvider.getSql(), page, sqlProvider.getParameters().toArray());
     }
@@ -233,7 +243,6 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (lambdaCriteria == null) {
             throw new TinyJdbcException("paginate lambdaCriteria cannot be null");
         }
-        PageCheck.check(page);
         SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
         return paginate(sqlProvider.getSql(), page, sqlProvider.getParameters().toArray());
     }
