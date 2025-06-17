@@ -23,17 +23,29 @@ public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
     }
 
     public final QueryCriteria<T> orderBy(String field, boolean isDesc) {
-        String orderByString = field;
-        if (isDesc) {
-            orderByString += " DESC";
+        return orderBy(true, field, isDesc);
+    }
+
+    public final QueryCriteria<T> orderBy(boolean whether, String field, boolean isDesc) {
+        if (whether) {
+            String orderByString = field;
+            if (isDesc) {
+                orderByString += " DESC";
+            }
+            orderBys.add(orderByString);
         }
-        orderBys.add(orderByString);
         return this;
     }
 
     public final QueryCriteria<T> orderBy(String field) {
-        String orderByString = field;
-        orderBys.add(orderByString);
+        return orderBy(true, field);
+    }
+
+    public final QueryCriteria<T> orderBy(boolean whether, String field) {
+        if (whether) {
+            String orderByString = field;
+            orderBys.add(orderByString);
+        }
         return this;
     }
 

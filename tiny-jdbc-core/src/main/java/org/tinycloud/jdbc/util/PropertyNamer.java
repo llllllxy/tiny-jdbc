@@ -18,6 +18,20 @@ public final class PropertyNamer {
     }
 
     /**
+     * 将属性名转换为对应的方法名
+     *
+     * @param prefix 前缀（如 "get", "set"）
+     * @param prop   属性名
+     * @return 方法名
+     */
+    public static String propertyToMethod(String prefix, String prop) {
+        if (prop == null || prop.isEmpty()) {
+            return "";
+        }
+        return prefix + prop.substring(0, 1).toUpperCase() + prop.substring(1);
+    }
+
+    /**
      * methodName 转 fieldName
      *
      * @param name methodName
