@@ -41,15 +41,19 @@ public class LambdaQueryCriteria<T> extends AbstractLambdaCriteria<T, LambdaQuer
     }
 
     public LambdaQueryCriteria<T> orderBy(TypeFunction<T, ?> field) {
-        return orderBy(true, field);
+        return orderBy(true, field, false);
     }
 
     public LambdaQueryCriteria<T> orderBy(boolean whether, TypeFunction<T, ?> field) {
-        if (whether) {
-            String columnName = getColumnName(field);
-            orderBys.add(columnName);
-        }
-        return this;
+        return orderBy(whether, field, false);
+    }
+
+    public LambdaQueryCriteria<T> orderByDesc(TypeFunction<T, ?> field) {
+        return orderBy(true, field, true);
+    }
+
+    public LambdaQueryCriteria<T> orderByDesc(boolean whether, TypeFunction<T, ?> field) {
+        return orderBy(whether, field, true);
     }
 
     public final LambdaQueryCriteria<T> last(String lastSql) {

@@ -38,15 +38,19 @@ public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
     }
 
     public final QueryCriteria<T> orderBy(String field) {
-        return orderBy(true, field);
+        return orderBy(true, field, false);
     }
 
     public final QueryCriteria<T> orderBy(boolean whether, String field) {
-        if (whether) {
-            String orderByString = field;
-            orderBys.add(orderByString);
-        }
-        return this;
+        return orderBy(whether, field, false);
+    }
+
+    public final QueryCriteria<T> orderByDesc(String field) {
+        return orderBy(true, field, true);
+    }
+
+    public final QueryCriteria<T> orderByDesc(boolean whether, String field) {
+        return orderBy(whether, field, true);
     }
 
     public final QueryCriteria<T> last(String lastSql) {
