@@ -88,6 +88,16 @@ public enum DbType {
      */
     GBASE8S_PG("gbase8s-pg", "南大通用数据库 GBase 8s兼容pg"),
     /**
+     * GBase8s
+     */
+    @Deprecated
+    GBASE_INFORMIX("gbase 8s", "南大通用数据库 GBase 8s"),
+    /**
+     * gbasedbt
+     */
+    @Deprecated
+    GBASEDBT("gbasedbt", "南大通用数据库"),
+    /**
      * GBase8c
      */
     GBASE_8C("gbase-8c", "南大通用数据库 GBase 8c"),
@@ -188,6 +198,26 @@ public enum DbType {
      */
     PRESTO("Presto", "Presto数据库"),
     /**
+     * goldendb
+     */
+    GOLDENDB("goldendb", "GoldenDB数据库"),
+    /**
+     * yasdb
+     */
+    YASDB("yasdb", "崖山数据库"),
+    /**
+     * vastbase
+     */
+    VASTBASE("vastbase", "Vastbase数据库"),
+    /**
+     * duckdb
+     */
+    DUCKDB("duckdb", "duckdb数据库"),
+    /**
+     * hive2
+     */
+    HIVE2("hive2", "Hadoop数据仓库"),
+    /**
      * UNKNOWN DB
      */
     OTHER("other", "其他数据库");
@@ -236,13 +266,14 @@ public enum DbType {
                 || this == DbType.GBASE
                 || this == DbType.OSCAR
                 || this == DbType.XUGU
-                || this == DbType.DERBY
                 || this == DbType.CLICK_HOUSE
                 || this == DbType.OCEAN_BASE
                 || this == DbType.CUBRID
                 || this == DbType.GOLDILOCKS
                 || this == DbType.CSIIDB
-                || this == DbType.SUNDB;
+                || this == DbType.SUNDB
+                || this == DbType.GOLDENDB
+                || this == DbType.YASDB;
     }
 
     public boolean oracleFamilyType() {
@@ -254,11 +285,14 @@ public enum DbType {
     public boolean oracle12cFamilyType() {
         return this == DbType.ORACLE_12C
                 || this == DbType.FIREBIRD
-                || this == DbType.SQLSERVER;
+                || this == DbType.SQLSERVER
+                || this == DbType.DERBY;
     }
 
     public boolean gBase8sFamilyType() {
         return this == DbType.GBASE_8S
+                || this == DbType.GBASEDBT
+                || this == DbType.GBASE_INFORMIX
                 || this == DbType.SINODB;
     }
 
@@ -280,6 +314,8 @@ public enum DbType {
                 || this == DbType.UXDB
                 || this == DbType.GBASE8S_PG
                 || this == DbType.GREENPLUM
-                || this == DbType.GBASE_8C;
+                || this == DbType.GBASE_8C
+                || this == DbType.DUCKDB
+                || this == DbType.VASTBASE;
     }
 }

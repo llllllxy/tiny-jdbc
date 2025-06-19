@@ -157,6 +157,18 @@ public class DbTypeUtils {
             return DbType.TRINO;
         } else if (jdbcUrl.contains(":presto:")) {
             return DbType.PRESTO;
+        } else if (jdbcUrl.contains(":derby:")) {
+            return DbType.DERBY;
+        } else if (jdbcUrl.contains(":vastbase:")) {
+            return DbType.VASTBASE;
+        } else if (jdbcUrl.contains(":duckdb:")) {
+            return DbType.DUCKDB;
+        } else if (jdbcUrl.contains(":goldendb:")) {
+            return DbType.GOLDENDB;
+        } else if (jdbcUrl.contains(":yasdb:")) {
+            return DbType.YASDB;
+        } else if (jdbcUrl.contains(":hive2:") || jdbcUrl.contains(":inceptor2:")) {
+            return DbType.HIVE2;
         } else {
             logger.warn("The jdbcUrl " + jdbcUrl + ", cannot parse DialectEnum or the database is not supported!");
             return DbType.OTHER;
