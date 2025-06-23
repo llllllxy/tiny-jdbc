@@ -1,4 +1,4 @@
-<h1 align="center">tiny-jdbc</h1>
+<h1 align="center">TinyJDBC</h1>
 <h1 align="center">一个优雅的 ORM 框架，轻量、灵活、高性能</h1>
 
 
@@ -33,21 +33,20 @@
 
 ## 1、简介
 
-`tiny-jdbc`是一个基于`Spring Data JDBC`开发的轻量、灵活、高性能的数据库ORM框架，
-在不改变原有功能的基础上，做了大量的增强，让操作数据库这件事变得更加简单！
+`tiny-jdbc` 是一款基于 `Spring Data JDBC` 精心打造的轻量、灵活且高性能的数据库 `ORM` 框架。它在继承 `Spring Data JDBC` 原有强大功能的基础上，进行了大量的增强和优化，为开发者提供了更加便捷、高效的数据库操作体验，让操作数据库这件事变得更加简单！
 
 ### 优势
 
 - **轻量级**：除了 Spring Data JDBC 本身，再无任何第三方依赖，轻量可靠
-- **性能高**：基于高性能的Spring Data JDBC，性能基本无损耗
-- **功能强**：既支持原生SQL操作、又支持实体类映射操作，BaseDao里封装了大量的通用方法，配合强大灵活的条件构造器，基本满足各类使用需求
-- **支持 Lambda 形式调用**：条件构造器支持Lambda形式调用，编译期增强，无需再担心字段写错
-- **支持主键自动生成**：内含多种主键生成策略（包括自增主键、UUID、雪花ID等，也支持自定义ID生成策略）
-- **支持多种数据库分页方言**：包括MySQL、ORACLE、DB2、PostgreSql等多种常用数据库，无需配置，自动识别数据库类型
+- **性能高**：依托高性能的 Spring Data JDBC，在执行数据库操作时性能基本无损耗，能够满足高并发场景下的应用需求
+- **功能强**：既支持原生 sql 操作，让开发者可以灵活编写复杂的 sql 语句；又支持实体类映射操作，通过简单的配置即可实现对象与数据库表的映射。BaseDao 里封装了大量的通用方法，配合强大灵活的条件构造器（Criteria）和SQL构造器（SQL），基本能满足各类使用需求。
+- **支持 Lambda 形式调用**：条件构造器（Criteria）和SQL构造器（SQL）支持Lambda形式调用，编译期语法增强，无需再担心字段写错，提高代码的安全性和可维护性
+- **支持主键自动生成**：内含多种主键生成策略，包括自增主键、UUID、雪花ID 等，同时也支持自定义 ID 生成策略，满足不同业务场景下的主键生成需求。
+- **支持多种数据库分页方言**：包括 MySQL、ORACLE、DB2、PostgreSql 等多种常用数据库，无需额外配置，框架会自动识别数据库类型并采用相应的分页方言，大大简化了分页查询的开发工作。
 
 ### 支持数据库
 
-- 分页插件目前支持MySQL、MARIADB、ORACLE、DB2、PostgreSql、SQLite、H2、OceanBase、openGauss、informix、达梦数据库、瀚高数据库等常见数据库
+- 分页插件目前支持MySQL、MARIADB、ORACLE、DB2、PostgreSql、SQLite、H2、OceanBase、openGauss、informix、达梦数据库、人大金仓数据库、瀚高数据库等常见数据库
 - 其他操作支持任何使用标准 SQL 的数据库
 
 ## 2、快速开始
@@ -88,11 +87,11 @@ public class UploadFile implements Serializable {
     private static final long serialVersionUID = -1L;
 
     /**
-     * @Id注解用于标记表的主键，目前只支持单主键，请不要在多个属性上设置此注解，会导致程序出错
+     * @Id 注解用于标记表的主键，目前只支持单主键，请不要在多个属性上设置此注解，会导致程序出错
      *
      * idType: 主键ID策略，目前支持以下7种 AUTO_INCREMENT、INPUT、OBJECT_ID、ASSIGN_ID、UUID、SEQUENCE、CUSTOM
      * value: 则代表的是sequence 序列的 sql 内容，idType=SEQUENCE时，必须设置此内容
-     * 
+     * <br/>
      * 注意！
      * 如果设置为 AUTO_INCREMENT 自增主键 的话，则此字段必须为Long
      * 如果设置为 UUID 的话，则此属性类型必须为String
@@ -102,7 +101,7 @@ public class UploadFile implements Serializable {
      * 如果设置为 CUSTOM 的话，则需要自己实现 IdGeneratorInterface 接口并注册为bean
      * 
      * 
-     * @Column注解用于标记属性和表字段的对应关系
+     * @Column 注解用于标记属性和表字段的对应关系
      */
     @Id(idType = IdType.AUTO_INCREMENT)
     @Column(value = "id")
@@ -152,7 +151,7 @@ public class UploadFile implements Serializable {
         this.id = id;
     }
 
-    ...
+    // 其他 getter 和 setter 方法...
 }
 ```
 
@@ -166,8 +165,8 @@ import org.tinycloud.entity.UploadFile;
 
 @Repository
 public class UploadFileDao extends BaseDao<UploadFile, Long> {
-    
-    ...
+
+    // 可添加自定义方法...
 }
 ```
 
@@ -182,8 +181,6 @@ public class UploadFileService {
 
     @Autowired
     private UploadFileDao uploadFileDao;
-    
-    ...
 }
 ```
 
@@ -196,8 +193,7 @@ public class UploadFileService {
 @Table("b_upload_file")
 public class UploadFile implements Serializable {
  private static final long serialVersionUID = -1L;
-
- ...
+ 
 }
 ```
 |属性|类型|必须指定|默认值|描述|
@@ -215,7 +211,6 @@ public class UploadFile implements Serializable {
      @Id(idType = IdType.AUTO_INCREMENT)
      @Column(value = "id")
      private Long id;
-     ...
  }
 ```
 |属性|类型|必须指定|默认值|描述|
@@ -248,7 +243,6 @@ public class UploadFile implements Serializable {
      
      @Column("file_id")
      private String fileId;
-
  }
 ```
 |属性|类型|必须指定|默认值|描述|
@@ -259,33 +253,34 @@ public class UploadFile implements Serializable {
 
 ### 查询操作
 
-|方法| 说明                                                       |
-|---|----------------------------------------------------------|
-|`<F> List<F> select(String sql, Class<F> classz, Object... params);` | 根据给定的sql语句和实体类型和参数，查询数据库并返回实体类对象列表                         |
-|`List<T> select(String sql, Object... params);` | 根据给定的sq语句l和参数，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型           |
-|`<F> F selectOne(String sql, Class<F> classz, Object... params);`| 根据给定的sql语句和实体类型和参数，查询数据并返回一个实体类对象                          |
-|`T selectOne(String sql, Object... params);`| 根据给定的sql语句和参数，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型            |
-|`List<Map<String, Object>> selectMap(String sql, Object... params);`| 根据给定的sql语句和参数，查询数据库并返回Map<String, Object>列表                |
-|`Map<String, Object> selectOneMap(String sql, Object... params);`| 根据给定的sql语句和参数，查询数据并返回一个Map<String, Object>对象               |
-|`<T> T selectForObject(String sql, Class<T> clazz, Object... params);`| 根据给定的sql语句和实体类型和参数，查询数据并返回一个值（常用于查count）                   |
-|`Page<F> paginate(String sql, Class<F> clazz, Page<F> page, Object... params);`| 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的Class<F>传入的自定义类型                    |
-|`Page<T> paginate(String sql, Page<T> page, Object... params);`| 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型                       |
-|`T selectById(Object id);`| 根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型                |
-|`T selectByIds(List<ID> ids);`| 根据主键ID值列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型              |
-|`T selectByIds(ID... id);`| 根据主键ID值可变参数列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型          |
-|`List<T> select(T entity);`| 实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型   |
-|`List<T> select(QueryCriteria<T> criteria);`| 根据查询构造器查询，返回多条，类型使用的是xxxDao<T>的类型                        |
-|`List<T> select(LambdaQueryCriteria<T> lambdaCriteria);`| 根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型 |
-|`T selectOne(T entity);`| 实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型    |
-|`T selectOne(QueryCriteria<T> criteria);`| 根据查询构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型                      |
-|`T selectOne(LambdaQueryCriteria<T> lambdaCriteria);`| 根据查询构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型              |
-|`Page<T> paginate(T entity, Page<T> page);`| 根据实体类里面非null的属性作为查询条件，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型 |
-|`Page<T> paginate(QueryCriteria<T> criteria, Page<T> page);`| 根据查询构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型                |
-|`Page<T> paginate(LambdaQueryCriteria<T> lambdaCriteria, Page<T> page);`| 根据查询构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型        |
-|`Long selectCount(QueryCriteria<T> criteria);`| 根据查询构造器执行总记录数查询，返回符合条件的总记录数量                             |
-|`Long selectCount(LambdaQueryCriteria<T> lambdaCriteria);`| 根据查询构造器(lambda)执行总记录数查询，返回符合条件的总记录数量                     |
-|`boolean exists(QueryCriteria<T> criteria);`| 根据查询构造器执行查询记录是否存在，返回true或者false                          |
-|`boolean exists(LambdaQueryCriteria<T> lambdaCriteria);`| 根据查询构造器(lambda)执行查询记录是否存在，返回true或者false                  |
+| 方法                                                                              | 说明                                                 |
+|---------------------------------------------------------------------------------|----------------------------------------------------|
+| `List<T> selectAll();`                                                          | 查询所有数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型                |
+| `<F> List<F> select(String sql, Class<F> classz, Object... params);`            | 根据给定的sql语句和实体类型和参数，查询数据并返回实体类对象列表                  |
+| `List<T> select(String sql, Object... params);`                                 | 根据给定的sq语句l和参数，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型    |
+| `<F> F selectOne(String sql, Class<F> classz, Object... params);`               | 根据给定的sql语句和实体类型和参数，查询数据并返回一个实体类对象                  |
+| `T selectOne(String sql, Object... params);`                                    | 根据给定的sql语句和参数，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型    |
+| `List<Map<String, Object>> selectMap(String sql, Object... params);`            | 根据给定的sql语句和参数，查询数据并返回Map<String, Object>列表         |
+| `Map<String, Object> selectOneMap(String sql, Object... params);`               | 根据给定的sql语句和参数，查询数据并返回一个Map<String, Object>对象       |
+| `<T> T selectForObject(String sql, Class<T> clazz, Object... params);`          | 根据给定的sql语句和实体类型和参数，查询数据并返回一个值（常用于查count）           |
+| `Page<F> paginate(String sql, Class<F> clazz, Page<F> page, Object... params);` | 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的Class<F>传入的自定义类型 |
+| `Page<T> paginate(String sql, Page<T> page, Object... params);`                 | 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型   |
+| `T selectById(Object id);`                                                      | 根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型          |
+| `T selectByIds(List<ID> ids);`                                                  | 根据主键ID值列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型        |
+| `T selectByIds(ID... id);`                                                      | 根据主键ID值可变参数列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型    |
+| `List<T> select(T entity);`                                                     | 实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型 |
+| `List<T> select(QueryCriteria<T> criteria);`                                    | 根据查询构造器查询，返回多条，类型使用的是xxxDao<T>的类型                  |
+| `List<T> select(LambdaQueryCriteria<T> lambdaCriteria);`                        | 根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型 |
+| `T selectOne(T entity);`                                                        | 实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型 |
+| `T selectOne(QueryCriteria<T> criteria);`                                       | 根据查询构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型                |
+| `T selectOne(LambdaQueryCriteria<T> lambdaCriteria);`                           | 根据查询构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型        |
+| `Page<T> paginate(T entity, Page<T> page);`                                     | 根据实体类里面非null的属性作为查询条件，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型 |
+| `Page<T> paginate(QueryCriteria<T> criteria, Page<T> page);`                    | 根据查询构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型          |
+| `Page<T> paginate(LambdaQueryCriteria<T> lambdaCriteria, Page<T> page);`        | 根据查询构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型  |
+| `Long selectCount(QueryCriteria<T> criteria);`                                  | 根据查询构造器执行总记录数查询，返回符合条件的总记录数量                       |
+| `Long selectCount(LambdaQueryCriteria<T> lambdaCriteria);`                      | 根据查询构造器(lambda)执行总记录数查询，返回符合条件的总记录数量               |
+| `boolean exists(QueryCriteria<T> criteria);`                                    | 根据查询构造器执行查询记录是否存在，返回true或者false                    |
+| `boolean exists(LambdaQueryCriteria<T> lambdaCriteria);`                        | 根据查询构造器(lambda)执行查询记录是否存在，返回true或者false            |
 
 ### 插入操作
 
