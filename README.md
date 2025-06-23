@@ -349,6 +349,7 @@ public class UploadFile implements Serializable {
 > 用于生成 sql 的 where 条件
 > 
 > 其中带Lambda字样的构造器 是基于 Lambda 表达式的条件构造器，它允许你使用 Lambda 表达式来指定字段，避免了硬编码字段名的问题。
+> 以下方法均有重载whether参数（第一个参数）后的方法，当whether=false时，不执行后面的条件，例如：`eq(boolean whether, String field, R value)`
 
 |方法|说明|示例|lambda示例|
 |---|---|---|---|
@@ -398,12 +399,13 @@ public class UploadFile implements Serializable {
 #### 查询构造器(QueryCriteria & LambdaQueryCriteria)
 > 继承自条件构造器，可额外自定义查询的排序和字段内容，查询接口适用
 
-| 方法         | 说明           | 示例                                     | lambda示例                                                 |
-|------------|--------------|----------------------------------------|----------------------------------------------------------|
-| orderBy    | 排序，true=desc | orderBy("name", true) ---> ORDER BY name DESC | orderBy(User::getName, true) ---> ORDER BY name DESC     |
-| orderBy    | 排序，false=asc | orderBy("name") ---> ORDER BY name     | orderBy(User::getName) ---> ORDER BY name                |
-| select     | 设置查询字段       | select("name", "age") ---> SELECT name,age | select(User::getName, User::getAge) ---> SELECT name,age |
-| last       | 直接在查询的最后添加一个 SQL 片段      | last("limit 1") ---> limit 1   | last("limit 1") ---> limit 1                             |
+| 方法         | 说明                    | 示例                                            | lambda示例                                                 |
+|------------|-----------------------|-----------------------------------------------|----------------------------------------------------------|
+| orderBy    | 排序，true=desc,false=asc | orderBy("name", true) ---> ORDER BY name DESC | orderBy(User::getName, true) ---> ORDER BY name DESC     |
+| orderBy    | 升序排序                  | orderBy("name") ---> ORDER BY name            | orderBy(User::getName) ---> ORDER BY name                |
+| orderByDesc| 降序排序                  | orderByDesc("name") ---> ORDER BY name DESC   | orderByDesc(User::getName) ---> ORDER BY name DESC               |
+| select     | 设置查询字段                | select("name", "age") ---> SELECT name,age    | select(User::getName, User::getAge) ---> SELECT name,age |
+| last       | 直接在查询的最后添加一个 SQL 片段   | last("limit 1") ---> limit 1                  | last("limit 1") ---> limit 1                             |
 
 ##### QueryCriteria示例
 
