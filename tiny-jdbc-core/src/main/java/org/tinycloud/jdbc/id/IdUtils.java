@@ -15,36 +15,42 @@ import java.util.UUID;
  */
 public class IdUtils {
 
-    // 私有化示例要加上volatile，防止jvm重排序，导致空指针
-    private static volatile SnowflakeId snowflakeIdObj = null;
+    /**
+     * 私有构造函数，防止外部实例化
+     */
+    private IdUtils() {
+    }
 
     /**
-     * 获取单例（懒汉式单例，有线程安全问题，所以加锁）
-     *
-     * @return Sequence单例对象
+     * 静态内部类实现懒汉式单例
+     * 特点：1. 懒加载（仅在首次调用时初始化） 2. 线程安全（JVM保证类加载过程线程安全）
      */
-    public static SnowflakeId getInstance() {
-        if (snowflakeIdObj == null) {
-            synchronized (IdUtils.class) {
-                if (snowflakeIdObj == null) {
+    private static class InstanceHolder {
+        private static final SnowflakeId INSTANCE;
 
-                    // 根据配置初始化雪花ID生成器单例
-                    SnowflakeConfigInterface snowflakeConfigInterface = GlobalConfig.getConfig().getSnowflakeConfigInterface();
-                    if (snowflakeConfigInterface != null) {
-                        DatacenterAndWorkerProvider provider = snowflakeConfigInterface.getDatacenterIdAndWorkerId();
-                        if (provider != null && provider.getDatacenterId() != null && provider.getWorkerId() != null) {
-                            snowflakeIdObj = new SnowflakeId(provider.getWorkerId(), provider.getDatacenterId());
-                        } else {
-                            snowflakeIdObj = new SnowflakeId(LocalHostUtils.getInetAddress());
-                        }
-                    } else {
-                        snowflakeIdObj = new SnowflakeId(LocalHostUtils.getInetAddress());
-                    }
-
+        static {
+            // 根据配置初始化雪花ID生成器单例
+            SnowflakeConfigInterface snowflakeConfigInterface = GlobalConfig.getConfig().getSnowflakeConfigInterface();
+            if (snowflakeConfigInterface != null) {
+                DatacenterAndWorkerProvider provider = snowflakeConfigInterface.getDatacenterIdAndWorkerId();
+                if (provider != null && provider.getDatacenterId() != null && provider.getWorkerId() != null) {
+                    INSTANCE = new SnowflakeId(provider.getWorkerId(), provider.getDatacenterId());
+                } else {
+                    INSTANCE = new SnowflakeId(LocalHostUtils.getInetAddress());
                 }
+            } else {
+                INSTANCE = new SnowflakeId(LocalHostUtils.getInetAddress());
             }
         }
-        return snowflakeIdObj;
+    }
+
+    /**
+     * 获取单例（静态内部类实现，线程安全）
+     *
+     * @return SnowflakeId单例对象
+     */
+    public static SnowflakeId getInstance() {
+        return InstanceHolder.INSTANCE;
     }
 
 
@@ -92,5 +98,4 @@ public class IdUtils {
     public static String objectId() {
         return ObjectId.nextId();
     }
-
 }
