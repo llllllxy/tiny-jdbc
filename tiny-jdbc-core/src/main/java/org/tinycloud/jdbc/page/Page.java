@@ -13,7 +13,7 @@ public class Page<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 当前页（pageNo = offset / limit + 1;）
+     * 当前页（pageNo = offset / limit + 1）
      */
     private Long pageNum;
 

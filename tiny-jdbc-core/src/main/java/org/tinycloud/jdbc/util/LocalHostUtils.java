@@ -18,9 +18,11 @@ public class LocalHostUtils {
     private static final Logger log = LoggerFactory.getLogger(LocalHostUtils.class);
 
     /**
-     * 获取本机ip
+     * 获取本机的 IPv4 地址。
+     * 该方法会遍历所有网络接口，尝试获取第一个非回环的 IPv4 地址。
+     * 如果未找到合适的地址，则会尝试使用 InetAddress.getLocalHost() 方法获取本地主机地址。
      *
-     * @return String
+     * @return 本机的 IPv4 地址，如果获取失败则抛出异常
      */
     public static String getLocalHost() {
         String ipLocalHost = null;
@@ -55,11 +57,12 @@ public class LocalHostUtils {
         }
     }
 
-
     /**
-     * 获取本机InetAddress
+     * 获取本机的非回环 IPv4 地址对应的 InetAddress 对象。
+     * 该方法会遍历所有网络接口，尝试获取第一个符合条件的非回环 IPv4 地址对应的 InetAddress 对象。
+     * 如果未找到合适的地址，则会尝试使用 InetAddress.getLocalHost() 方法获取本地主机的 InetAddress 对象。
      *
-     * @return String
+     * @return 本机的非回环 IPv4 地址对应的 InetAddress 对象，如果获取失败则抛出异常
      */
     public static InetAddress getInetAddress() {
         InetAddress inetAddress = null;

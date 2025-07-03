@@ -95,6 +95,7 @@ public class LambdaUtils {
      * @param <T>   类的类型
      * @return TypeFunction 函数式接口
      */
+    @SuppressWarnings("unchecked")
     public static <T> TypeFunction<T, ?> getLambdaGetter(Class<T> clazz, String prop) {
         try {
             // 构建缓存键

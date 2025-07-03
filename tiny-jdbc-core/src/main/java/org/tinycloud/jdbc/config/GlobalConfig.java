@@ -21,6 +21,9 @@ public class GlobalConfig implements Serializable {
      */
     private boolean banner = true;
 
+    /**
+     * 版本号
+     */
     private String version;
 
     /**

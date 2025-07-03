@@ -15,7 +15,7 @@ public class OffsetPage<T> implements Serializable {
 
 
     /**
-     * 偏移位置（offset = (pageNo - 1) * pageSize;）
+     * 偏移位置（offset = (pageNo - 1) * pageSize）
      */
     private Long offset;
 
