@@ -7,17 +7,17 @@ import java.util.List;
 
 /**
  * <p>
- *     内部类：简单条件
+ *     条件：简单条件（=、!=、> 、< 、>=、<=、like）
  * </p>
  *
  * @author liuxingyu01
  * @since 2025-05-21 14:03
  */
 public class SimpleCondition implements ConditionElement {
-    private String column;
-    private String operator;
-    private Object value;
-    private JoinType joinType;
+    private final String column;
+    private final String operator;
+    private final Object value;
+    private final JoinType joinType;
 
     public SimpleCondition(String column, String operator, Object value, JoinType joinType) {
         this.column = column;

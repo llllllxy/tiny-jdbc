@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * <p>
- *     内部接口：条件元素
+ *     条件：条件元素接口声明
  * </p>
  *
  * @author liuxingyu01

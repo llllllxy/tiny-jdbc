@@ -7,6 +7,7 @@ import java.util.Collections;
 
 /**
  * <p>
+ *     条件：IS NULL / IS NOT NULL
  * </p>
  *
  * @author liuxingyu01

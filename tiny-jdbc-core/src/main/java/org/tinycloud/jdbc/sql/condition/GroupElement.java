@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * <p>
- *     内部类：条件组元素
+ *     条件：条件组元素 OR (...)  / AND (...)
  * </p>
  *
  * @author liuxingyu01

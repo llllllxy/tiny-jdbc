@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * <p>
+ *     条件：IN (?,?)
  * </p>
  *
  * @author liuxingyu01

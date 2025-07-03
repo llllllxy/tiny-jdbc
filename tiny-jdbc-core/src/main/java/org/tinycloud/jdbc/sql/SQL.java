@@ -6,12 +6,7 @@ import org.tinycloud.jdbc.sql.enums.ClauseState;
 import org.tinycloud.jdbc.sql.enums.Operation;
 import org.tinycloud.jdbc.util.LambdaUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,20 +48,20 @@ public class SQL {
     // ------------------------ SELECT ------------------------
 
     public SQL select() {
-        validateOperation(Operation.SELECT);
+        this.validateOperation(Operation.SELECT);
         this.selectFields.add("*");
         return this;
     }
 
     public SQL select(String... columns) {
-        validateOperation(Operation.SELECT);
+        this.validateOperation(Operation.SELECT);
         this.selectFields.addAll(Arrays.asList(columns));
         return this;
     }
 
     @SafeVarargs
     public final <T> SQL select(TypeFunction<T, ?>... fields) {
-        validateOperation(Operation.SELECT);
+        this.validateOperation(Operation.SELECT);
         for (TypeFunction<T, ?> field : fields) {
             String columnName = LambdaUtils.getLambdaColumnName(field);
             this.selectFields.add(columnName);
@@ -75,15 +70,15 @@ public class SQL {
     }
 
     public SQL select(Expression... expressions) {
-        validateOperation(Operation.SELECT);
+        this.validateOperation(Operation.SELECT);
         for (Expression expr : expressions) {
-            selectFields.add(expr.toString());
+            this.selectFields.add(expr.toString());
         }
         return this;
     }
 
     public <T> SQL orderBy(TypeFunction<T, ?> field) {
-        if (operation != Operation.SELECT) {
+        if (this.operation != Operation.SELECT) {
             throw new IllegalStateException("ORDER BY 只能用于 SELECT 语句");
         }
         String column = LambdaUtils.getLambdaColumnName(field);
@@ -92,7 +87,7 @@ public class SQL {
     }
 
     public SQL orderBy(String column) {
-        if (operation != Operation.SELECT) {
+        if (this.operation != Operation.SELECT) {
             throw new IllegalStateException("ORDER BY 只能用于 SELECT 语句");
         }
         this.orderByClauses.add(new OrderBy(column, false));
@@ -100,7 +95,7 @@ public class SQL {
     }
 
     public SQL groupBy(String... columns) {
-        if (operation != Operation.SELECT) {
+        if (this.operation != Operation.SELECT) {
             throw new IllegalStateException("GROUP BY 只能用于 SELECT 语句");
         }
         this.groupByColumns.addAll(Arrays.asList(columns));
@@ -109,7 +104,7 @@ public class SQL {
 
     @SafeVarargs
     public final <T> SQL groupBy(TypeFunction<T, ?>... fields) {
-        if (operation != Operation.SELECT) {
+        if (this.operation != Operation.SELECT) {
             throw new IllegalStateException("GROUP BY 只能用于 SELECT 语句");
         }
         for (TypeFunction<T, ?> field : fields) {
@@ -120,27 +115,27 @@ public class SQL {
     }
 
     public SQL having(Consumer<ConditionGroup> conditions) {
-        if (operation != Operation.SELECT) {
+        if (this.operation != Operation.SELECT) {
             throw new IllegalStateException("HAVING 子句只能用于 SELECT 语句");
         }
-        if (havingState == ClauseState.CALLED) {
+        if (this.havingState == ClauseState.CALLED) {
             throw new IllegalStateException("HAVING 子句已被调用，不能重复调用");
         }
-        havingState = ClauseState.CALLED;
-        conditions.accept(havingCondition);
+        this.havingState = ClauseState.CALLED;
+        conditions.accept(this.havingCondition);
         return this;
     }
 
     public SQL desc() {
-        if (!orderByClauses.isEmpty()) {
-            OrderBy lastOrder = orderByClauses.get(orderByClauses.size() - 1);
-            orderByClauses.set(orderByClauses.size() - 1, new OrderBy(lastOrder.column, true));
+        if (!this.orderByClauses.isEmpty()) {
+            OrderBy lastOrder = this.orderByClauses.get(this.orderByClauses.size() - 1);
+            this.orderByClauses.set(this.orderByClauses.size() - 1, new OrderBy(lastOrder.getColumn(), true));
         }
         return this;
     }
 
     public SQL limit(int limit) {
-        if (operation != Operation.SELECT) {
+        if (this.operation != Operation.SELECT) {
             throw new IllegalStateException("LIMIT 只能用于 SELECT 语句");
         }
         this.limit = limit;
@@ -148,7 +143,7 @@ public class SQL {
     }
 
     public SQL offset(int offset) {
-        if (operation != Operation.SELECT) {
+        if (this.operation != Operation.SELECT) {
             throw new IllegalStateException("OFFSET 只能用于 SELECT 语句");
         }
         this.offset = offset;
@@ -157,16 +152,16 @@ public class SQL {
 
     // ------------------------ INSERT ------------------------
     public SQL insert(String... columns) {
-        validateOperation(Operation.INSERT);
+        this.validateOperation(Operation.INSERT);
         for (String column : columns) {
-            insertValues.put(column, null);
+            this.insertValues.put(column, null);
         }
         return this;
     }
 
     @SafeVarargs
     public final <T> SQL insert(TypeFunction<T, ?>... fields) {
-        validateOperation(Operation.INSERT);
+        this.validateOperation(Operation.INSERT);
         for (TypeFunction<T, ?> field : fields) {
             String columnName = LambdaUtils.getLambdaColumnName(field);
             this.insertValues.put(columnName, null);// 占位
@@ -175,193 +170,190 @@ public class SQL {
     }
 
     public SQL values(Object... values) {
-        if (operation != Operation.INSERT) {
+        if (this.operation != Operation.INSERT) {
             throw new IllegalStateException("values() 方法只能在 insert() 之后调用");
         }
-        if (insertValues.isEmpty()) {
+        if (this.insertValues.isEmpty()) {
             throw new IllegalStateException("请先调用 insert() 方法指定列");
         }
-        if (values.length != insertValues.size()) {
+        if (values.length != this.insertValues.size()) {
             throw new IllegalArgumentException("值的数量与列的数量不匹配");
         }
         int i = 0;
-        for (String column : insertValues.keySet()) {
-            insertValues.put(column, values[i++]);
+        for (String column : this.insertValues.keySet()) {
+            this.insertValues.put(column, values[i++]);
         }
         return this;
     }
 
     // ------------------------ UPDATE ------------------------
     public SQL update() {
-        validateOperation(Operation.UPDATE);
+        this.validateOperation(Operation.UPDATE);
         return this;
     }
 
     public SQL set(String column, Object value) {
-        if (operation != Operation.UPDATE) {
+        if (this.operation != Operation.UPDATE) {
             throw new IllegalStateException("set() 方法只能在 update() 之后调用");
         }
-        updateValues.put(column, value);
+        this.updateValues.put(column, value);
         return this;
     }
 
     public <T> SQL set(TypeFunction<T, ?> field, Object value) {
-        if (operation != Operation.UPDATE) {
+        if (this.operation != Operation.UPDATE) {
             throw new IllegalStateException("set() 方法只能在 update() 之后调用");
         }
         String column = LambdaUtils.getLambdaColumnName(field);
-        updateValues.put(column, value);
+        this.updateValues.put(column, value);
         return this;
     }
 
     // ------------------------ DELETE ------------------------
     public SQL delete() {
-        validateOperation(Operation.DELETE);
+        this.validateOperation(Operation.DELETE);
         return this;
     }
 
     // ------------------------ 通用方法 ------------------------
     public SQL where(Consumer<ConditionGroup> conditions) {
-        if (operation == null) {
+        if (this.operation == null) {
             throw new IllegalStateException("请先调用 select()、update() 或 delete() 方法");
         }
-        if (operation == Operation.INSERT) {
+        if (this.operation == Operation.INSERT) {
             throw new IllegalStateException("INSERT 语句不能使用 WHERE 子句");
         }
-        if (whereState == ClauseState.CALLED) {
+        if (this.whereState == ClauseState.CALLED) {
             throw new IllegalStateException("WHERE 子句已被调用，不能重复调用");
         }
-        whereState = ClauseState.CALLED;
-        conditions.accept(whereCondition);
+        this.whereState = ClauseState.CALLED;
+        conditions.accept(this.whereCondition);
         return this;
     }
 
     public String toSql() {
-        if (operation == null) {
+        if (this.operation == null) {
             throw new IllegalStateException("请先调用 select()、insert()、update() 或 delete() 方法");
         }
-        switch (operation) {
+        switch (this.operation) {
             case SELECT:
-                return buildSelectSql();
+                return this.buildSelectSql();
             case INSERT:
-                return buildInsertSql();
+                return this.buildInsertSql();
             case UPDATE:
-                return buildUpdateSql();
+                return this.buildUpdateSql();
             case DELETE:
-                return buildDeleteSql();
+                return this.buildDeleteSql();
             default:
-                throw new IllegalArgumentException("不支持的操作类型: " + operation);
+                throw new IllegalArgumentException("不支持的操作类型: " + this.operation);
         }
     }
 
     public List<Object> getParameters() {
-        switch (operation) {
+        switch (this.operation) {
             case SELECT:
             case DELETE:
-                return Stream.concat(whereCondition.getParameters().stream(), havingCondition.getParameters().stream()).collect(Collectors.toList());
+                return Stream.concat(this.whereCondition.getParameters().stream(), this.havingCondition.getParameters().stream()).collect(Collectors.toList());
             case INSERT:
-                return new ArrayList<>(insertValues.values());
+                return new ArrayList<>(this.insertValues.values());
             case UPDATE:
-                return Stream.concat(updateValues.values().stream(), whereCondition.getParameters().stream()).collect(Collectors.toList());
+                return Stream.concat(this.updateValues.values().stream(), this.whereCondition.getParameters().stream()).collect(Collectors.toList());
             default:
-                throw new IllegalArgumentException("不支持的操作类型: " + operation);
+                throw new IllegalArgumentException("不支持的操作类型: " + this.operation);
         }
     }
 
     // ------------------------ 私有方法 ------------------------
     private void validateOperation(Operation newOperation) {
-        if (operation != null) {
-            throw new IllegalStateException("不能同时使用 " + operation + " 和 " + newOperation + " 操作");
+        if (this.operation != null) {
+            throw new IllegalStateException("不能同时使用 " + this.operation + " 和 " + newOperation + " 操作");
         }
         this.operation = newOperation;
     }
 
     private String buildSelectSql() {
         StringBuilder sql = new StringBuilder();
-        if (selectFields.isEmpty()) {
+        if (this.selectFields.isEmpty()) {
             sql.append("SELECT *");
         } else {
-            sql.append("SELECT ").append(String.join(", ", selectFields));
+            sql.append("SELECT ").append(String.join(", ", this.selectFields));
         }
-        sql.append(" FROM ").append(table);
-        if (!whereCondition.isEmpty()) {
-            sql.append(" WHERE ").append(whereCondition.toSql());
+        sql.append(" FROM ").append(this.table);
+        if (!this.whereCondition.isEmpty()) {
+            sql.append(" WHERE ").append(this.whereCondition.toSql());
         }
         // 添加GROUP BY子句
-        if (!groupByColumns.isEmpty()) {
-            sql.append(" GROUP BY ").append(String.join(", ", groupByColumns));
+        if (!this.groupByColumns.isEmpty()) {
+            sql.append(" GROUP BY ").append(String.join(", ", this.groupByColumns));
         }
         // 添加 HAVING 子句
-        if (!havingCondition.isEmpty()) {
-            sql.append(" HAVING ").append(havingCondition.toSql());
+        if (!this.havingCondition.isEmpty()) {
+            sql.append(" HAVING ").append(this.havingCondition.toSql());
         }
         // 添加ORDER BY子句
-        if (!orderByClauses.isEmpty()) {
+        if (!this.orderByClauses.isEmpty()) {
             sql.append(" ORDER BY ");
             StringJoiner orderJoiner = new StringJoiner(", ");
-            for (OrderBy order : orderByClauses) {
-                orderJoiner.add(order.column + (order.isDesc ? " DESC" : " ASC"));
+            for (OrderBy order : this.orderByClauses) {
+                orderJoiner.add(order.getColumn() + (order.isDesc() ? " DESC" : " ASC"));
             }
             sql.append(orderJoiner);
         }
         // 添加LIMIT和OFFSET子句
-        if (limit != null) {
-            sql.append(" LIMIT ").append(limit);
+        if (this.limit != null) {
+            sql.append(" LIMIT ").append(this.limit);
         }
-        if (offset != null) {
-            sql.append(" OFFSET ").append(offset);
+        if (this.offset != null) {
+            sql.append(" OFFSET ").append(this.offset);
         }
         return sql.toString();
     }
 
     private String buildInsertSql() {
-        if (insertValues.isEmpty()) {
+        if (this.insertValues.isEmpty()) {
             throw new IllegalStateException("INSERT 语句需要指定列和值");
         }
-        StringBuilder sql = new StringBuilder("INSERT INTO ").append(table);
+        StringBuilder sql = new StringBuilder("INSERT INTO ").append(this.table);
 
         // 构建列名
         StringJoiner columnsJoiner = new StringJoiner(", ", "(", ")");
-        insertValues.keySet().forEach(columnsJoiner::add);
+        this.insertValues.keySet().forEach(columnsJoiner::add);
         sql.append(columnsJoiner);
 
         // 构建占位符
         StringJoiner valuesJoiner = new StringJoiner(", ", " VALUES (", ")");
-        insertValues.keySet().forEach(col -> valuesJoiner.add("?"));
+        this.insertValues.keySet().forEach(col -> valuesJoiner.add("?"));
         sql.append(valuesJoiner);
-
         return sql.toString();
     }
 
     private String buildUpdateSql() {
-        if (updateValues.isEmpty()) {
+        if (this.updateValues.isEmpty()) {
             throw new IllegalStateException("UPDATE 语句需要至少一个 SET 子句");
         }
-        StringBuilder sql = new StringBuilder("UPDATE ").append(table).append(" SET ");
+        StringBuilder sql = new StringBuilder("UPDATE ").append(this.table).append(" SET ");
 
         // 构建 SET 子句
         StringJoiner setJoiner = new StringJoiner(", ");
-        updateValues.forEach((col, val) -> setJoiner.add(col + " = ?"));
+        this.updateValues.forEach((col, val) -> setJoiner.add(col + " = ?"));
         sql.append(setJoiner);
 
         // 构建 WHERE 子句
-        if (!whereCondition.isEmpty()) {
-            sql.append(" WHERE ").append(whereCondition.toSql());
+        if (!this.whereCondition.isEmpty()) {
+            sql.append(" WHERE ").append(this.whereCondition.toSql());
         } else {
             throw new IllegalStateException("UPDATE 语句需要 WHERE 子句");
         }
-
         return sql.toString();
     }
 
     private String buildDeleteSql() {
-        StringBuilder sql = new StringBuilder("DELETE FROM ").append(table);
-        if (!whereCondition.isEmpty()) {
-            sql.append(" WHERE ").append(whereCondition.toSql());
+        StringBuilder sql = new StringBuilder("DELETE FROM ").append(this.table);
+        if (!this.whereCondition.isEmpty()) {
+            sql.append(" WHERE ").append(this.whereCondition.toSql());
         } else {
             throw new IllegalStateException("DELETE 语句需要 WHERE 子句");
         }
-
         return sql.toString();
     }
 }

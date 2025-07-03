@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * <p>
+ *     条件：BETWEEN AND
  * </p>
  *
  * @author liuxingyu01
