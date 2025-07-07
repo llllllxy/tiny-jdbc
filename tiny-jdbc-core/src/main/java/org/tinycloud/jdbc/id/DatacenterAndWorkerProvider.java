@@ -9,6 +9,12 @@ package org.tinycloud.jdbc.id;
  * @since 2024-12-18 18:10
  */
 public class DatacenterAndWorkerProvider {
+
+    public DatacenterAndWorkerProvider(Long datacenterId, Long workerId) {
+        this.datacenterId = datacenterId;
+        this.workerId = workerId;
+    }
+
     private Long datacenterId;
 
     private Long workerId;
