@@ -9,7 +9,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
@@ -463,15 +462,15 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("batchInsert collection cannot be null or empty");
         }
         List<Object[]> batchArgs = new ArrayList<>();
-        String sql = "";
+        String sql = null;
         for (T t : collection) {
             SqlProvider sqlProvider = SqlGenerator.insertSql(t, true, getJdbcTemplate());
-            if (StringUtils.hasLength(sql)) {
+            if (sql == null || sql.isEmpty()) {
                 sql = sqlProvider.getSql();
             }
             batchArgs.add(sqlProvider.getParameters().toArray());
         }
-        if (CollectionUtils.isEmpty(batchArgs)) {
+        if (batchArgs.isEmpty()) {
             throw new TinyJdbcException("batchInsert batchArgs cannot be null");
         }
         return getJdbcTemplate().batchUpdate(sql, batchArgs);
