@@ -57,7 +57,6 @@
 ### 引入Maven依赖
 
 ```xml
-
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-jdbc</artifactId>
@@ -65,7 +64,7 @@
 <dependency>
 <groupId>top.lxyccc</groupId>
 <artifactId>tiny-jdbc-boot-starter</artifactId>
-<version>1.8.6</version>
+<version>1.8.7</version>
 </dependency>
 ```
 
