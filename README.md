@@ -314,17 +314,17 @@ public class UploadFile implements Serializable {
 
 ### 更新操作
 
-| 方法                                                                             | 说明                                                     |
-|--------------------------------------------------------------------------------|--------------------------------------------------------|
-| `int update(String sql, Object... params);`                                    | 根据提供的SQL语句和提供的参数，执行修改                                  |
-| `int updateById(T entity);`                                                    | 根据entity内的主键值作为条件更新数据，默认忽略entity里值为null的属性             |
-| `int updateById(T entity, boolean ignoreNulls);`                               | 根据entity内的主键值更新数据，可选择是否忽略entity里值为null的属性              |
-| `int update(T entity, UpdateCriteria<T> criteria);`                            | 根据entity里的值和条件构造器，执行修改，默认忽略entity里值为null的属性            |
-| `int update(T entity, LambdaUpdateCriteria<T> criteria);`                      | 根据entity里的值和条件构造器（lambda），执行修改，默认忽略entity里值为null的属性    |
-| `int update(T entity, boolean ignoreNulls, UpdateCriteria<T> criteria);`       | 根据entity里的值和条件构造器，执行修改，可选择是否忽略entity里值为null的属性         |
-| `int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria<T> criteria);` | 根据entity里的值和条件构造器（lambda），执行修改，可选择是否忽略entity里值为null的属性 |
-| `int update(UpdateCriteria<T> criteria);`                                      | 只根据条件构造器来更新数据，配合.set方法来使用                              |
-| `int update(LambdaUpdateCriteria<T> criteria);`                                | 只根据条件构造器（lambda）来更新数据，配合.set方法来使用                      |
+| 方法                                                                             | 说明                                                                  |
+|--------------------------------------------------------------------------------|---------------------------------------------------------------------|
+| `int update(String sql, Object... params);`                                    | 根据提供的SQL语句和提供的参数，执行修改                                               |
+| `int updateById(T entity);`                                                    | 根据entity提供SET子句，主键值提供WHERE条件，执行修改，默认忽略entity里值为null的属性              |
+| `int updateById(T entity, boolean ignoreNulls);`                               | 根据entity提供SET子句，主键值提供WHERE条件，执行修改，可选择是否忽略entity里值为null的属性           |
+| `int update(T entity, UpdateCriteria<T> criteria);`                            | 根据entity提供SET子句，条件构造器提供WHERE条件，执行修改，默认忽略entity里值为null的属性            |
+| `int update(T entity, LambdaUpdateCriteria<T> criteria);`                      | 根据entity提供SET子句，条件构造器（lambda）提供WHERE条件，执行修改，默认忽略entity里值为null的属性    |
+| `int update(T entity, boolean ignoreNulls, UpdateCriteria<T> criteria);`       | 根据entity提供SET子句，条件构造器，执行修改提供WHERE条件，执行修改，可选择是否忽略entity里值为null的属性    |
+| `int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria<T> criteria);` | 根据entity提供SET子句，条件构造器（lambda）提供WHERE条件，执行修改，可选择是否忽略entity里值为null的属性 |
+| `int update(UpdateCriteria<T> criteria);`                                      | 只根据条件构造器来构建，需配合.set方法来使用                                            |
+| `int update(LambdaUpdateCriteria<T> criteria);`                                | 只根据条件构造器（lambda）来构建，需配合.set方法来使用                                  |
 
 ### 删除操作
 
