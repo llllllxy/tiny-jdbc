@@ -71,7 +71,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
     List<T> select(String sql, Object... params);
 
     /**
-     * 查询给定的SQL和参数列表，返回实例列表
+     * 查询给定的SQL和参数列表，返回实体列表
      *
      * @param sql    要执行的SQL查询
      * @param params 要绑定到查询的参数
@@ -115,6 +115,18 @@ public interface ISqlSupport<T, ID extends Serializable> {
     List<Map<String, Object>> selectMap(String sql, Object... params);
 
     /**
+     * 执行给定的 SQL 查询，返回指定类型的单列结果列表。
+     * 该方法适用于查询预期返回多行单列数据的场景，例如只查询用户表中的所有用户名。
+     *
+     * @param sql    要执行的sql
+     * @param clazz  结果集中单列数据的类型，例如 String.class、Integer.class 等
+     * @param params 要绑定到查询的参数
+     * @param <F>    单列数据的泛型类型。
+     * @return 包含指定类型单列数据的列表，如果没有结果则返回空列表。
+     */
+    <F> List<F> selectSingleColumn(String sql, Class<F> clazz, Object... params);
+
+    /**
      * 执行查询sql，有查询条件，结果返回第一条（固定返回Map<String, Object>）
      *
      * @param sql    要执行的sql
@@ -127,15 +139,16 @@ public interface ISqlSupport<T, ID extends Serializable> {
     }
 
     /**
-     * 查询一个值，经常用于查count(*)这种
+     * 执行 SQL 查询，返回单个结果对象。
+     * 它适用于查询预期返回单行单列数据的场景，例如获取单个数值、字符串或其他类型的标量值
      *
-     * @param sql    要执行的SQL查询
-     * @param clazz  实体类
-     * @param params 要绑定到查询的参数
-     * @param <F>    泛型
-     * @return F
+     * @param sql    要执行的sql（必须返回单行单列），例如 "SELECT COUNT(*) FROM users"。
+     * @param clazz  结果集中单行单列数据的类型，例如 String.class、Integer.class 等
+     * @param params 要绑定到 SQL 查询语句中的参数，用于替换 SQL 中的占位符（?）。
+     * @param <F>    结果对象的泛型类型，由 clazz 参数指定。
+     * @return 单个结果对象，类型为 clazz，若查询结果为空，抛出 EmptyResultDataAccessException，若结果超过一行，抛出 IncorrectResultSizeDataAccessException
      */
-    <F> F selectForObject(String sql, Class<F> clazz, Object... params);
+    <F> F selectOneObject(String sql, Class<F> clazz, Object... params);
 
     /**
      * 分页查询
@@ -195,6 +208,6 @@ public interface ISqlSupport<T, ID extends Serializable> {
     Page<T> paginate(SQL sql, Page<T> page);
 
     <F> Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page);
-    
-    <F> F selectForObject(SQL sql, Class<F> clazz);
+
+    <F> F selectOneObject(SQL sql, Class<F> clazz);
 }

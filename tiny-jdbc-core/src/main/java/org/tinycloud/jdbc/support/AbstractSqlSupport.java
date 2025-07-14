@@ -1,9 +1,6 @@
 package org.tinycloud.jdbc.support;
 
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -80,7 +77,12 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     }
 
     @Override
-    public <F> F selectForObject(String sql, Class<F> clazz, Object... params) {
+    public <F> List<F> selectSingleColumn(String sql, Class<F> clazz, Object... params) {
+        return getJdbcTemplate().query(sql, new SingleColumnRowMapper<>(clazz), params);
+    }
+
+    @Override
+    public <F> F selectOneObject(String sql, Class<F> clazz, Object... params) {
         return getJdbcTemplate().queryForObject(sql, clazz, params);
     }
 
@@ -168,10 +170,9 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     }
 
     @Override
-    public <F> F selectForObject(SQL sql, Class<F> clazz) {
-        return selectForObject(sql.toSql(), clazz, sql.getParameters().toArray());
+    public <F> F selectOneObject(SQL sql, Class<F> clazz) {
+        return selectOneObject(sql.toSql(), clazz, sql.getParameters().toArray());
     }
-
 
     // ---------------------------------IObjectSupport实现开始---------------------------------
     @Override
@@ -252,7 +253,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("criteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCountCriteriaSql(criteria, entityClass);
-        return selectForObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
+        return selectOneObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
     }
 
     @Override
@@ -261,7 +262,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("lambdaCriteria cannot be null");
         }
         SqlProvider sqlProvider = SqlGenerator.selectCountLambdaCriteriaSql(lambdaCriteria, entityClass);
-        return selectForObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
+        return selectOneObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
     }
 
     @Override
