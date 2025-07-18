@@ -17,16 +17,17 @@ public class PostgreSqlPageHandleImpl implements IPageHandle {
      * @return 处理过后的sql
      */
     @Override
-    public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
+    public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         StringBuilder sql = new StringBuilder(oldSQL);
         long offset = (pageNo - 1L) * pageSize;
         long limit = pageSize;
         if (offset != 0L) {
-            sql.append(" LIMIT ").append(limit).append(" OFFSET ").append(offset);
+            sql.append(" LIMIT ").append("?").append(" OFFSET ").append("?");
+            return PagingSQLProvider.create(sql.toString(), limit, offset);
         } else {
-            sql.append(" LIMIT ").append(limit);
+            sql.append(" LIMIT ").append("?");
+            return PagingSQLProvider.create(sql.toString(), limit);
         }
-        return sql.toString();
     }
 
 

@@ -21,28 +21,20 @@ public class InforMixPageHandleImpl implements IPageHandle {
      * @return 处理过后的sql
      */
     @Override
-    public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
+    public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         long offset = (pageNo - 1L) * pageSize;
         long limit = pageSize;
-
-        StringBuilder sql = new StringBuilder("SELECT");
-        sql.append(" SKIP ");
-        sql.append(offset);
-        sql.append(" FIRST ");
-        sql.append(limit);
-
-        // 忽略大小写进行替换
-        Pattern pattern = Pattern.compile("SELECT", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(oldSQL);
-        return matcher.replaceFirst(sql.toString());
+        StringBuilder ret = new StringBuilder();
+        // 这个sql的分页的是紧跟着SELECT的（SELECT SKIP ? FIRST ? * FROM user WHERE age > 18），所以暂时拼接，无法参数后置
+        ret.append(String.format("select skip %s first %s ", offset + "", limit + ""));
+        ret.append(oldSQL.replaceFirst("(?i)select", ""));
+        return PagingSQLProvider.create(ret.toString());
     }
 
     @Override
     public String handlerCountSQL(String oldSQL) {
-        StringBuilder newSql = new StringBuilder();
-        newSql.append("SELECT COUNT(*) FROM ( ");
-        newSql.append(oldSQL);
-        newSql.append(" ) TEMP");
-        return newSql.toString();
+        return "SELECT COUNT(*) FROM ( " +
+                oldSQL +
+                " ) TEMP";
     }
 }

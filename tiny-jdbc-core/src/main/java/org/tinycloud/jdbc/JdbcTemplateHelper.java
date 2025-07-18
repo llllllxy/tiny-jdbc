@@ -8,6 +8,7 @@ import org.tinycloud.jdbc.page.Page;
 import org.tinycloud.jdbc.page.PageCheck;
 import org.tinycloud.jdbc.page.PageHandleResult;
 import org.tinycloud.jdbc.sql.SQL;
+import org.tinycloud.jdbc.util.ArrayUtils;
 import org.tinycloud.jdbc.util.DataAccessUtils;
 
 import java.util.ArrayList;
@@ -134,7 +135,7 @@ public class JdbcTemplateHelper {
         Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, params);
         List<F> records;
         if (count != null && count > 0L) {
-            records = getJdbcTemplate().query(handleResult.getPageSql(), new BeanPropertyRowMapper<>(clazz), params);
+            records = getJdbcTemplate().query(handleResult.getPageSql(), new BeanPropertyRowMapper<>(clazz), ArrayUtils.mergeArrays(params, handleResult.getParameters()));
         } else {
             records = new ArrayList<>();
         }
@@ -158,7 +159,7 @@ public class JdbcTemplateHelper {
         Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, params);
         List<Map<String, Object>> records;
         if (count != null && count > 0L) {
-            records = getJdbcTemplate().queryForList(handleResult.getPageSql(), params);
+            records = getJdbcTemplate().queryForList(handleResult.getPageSql(), ArrayUtils.mergeArrays(params, handleResult.getParameters()));
         } else {
             records = new ArrayList<>();
         }

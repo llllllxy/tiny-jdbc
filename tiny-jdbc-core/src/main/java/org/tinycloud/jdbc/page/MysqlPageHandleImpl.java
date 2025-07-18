@@ -18,16 +18,17 @@ public class MysqlPageHandleImpl implements IPageHandle {
      * @return 处理过后的sql
      */
     @Override
-    public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
+    public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         StringBuilder sql = new StringBuilder(oldSQL);
         long offset = (pageNo - 1L) * pageSize;
         long limit = pageSize;
         if (offset <= 0L) {
-            sql.append(" LIMIT ").append(limit);
+            sql.append(" LIMIT ").append("?");
+            return PagingSQLProvider.create(sql.toString(), limit);
         } else {
-            sql.append(" LIMIT ").append(offset).append(",").append(limit);
+            sql.append(" LIMIT ").append("?").append(",").append("?");
+            return PagingSQLProvider.create(sql.toString(), offset, limit);
         }
-        return sql.toString();
     }
 
 

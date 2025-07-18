@@ -1,9 +1,11 @@
 package org.tinycloud.jdbc.page;
 
 
+import java.util.List;
+
 /**
  * <p>
- *     分页处理结果实体类
+ * 分页处理结果实体类
  * </p>
  *
  * @author liuxingyu01
@@ -11,16 +13,16 @@ package org.tinycloud.jdbc.page;
  */
 public class PageHandleResult {
 
-    private String pageSql;
+    private PagingSQLProvider pageSqlProvider;
 
     private String countSql;
 
-    public String getPageSql() {
-        return pageSql;
+    public PagingSQLProvider getPageSqlProvider() {
+        return pageSqlProvider;
     }
 
-    public void setPageSql(String pageSql) {
-        this.pageSql = pageSql;
+    public void setPageSqlProvider(PagingSQLProvider pageSqlProvider) {
+        this.pageSqlProvider = pageSqlProvider;
     }
 
     public String getCountSql() {
@@ -31,9 +33,17 @@ public class PageHandleResult {
         this.countSql = countSql;
     }
 
-    public static PageHandleResult create(String pageSql, String countSql) {
+    public String getPageSql() {
+        return pageSqlProvider.getSql();
+    }
+
+    public Object[] getParameters() {
+        return pageSqlProvider.getParameters();
+    }
+
+    public static PageHandleResult create(PagingSQLProvider pageSqlProvider, String countSql) {
         PageHandleResult result = new PageHandleResult();
-        result.setPageSql(pageSql);
+        result.setPageSqlProvider(pageSqlProvider);
         result.setCountSql(countSql);
         return result;
     }
@@ -41,7 +51,8 @@ public class PageHandleResult {
     @Override
     public String toString() {
         return "PageHandleResult{" +
-                "pageSql='" + pageSql + '\'' +
+                "pageSql='" + pageSqlProvider.getSql() + '\'' +
+                ", parameters='" + pageSqlProvider.getParameters() + '\'' +
                 ", countSql='" + countSql + '\'' +
                 '}';
     }

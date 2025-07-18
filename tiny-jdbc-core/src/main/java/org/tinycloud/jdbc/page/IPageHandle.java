@@ -17,7 +17,7 @@ public interface IPageHandle {
      * @param pageSize pageSize 每页数量
      * @return 带有分页逻辑的新 SQL 语句。
      */
-    String handlerPagingSQL(String sql, long pageNo, long pageSize);
+    PagingSQLProvider handlerPagingSQL(String sql, long pageNo, long pageSize);
 
     /**
      * 将传入的 SQL 做 COUNT 处理
@@ -40,7 +40,7 @@ public interface IPageHandle {
      * @return 封装了分页 SQL 语句和 COUNT SQL 语句的 PageHandleResult 对象。
      */
     default PageHandleResult handle(String sql, long pageNo, long pageSize) {
-        String pageSQl = this.handlerPagingSQL(sql, pageNo, pageSize);
+        PagingSQLProvider pageSQl = this.handlerPagingSQL(sql, pageNo, pageSize);
         String countSql = this.handlerCountSQL(sql);
         return PageHandleResult.create(pageSQl, countSql);
     }

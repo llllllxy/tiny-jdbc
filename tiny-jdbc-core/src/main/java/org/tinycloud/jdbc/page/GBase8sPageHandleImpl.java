@@ -18,11 +18,12 @@ public class GBase8sPageHandleImpl implements IPageHandle {
      * @return 处理过后的sql
      */
     @Override
-    public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
+    public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         long offset = (pageNo - 1) * pageSize;
         long limit = pageSize;
+        // 这个sql的分页的是紧跟着SELECT的（SELECT SKIP ? FIRST ? * FROM user WHERE age > 18），所以暂时拼接，无法参数后置
         StringBuilder sql = (new StringBuilder(oldSQL)).insert(6, " SKIP " + offset + " FIRST " + limit);
-        return sql.toString();
+        return PagingSQLProvider.create(sql.toString());
     }
 
     @Override

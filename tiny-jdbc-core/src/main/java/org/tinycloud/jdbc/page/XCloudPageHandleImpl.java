@@ -9,18 +9,19 @@ package org.tinycloud.jdbc.page;
  */
 public class XCloudPageHandleImpl implements IPageHandle {
     @Override
-    public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
-        StringBuilder sql = new StringBuilder();
+    public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
+        StringBuilder sql = new StringBuilder(oldSQL);
         long offset = (pageNo - 1L) * pageSize;
         long limit = pageSize;
 
         sql.append(" LIMIT ");
         if (offset != 0L) {
-            sql.append(" ( ").append(offset + 1L).append(",").append(offset + limit).append(" ) ");
+            sql.append(" ( ").append("?").append(",").append("?").append(" ) ");
+            return PagingSQLProvider.create(sql.toString(), offset + 1L, offset + limit);
         } else {
-            sql.append(limit);
+            sql.append("?");
+            return PagingSQLProvider.create(sql.toString(), limit);
         }
-        return sql.toString();
     }
 
     @Override

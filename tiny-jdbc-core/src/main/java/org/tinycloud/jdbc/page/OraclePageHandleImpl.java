@@ -18,16 +18,16 @@ public class OraclePageHandleImpl implements IPageHandle {
      * @return 处理过后的sql
      */
     @Override
-    public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
+    public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         long pageStart = (pageNo - 1L) * pageSize;
         long pageEnd = pageNo * pageSize;
         StringBuilder sql = new StringBuilder("SELECT * FROM ( SELECT TMP_TB.*, ROWNUM ROW_ID FROM ( ");
         sql.append(oldSQL);
         sql.append(" ) TMP_TB WHERE ROWNUM <=  ")
-                .append(pageEnd)
+                .append("?")
                 .append(" ) WHERE ROW_ID > ")
-                .append(pageStart);
-        return sql.toString();
+                .append("?");
+        return PagingSQLProvider.create(sql.toString(), pageEnd, pageStart);
     }
 
     @Override

@@ -9,16 +9,17 @@ package org.tinycloud.jdbc.page;
  */
 public class TrinoPageHandleImpl implements IPageHandle {
     @Override
-    public String handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
+    public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         StringBuilder sql = new StringBuilder(oldSQL);
         long offset = (pageNo - 1L) * pageSize;
         long limit = pageSize;
         if (offset != 0L) {
-            sql.append(" OFFSET ").append(limit).append(" LIMIT ").append(offset);
+            sql.append(" OFFSET ").append("?").append(" LIMIT ").append("?");
+            return PagingSQLProvider.create(sql.toString(), offset, limit);
         } else {
-            sql.append(" LIMIT ").append(limit);
+            sql.append(" LIMIT ").append("?");
+            return PagingSQLProvider.create(sql.toString(), limit);
         }
-        return sql.toString();
     }
 
 
