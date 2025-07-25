@@ -16,6 +16,14 @@ public class DataAccessUtils {
     public DataAccessUtils() {
     }
 
+    /**
+     * 获取集合中的唯一元素
+     *
+     * @param results 结果集合
+     * @param <T>     元素类型
+     * @return 唯一元素或null
+     * @throws TinyJdbcException 集合中存在多个元素时抛出
+     */
     public static <T> T singleResult(Collection<T> results) throws TinyJdbcException {
         if (results == null || results.isEmpty()) {
             return null;
@@ -26,6 +34,14 @@ public class DataAccessUtils {
         }
     }
 
+    /**
+     * 获取集合中的唯一元素（非空）
+     *
+     * @param results 结果集合
+     * @param <T>     元素类型
+     * @return 唯一元素
+     * @throws TinyJdbcException 集合中不存在或存在多个元素时抛出
+     */
     public static <T> T requiredSingleResult(Collection<T> results) throws TinyJdbcException {
         if (results == null || results.isEmpty()) {
             throw new TinyJdbcException("Expected one result to be returned , but not found");

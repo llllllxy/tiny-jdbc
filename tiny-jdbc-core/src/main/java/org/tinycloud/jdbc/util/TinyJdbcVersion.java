@@ -18,6 +18,11 @@ public class TinyJdbcVersion {
     private TinyJdbcVersion() {
     }
 
+    /**
+     * 获取版本号
+     *
+     * @return 版本号
+     */
     public static String getVersion() {
         String appVersion = "";
         Properties properties = new Properties();

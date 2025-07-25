@@ -9,6 +9,7 @@ import java.math.BigInteger;
 
 /**
  * <p>
+ * 类型转换工具类
  * </p>
  *
  * @author liuxingyu01
@@ -18,11 +19,26 @@ public class ConvertUtils {
     private ConvertUtils() {
     }
 
+    /**
+     * 转换对象类型
+     *
+     * @param value       待转换对象
+     * @param targetClass 目标类型
+     * @return 转换后的对象
+     */
     @SuppressWarnings("rawtypes")
     public static Object convert(Object value, Class targetClass) {
         return convert(value, targetClass, false);
     }
 
+    /**
+     * 转换对象类型
+     *
+     * @param value              待转换对象
+     * @param targetClass        目标类型
+     * @param ignoreConvertError 是否忽略转换错误
+     * @return 转换后的对象
+     */
     @SuppressWarnings({"rawtypes"})
     public static Object convert(Object value, Class targetClass, boolean ignoreConvertError) {
         if (value == null && targetClass.isPrimitive()) {
@@ -87,8 +103,13 @@ public class ConvertUtils {
         }
     }
 
-
-    //Boolean.TYPE, Character.TYPE, Byte.TYPE, Short.TYPE, Integer.TYPE, Long.TYPE, Float.TYPE, Double.TYPE, Void.TYPE
+    /**
+     * 获取原始类型的默认值
+     * Boolean.TYPE, Character.TYPE, Byte.TYPE, Short.TYPE, Integer.TYPE, Long.TYPE, Float.TYPE, Double.TYPE, Void.TYPE
+     *
+     * @param paraClass 原始类型
+     * @return 默认值
+     */
     public static Object getPrimitiveDefaultValue(Class<?> paraClass) {
         if (paraClass == int.class || paraClass == long.class || paraClass == float.class || paraClass == double.class) {
             return 0;
@@ -105,6 +126,12 @@ public class ConvertUtils {
         }
     }
 
+    /**
+     * 转换原始类型为包装类型
+     *
+     * @param paraClass 原始类型
+     * @return 包装类型
+     */
     public static Class<?> primitiveToBoxed(Class<?> paraClass) {
         if (paraClass == Integer.TYPE) {
             return Integer.class;
@@ -127,7 +154,12 @@ public class ConvertUtils {
         }
     }
 
-
+    /**
+     * 转换对象为整数类型
+     *
+     * @param i 待转换对象
+     * @return 整数类型
+     */
     public static Integer toInt(Object i) {
         if (i instanceof Integer) {
             return (Integer) i;
@@ -137,6 +169,12 @@ public class ConvertUtils {
         return i != null ? Integer.parseInt(i.toString()) : null;
     }
 
+    /**
+     * 转换对象为长整数类型
+     *
+     * @param l 待转换对象
+     * @return 长整数类型
+     */
     public static Long toLong(Object l) {
         if (l instanceof Long) {
             return (Long) l;
@@ -146,6 +184,12 @@ public class ConvertUtils {
         return l != null ? Long.parseLong(l.toString()) : null;
     }
 
+    /**
+     * 转换对象为双精度浮点数类型
+     *
+     * @param d 待转换对象
+     * @return 双精度浮点数类型
+     */
     public static Double toDouble(Object d) {
         if (d instanceof Double) {
             return (Double) d;
@@ -156,6 +200,12 @@ public class ConvertUtils {
         return d != null ? Double.parseDouble(d.toString()) : null;
     }
 
+    /**
+     * 转换对象为双精度浮点数类型
+     *
+     * @param b 待转换对象
+     * @return 双精度浮点数类型
+     */
     public static BigDecimal toBigDecimal(Object b) {
         if (b instanceof BigDecimal) {
             return (BigDecimal) b;
@@ -166,6 +216,12 @@ public class ConvertUtils {
         }
     }
 
+    /**
+     * 转换对象为大整数类型
+     *
+     * @param b 待转换对象
+     * @return 大整数类型
+     */
     public static BigInteger toBigInteger(Object b) {
         if (b instanceof BigInteger) {
             return (BigInteger) b;
@@ -182,6 +238,12 @@ public class ConvertUtils {
         return (BigInteger) b;
     }
 
+    /**
+     * 转换对象为单精度浮点数类型
+     *
+     * @param f 待转换对象
+     * @return 单精度浮点数类型
+     */
     public static Float toFloat(Object f) {
         if (f instanceof Float) {
             return (Float) f;
@@ -191,7 +253,12 @@ public class ConvertUtils {
         return f != null ? Float.parseFloat(f.toString()) : null;
     }
 
-
+    /**
+     * 转换对象为短整数类型
+     *
+     * @param s 待转换对象
+     * @return 短整数类型
+     */
     public static Short toShort(Object s) {
         if (s instanceof Short) {
             return (Short) s;
@@ -201,7 +268,12 @@ public class ConvertUtils {
         return s != null ? Short.parseShort(s.toString()) : null;
     }
 
-
+    /**
+     * 转换对象为字节类型
+     *
+     * @param b 待转换对象
+     * @return 字节类型
+     */
     public static Byte toByte(Object b) {
         if (b instanceof Byte) {
             return (Byte) b;
@@ -211,6 +283,12 @@ public class ConvertUtils {
         return b != null ? Byte.parseByte(b.toString()) : null;
     }
 
+    /**
+     * 转换对象为布尔类型
+     *
+     * @param b 待转换对象
+     * @return 布尔类型
+     */
     public static Boolean toBoolean(Object b) {
         if (b instanceof Boolean) {
             return (Boolean) b;
@@ -240,5 +318,4 @@ public class ConvertUtils {
         }
         return (Boolean) b;
     }
-
 }

@@ -50,7 +50,7 @@ public class LambdaUtils {
             Column annotation = field.getAnnotation(Column.class);
             String sqlField;
             if (annotation == null || StrUtils.isEmpty(annotation.value())) {
-                sqlField = StrUtils.humpToLine(fieldName);
+                sqlField = StrUtils.camelToUnderline(fieldName);
             } else {
                 sqlField = annotation.value();
             }

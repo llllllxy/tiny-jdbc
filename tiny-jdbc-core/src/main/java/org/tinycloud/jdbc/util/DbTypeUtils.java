@@ -10,15 +10,25 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.regex.Pattern;
 
+/**
+ * <p>
+ * 数据库类型判断工具类
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2024-03-31 22:43
+ */
 public class DbTypeUtils {
     private static final Logger logger = LoggerFactory.getLogger(DbTypeUtils.class);
 
     private DbTypeUtils() {
     }
 
-
     /**
      * 获取当前配置的 DbType
+     *
+     * @param dataSource 数据源
+     * @return DbType
      */
     public static DbType getDbType(DataSource dataSource) {
         String jdbcUrl = getJdbcUrl(dataSource);
@@ -55,7 +65,7 @@ public class DbTypeUtils {
             if (connection != null) {
                 try {
                     connection.close();
-                } catch (SQLException e) { //ignore
+                } catch (SQLException ignored) {
                 }
             }
         }

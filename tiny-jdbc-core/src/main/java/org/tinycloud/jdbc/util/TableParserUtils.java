@@ -129,7 +129,7 @@ public class TableParserUtils {
             Id idAnnotation = field.getAnnotation(Id.class);
             String column;
             if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                column = (StrUtils.humpToLine(field.getName()));
+                column = (StrUtils.camelToUnderline(field.getName()));
             } else {
                 column = (columnAnnotation.value());
             }

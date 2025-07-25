@@ -32,25 +32,43 @@ public class StrUtils {
         return true;
     }
 
+    /**
+     * 判断字符串是否不为空
+     *
+     * @param cs 需要判断的字符串
+     * @return 如果字符串序列不是 null 并且长度大于 0，返回 true
+     */
     public static boolean isNotBlank(CharSequence cs) {
         return !isBlank(cs);
     }
 
+    /**
+     * 判断字符串是否为空
+     *
+     * @param cs 需要判断的字符串
+     * @return 如果字符串序列是 null 或者长度为 0，返回 true
+     */
     public static boolean isEmpty(CharSequence cs) {
         return cs == null || cs.length() == 0;
     }
 
+    /**
+     * 判断字符串是否不为空
+     *
+     * @param cs 需要判断的字符串
+     * @return 如果字符串序列不是 null 并且长度大于 0，返回 true
+     */
     public static boolean isNotEmpty(CharSequence cs) {
         return !isEmpty(cs);
     }
 
     /**
-     * 驼峰转下划线 humpToLine("helloWorld") = "hello_world"
+     * 驼峰转下划线 camelToUnderline("helloWorld") = "hello_world"
      *
      * @param param 字符串
      * @return 字符串
      */
-    public static String humpToLine(String param) {
+    public static String camelToUnderline(String param) {
         if (isBlank(param)) {
             return "";
         }
@@ -67,12 +85,12 @@ public class StrUtils {
     }
 
     /**
-     * 下划线转驼峰 lineToHump("hello_world") = "helloWorld"
+     * 下划线转驼峰 underlineToCamel("hello_world") = "helloWorld"
      *
      * @param param 字符串
      * @return 字符串
      */
-    public static String lineToHump(String param) {
+    public static String underlineToCamel(String param) {
         if (isBlank(param)) {
             return "";
         }
@@ -101,7 +119,7 @@ public class StrUtils {
      * @return 转换好的字符串
      */
     public static String decapitalize(String name) {
-        if (name == null || name.length() == 0) {
+        if (name == null || name.isEmpty()) {
             return name;
         }
         if (name.length() > 1 && Character.isUpperCase(name.charAt(1)) &&
@@ -115,6 +133,7 @@ public class StrUtils {
 
     /**
      * 首字母转换大写
+     *
      * @param str 需要转换的字符串
      * @return 转换好的字符串
      */
@@ -137,7 +156,7 @@ public class StrUtils {
 
 
     /**
-     * 这个字符串是否是全是数字
+     * 判断字符串是否是全是数字
      *
      * @param str 输入字符串
      * @return true: 是，false: 不是

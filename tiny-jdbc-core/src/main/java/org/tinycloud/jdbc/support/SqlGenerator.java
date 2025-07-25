@@ -57,7 +57,7 @@ public class SqlGenerator {
             Id idAnnotation = field.getAnnotation(Id.class);
             String column;
             if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                column = StrUtils.humpToLine(fieldName);
+                column = StrUtils.camelToUnderline(fieldName);
             } else {
                 column = columnAnnotation.value();
             }
@@ -198,7 +198,7 @@ public class SqlGenerator {
             if (columnAnnotation != null && StrUtils.isNotEmpty(columnAnnotation.value())) {
                 column = columnAnnotation.value();
             } else {
-                column = StrUtils.humpToLine(field.getName());
+                column = StrUtils.camelToUnderline(field.getName());
             }
             Object filedValue = null;
             try {
@@ -263,7 +263,7 @@ public class SqlGenerator {
             Column columnAnnotation = field.getAnnotation(Column.class);
             String column;
             if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                column = StrUtils.humpToLine(field.getName());
+                column = StrUtils.camelToUnderline(field.getName());
             } else {
                 column = columnAnnotation.value();
             }
@@ -317,7 +317,7 @@ public class SqlGenerator {
             Column columnAnnotation = field.getAnnotation(Column.class);
             String column;
             if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                column = StrUtils.humpToLine(field.getName());
+                column = StrUtils.camelToUnderline(field.getName());
             } else {
                 column = columnAnnotation.value();
             }
@@ -421,7 +421,7 @@ public class SqlGenerator {
             Column columnAnnotation = field.getAnnotation(Column.class);
             String column;
             if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                column = StrUtils.humpToLine(field.getName());
+                column = StrUtils.camelToUnderline(field.getName());
             } else {
                 column = columnAnnotation.value();
             }
@@ -523,7 +523,7 @@ public class SqlGenerator {
             Column columnAnnotation = field.getAnnotation(Column.class);
             String column;
             if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                column = StrUtils.humpToLine(field.getName());
+                column = StrUtils.camelToUnderline(field.getName());
             } else {
                 column = columnAnnotation.value();
             }

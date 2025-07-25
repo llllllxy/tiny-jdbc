@@ -54,7 +54,7 @@ public final class PropertyNamer {
     }
 
     /**
-     * 判断是否是一个getter或settre方法方法
+     * 判断是否是一个getter或setter方法方法
      *
      * @param name 方法名
      * @return true是，false不是
