@@ -55,7 +55,7 @@ public class IdUtils {
 
 
     /**
-     * 生成雪花id
+     * 生成雪花id，长度19，类似于：1932382813993381897
      *
      * @return String
      */
@@ -64,7 +64,7 @@ public class IdUtils {
     }
 
     /**
-     * 生成雪花id
+     * 生成雪花id，长度19，类似于：1932382813993381897
      *
      * @return long
      */
@@ -73,7 +73,7 @@ public class IdUtils {
     }
 
     /**
-     * 生成的UUID是带-的字符串，类似于：a5c8a5e8-df2b-4706-bea4-08d0939410e3
+     * 生成的UUID是带-的字符串，长度36，类似于：a5c8a5e8-df2b-4706-bea4-08d0939410e3
      *
      * @return String
      */
@@ -82,7 +82,7 @@ public class IdUtils {
     }
 
     /**
-     * 生成的是不带-的字符串，类似于：a5c8a5e8df2b4706bea408d0939410e3
+     * 生成的是不带-的字符串，长度32，类似于：a5c8a5e8df2b4706bea408d0939410e3
      *
      * @return String
      */

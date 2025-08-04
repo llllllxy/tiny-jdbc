@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  **/
 public final class ObjectId implements Comparable<ObjectId>, Serializable {
     private static final long serialVersionUID = 3670079982654483072L;
-
     private static final int RANDOM_VALUE1;
     private static final short RANDOM_VALUE2;
     private static final AtomicInteger NEXT_COUNTER = new AtomicInteger((new SecureRandom()).nextInt());
