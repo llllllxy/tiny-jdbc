@@ -113,6 +113,8 @@ public class DbTypeUtils {
             return DbType.PHOENIX;
         } else if (jdbcUrl.contains(":zenith:")) {
             return DbType.GAUSS;
+        }  else if (jdbcUrl.contains(":gaussdb:")) {
+            return DbType.GAUSS_DB;
         } else if (jdbcUrl.contains(":gbase:")) {
             return DbType.GBASE;
         } else if (jdbcUrl.contains(":gbasedbt-sqli:") || jdbcUrl.contains(":informix-sqli:")) {

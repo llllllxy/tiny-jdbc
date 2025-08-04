@@ -65,8 +65,10 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
             pageHandle = new XCloudPageHandleImpl();
         } else if (dbType == DbType.TRINO || dbType == DbType.PRESTO) {
             pageHandle = new TrinoPageHandleImpl();
+        }  else if (dbType == DbType.GAUSS_DB) {
+            pageHandle = new GaussDBPageHandleImpl();
         } else {
-            logger.warn("{} database not supported, default to PostgreSql Implements", dbType.getName());
+            logger.warn("{} database not supported, default to PostgreSQL Implements", dbType.getName());
             pageHandle = new PostgreSqlPageHandleImpl();
         }
 
