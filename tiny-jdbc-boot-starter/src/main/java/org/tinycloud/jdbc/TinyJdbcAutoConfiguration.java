@@ -3,9 +3,10 @@ package org.tinycloud.jdbc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -15,65 +16,31 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.SnowflakeConfigInterface;
-import org.tinycloud.jdbc.page.*;
-import org.tinycloud.jdbc.util.DbType;
-import org.tinycloud.jdbc.util.DbTypeUtils;
 import org.tinycloud.jdbc.util.TinyJdbcVersion;
 
-import javax.sql.DataSource;
 import java.util.function.Consumer;
 
 @Configuration
 @EnableConfigurationProperties(TinyJdbcProperties.class)
-public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
+public class TinyJdbcAutoConfiguration implements ApplicationContextAware, InitializingBean {
     final static Logger logger = LoggerFactory.getLogger(TinyJdbcAutoConfiguration.class);
 
     private ApplicationContext applicationContext;
+
+    @Autowired
+    private TinyJdbcProperties tinyJdbcProperties; // 注入配置属性
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 
-    @ConditionalOnMissingBean(IPageHandle.class)
-    @Bean
-    public IPageHandle pageHandle(@Autowired DataSource dataSource,
-                                  @Autowired TinyJdbcProperties tinyJdbcProperties) {
-        DbType dbType = tinyJdbcProperties.getDbType();
-        if (dbType == null) {
-            dbType = DbTypeUtils.getDbType(dataSource);
-        }
-        if (logger.isInfoEnabled()) {
-            logger.info("Tiny-Jdbc dbType: {}", dbType.getName());
-        }
-        IPageHandle pageHandle;
-        if (dbType.mysqlFamilyType()) {
-            pageHandle = new MysqlPageHandleImpl();
-        } else if (dbType.oracleFamilyType()) {
-            pageHandle = new OraclePageHandleImpl();
-        } else if (dbType.postgresqlFamilyType()) {
-            pageHandle = new PostgreSqlPageHandleImpl();
-        } else if (dbType.oracle12cFamilyType()) {
-            pageHandle = new Oracle12cPageHandleImpl();
-        } else if (dbType.gBase8sFamilyType()) {
-            pageHandle = new GBase8sPageHandleImpl();
-        } else if (dbType == DbType.DB2) {
-            pageHandle = new DB2PageHandleImpl();
-        } else if (dbType == DbType.INFORMIX) {
-            pageHandle = new InforMixPageHandleImpl();
-        } else if (dbType == DbType.XCLOUD) {
-            pageHandle = new XCloudPageHandleImpl();
-        } else if (dbType == DbType.TRINO || dbType == DbType.PRESTO) {
-            pageHandle = new TrinoPageHandleImpl();
-        }  else if (dbType == DbType.GAUSS_DB) {
-            pageHandle = new GaussDBPageHandleImpl();
-        } else {
-            logger.warn("{} database not supported, default to PostgreSQL Implements", dbType.getName());
-            pageHandle = new PostgreSqlPageHandleImpl();
-        }
-
+    // 新增：容器初始化完成后执行全局配置初始化
+    @Override
+    public void afterPropertiesSet() throws Exception {
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setBanner(tinyJdbcProperties.getBanner());
+        globalConfig.setDbType(tinyJdbcProperties.getDbType());
         String version = TinyJdbcVersion.getVersion();
         globalConfig.setVersion(version);
         /* 获取自定义的（ID生成器） */
@@ -81,19 +48,16 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
         /* 获取自定义的（雪花算法 workerId 和 datacenterId 配置） */
         this.getBeanThen(SnowflakeConfigInterface.class, globalConfig::setSnowflakeConfigInterface);
         GlobalConfig.setConfig(globalConfig);
-
         if (logger.isInfoEnabled()) {
             logger.info("Tiny-Jdbc started successfully, version: {}!", version);
         }
-        return pageHandle;
     }
 
 
-    @ConditionalOnBean({IPageHandle.class, JdbcTemplate.class})
+    @ConditionalOnBean({JdbcTemplate.class})
     @Bean
-    public JdbcTemplateHelper jdbcTemplateHelper(@Autowired IPageHandle pageHandle,
-                                                 @Autowired JdbcTemplate jdbcTemplate) {
-        return new JdbcTemplateHelper(jdbcTemplate, pageHandle);
+    public JdbcTemplateHelper jdbcTemplateHelper(@Autowired JdbcTemplate jdbcTemplate) {
+        return new JdbcTemplateHelper(jdbcTemplate);
     }
 
     /**

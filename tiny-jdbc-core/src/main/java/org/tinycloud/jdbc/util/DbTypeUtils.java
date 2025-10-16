@@ -7,7 +7,6 @@ import org.tinycloud.jdbc.exception.TinyJdbcException;
 import javax.sql.DataSource;
 import java.lang.reflect.Method;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.regex.Pattern;
 
 /**
@@ -35,7 +34,7 @@ public class DbTypeUtils {
         if (!StrUtils.isEmpty(jdbcUrl)) {
             return parseDbType(jdbcUrl);
         }
-        throw new IllegalStateException("Can not get dataSource jdbcUrl: " + dataSource.getClass().getName());
+        throw new TinyJdbcException("Can not get dataSource jdbcUrl: " + dataSource.getClass().getName());
     }
 
     /**
@@ -54,20 +53,10 @@ public class DbTypeUtils {
                 //ignore
             }
         }
-
-        Connection connection = null;
-        try {
-            connection = dataSource.getConnection();
+        try (Connection connection = dataSource.getConnection()) {
             return connection.getMetaData().getURL();
         } catch (Exception e) {
             throw new TinyJdbcException("Can not get the dataSource jdbcUrl!");
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException ignored) {
-                }
-            }
         }
     }
 
@@ -182,7 +171,7 @@ public class DbTypeUtils {
         } else if (jdbcUrl.contains(":hive2:") || jdbcUrl.contains(":inceptor2:")) {
             return DbType.HIVE2;
         } else {
-            logger.warn("The jdbcUrl " + jdbcUrl + ", cannot parse DialectEnum or the database is not supported!");
+            logger.warn("The jdbcUrl {}, cannot parse DialectEnum or the database is not supported!", jdbcUrl);
             return DbType.OTHER;
         }
     }

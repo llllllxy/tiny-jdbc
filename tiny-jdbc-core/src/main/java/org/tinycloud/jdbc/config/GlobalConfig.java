@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.config;
 
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.SnowflakeConfigInterface;
+import org.tinycloud.jdbc.util.DbType;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -25,6 +26,11 @@ public class GlobalConfig implements Serializable {
      * 版本号
      */
     private String version;
+
+    /**
+     * 默认分页器适配类型（用于兜底）
+     */
+    private DbType dbType;
 
     /**
      * 主键生成器
@@ -58,6 +64,14 @@ public class GlobalConfig implements Serializable {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public DbType getDbType() {
+        return dbType;
+    }
+
+    public void setDbType(DbType dbType) {
+        this.dbType = dbType;
     }
 
     public SnowflakeConfigInterface getSnowflakeConfigInterface() {
