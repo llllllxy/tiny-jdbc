@@ -13,7 +13,7 @@ public class TinyJdbcProperties {
     /**
      * 是否使用运行时数据库类型，默认值为 false，设置为 true 时，会在运行时根据多数据源自动识别对应的分页处理器
      */
-    private Boolean runtimeDbType;
+    private Boolean openRuntimeDbType;
 
     /**
      * 默认值为 true，当使用运行时动态数据源或没有设置 helperDialect 属性自动获取数据库类型时，会自动获取一个数据库连接， 通过该属性来设置是否关闭获取的这个连接，默认true关闭，设置为 false 后，不会关闭获取的连接，这个参数的设置要根据自己选择的数据源来决定。
@@ -41,12 +41,12 @@ public class TinyJdbcProperties {
         this.dbType = dbType;
     }
 
-    public Boolean getRuntimeDbType() {
-        return runtimeDbType;
+    public Boolean getOpenRuntimeDbType() {
+        return openRuntimeDbType;
     }
 
-    public void setRuntimeDbType(Boolean runtimeDbType) {
-        this.runtimeDbType = runtimeDbType;
+    public void setOpenRuntimeDbType(Boolean openRuntimeDbType) {
+        this.openRuntimeDbType = openRuntimeDbType;
     }
 
     public Boolean getCloseConn() {

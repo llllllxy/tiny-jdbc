@@ -34,7 +34,7 @@ public class BaseDao<T, ID extends Serializable> extends AbstractSqlSupport<T, I
     /**
      * 分页处理
      */
-    @Autowired(required = false)
+    @Autowired
     private IPageHandle pageHandle;
 
     /**
@@ -54,9 +54,9 @@ public class BaseDao<T, ID extends Serializable> extends AbstractSqlSupport<T, I
      */
     @Override
     protected IPageHandle getPageHandle() {
-        return GlobalConfig.getConfig().getRuntimeDbType().equals(false) && this.pageHandle != null
+        return Boolean.FALSE.equals(GlobalConfig.getConfig().getOpenRuntimeDbType()) && this.pageHandle != null
                 ? this.pageHandle
-                : PageHandleFactory.getPageHandle(this.getJdbcTemplate());
+                : PageHandleFactory.getDynamicPageHandle(this.getJdbcTemplate());
     }
 
 

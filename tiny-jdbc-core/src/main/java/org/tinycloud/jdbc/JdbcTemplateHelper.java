@@ -52,9 +52,9 @@ public class JdbcTemplateHelper {
      * @return 当前类中持有的 IPageHandle 实例
      */
     private IPageHandle getPageHandle() {
-        return GlobalConfig.getConfig().getRuntimeDbType().equals(false) && this.pageHandle != null
+        return Boolean.FALSE.equals(GlobalConfig.getConfig().getOpenRuntimeDbType()) && this.pageHandle != null
                 ? this.pageHandle
-                : PageHandleFactory.getPageHandle(this.getJdbcTemplate());
+                : PageHandleFactory.getDynamicPageHandle(this.getJdbcTemplate());
     }
 
     /**

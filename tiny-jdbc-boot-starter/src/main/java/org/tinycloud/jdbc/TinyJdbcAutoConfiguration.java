@@ -3,6 +3,7 @@ package org.tinycloud.jdbc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -26,35 +27,31 @@ import java.util.function.Consumer;
 
 @Configuration
 @EnableConfigurationProperties(TinyJdbcProperties.class)
-public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
+public class TinyJdbcAutoConfiguration implements ApplicationContextAware, InitializingBean {
     final static Logger logger = LoggerFactory.getLogger(TinyJdbcAutoConfiguration.class);
 
     private ApplicationContext applicationContext;
+
+    @Autowired
+    private TinyJdbcProperties tinyJdbcProperties;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 
-    @ConditionalOnMissingBean(IPageHandle.class)
-    @Bean
-    public IPageHandle pageHandle(@Autowired DataSource dataSource,
-                                  @Autowired TinyJdbcProperties tinyJdbcProperties) {
-        DbType dbType = tinyJdbcProperties.getDbType();
-        if (dbType == null) {
-            dbType = DbTypeUtils.getDbType(dataSource);
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        // 避免重复初始化
+        if (Objects.nonNull(GlobalConfig.getConfig())) {
+            return;
         }
-        if (logger.isInfoEnabled()) {
-            logger.info("Tiny-Jdbc dbType: {}", dbType.getName());
-        }
-        IPageHandle pageHandle = PageHandleFactory.createPageHandleByDbType(dbType);
-
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setBanner(tinyJdbcProperties.getBanner());
         String version = TinyJdbcVersion.getVersion();
         globalConfig.setVersion(version);
-        globalConfig.setDbType(dbType);
-        globalConfig.setRuntimeDbType(Objects.isNull(tinyJdbcProperties.getRuntimeDbType()) ? Boolean.FALSE : tinyJdbcProperties.getRuntimeDbType());
+        globalConfig.setDbType(tinyJdbcProperties.getDbType());
+        globalConfig.setOpenRuntimeDbType(Objects.isNull(tinyJdbcProperties.getOpenRuntimeDbType()) ? Boolean.FALSE : tinyJdbcProperties.getOpenRuntimeDbType());
         globalConfig.setCloseConn(Objects.isNull(tinyJdbcProperties.getCloseConn()) ? Boolean.TRUE : tinyJdbcProperties.getCloseConn());
         globalConfig.setDatasourceType(tinyJdbcProperties.getDatasourceType());
         /* 获取自定义的（ID生成器） */
@@ -64,9 +61,21 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
         GlobalConfig.setConfig(globalConfig);
 
         if (logger.isInfoEnabled()) {
-            logger.info("Tiny-Jdbc started successfully, version: {}!", version);
+            logger.info("Tiny-Jdbc started successfully, version: {}.", version);
         }
-        return pageHandle;
+    }
+
+    @ConditionalOnMissingBean(IPageHandle.class)
+    @Bean
+    public IPageHandle pageHandle(@Autowired DataSource dataSource) {
+        DbType dbType = tinyJdbcProperties.getDbType();
+        if (dbType == null) {
+            dbType = DbTypeUtils.getDbType(dataSource);
+        }
+        if (logger.isInfoEnabled()) {
+            logger.info("Tiny-Jdbc create bean IPageHandle, dbType: {}.", dbType.getName());
+        }
+        return PageHandleFactory.createPageHandleByDbType(dbType);
     }
 
 
@@ -74,6 +83,9 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware {
     @Bean
     public JdbcTemplateHelper jdbcTemplateHelper(@Autowired IPageHandle pageHandle,
                                                  @Autowired JdbcTemplate jdbcTemplate) {
+        if (logger.isInfoEnabled()) {
+            logger.info("Tiny-Jdbc create bean JdbcTemplateHelper.");
+        }
         return new JdbcTemplateHelper(jdbcTemplate, pageHandle);
     }
 

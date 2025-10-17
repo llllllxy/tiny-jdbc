@@ -11,7 +11,7 @@ import org.tinycloud.jdbc.util.DbTypeUtils;
 
 /**
  * <p>
- *
+ *     分页处理器获取工厂类
  * </p>
  *
  * @author liuxingyu01
@@ -21,9 +21,9 @@ public class PageHandleFactory {
     private static final Logger logger = LoggerFactory.getLogger(PageHandleFactory.class);
 
     /**
-     * 根据数据源获取对应的分页处理器
+     * 根据数据源动态获取对应的分页处理器
      */
-    public static IPageHandle getPageHandle(JdbcTemplate jdbcTemplate) {
+    public static IPageHandle getDynamicPageHandle(JdbcTemplate jdbcTemplate) {
         DbType dbType = null;
         try {
             dbType = DbTypeUtils.getDbType(jdbcTemplate.getDataSource());
@@ -36,11 +36,16 @@ public class PageHandleFactory {
             throw new TinyJdbcException("Could not identify the database type. Please specify tiny-jdbc.db-type in the configuration.");
         }
         if (logger.isInfoEnabled()) {
-            logger.info("Tiny-Jdbc dbType: {}", dbType.getName());
+            logger.info("Tiny-Jdbc dynamic dbType: {}", dbType.getName());
         }
         return createPageHandleByDbType(dbType);
     }
 
+    /**
+     * 根据数据库类型创建对应的分页处理器
+     * @param dbType 数据库类型
+     * @return 分页处理器IPageHandle
+     */
     public static IPageHandle createPageHandleByDbType(DbType dbType) {
         IPageHandle pageHandle;
         if (dbType.mysqlFamilyType()) {
