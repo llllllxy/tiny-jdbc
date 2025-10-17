@@ -38,6 +38,10 @@ public class PageHandleFactory {
         if (logger.isInfoEnabled()) {
             logger.info("Tiny-Jdbc dbType: {}", dbType.getName());
         }
+        return createPageHandleByDbType(dbType);
+    }
+
+    public static IPageHandle createPageHandleByDbType(DbType dbType) {
         IPageHandle pageHandle;
         if (dbType.mysqlFamilyType()) {
             pageHandle = new MysqlPageHandleImpl();

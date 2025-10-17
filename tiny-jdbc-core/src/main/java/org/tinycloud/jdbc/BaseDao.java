@@ -3,6 +3,7 @@ package org.tinycloud.jdbc;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.PageHandleFactory;
 import org.tinycloud.jdbc.support.AbstractSqlSupport;
@@ -31,6 +32,12 @@ public class BaseDao<T, ID extends Serializable> extends AbstractSqlSupport<T, I
     private JdbcTemplate jdbcTemplate;
 
     /**
+     * 分页处理
+     */
+    @Autowired(required = false)
+    private IPageHandle pageHandle;
+
+    /**
      * 获取 JdbcTemplate 实例
      *
      * @return 当前类中注入的 JdbcTemplate 实例
@@ -47,7 +54,9 @@ public class BaseDao<T, ID extends Serializable> extends AbstractSqlSupport<T, I
      */
     @Override
     protected IPageHandle getPageHandle() {
-        return PageHandleFactory.getPageHandle(this.getJdbcTemplate());
+        return GlobalConfig.getConfig().getRuntimeDbType().equals(false) && this.pageHandle != null
+                ? this.pageHandle
+                : PageHandleFactory.getPageHandle(this.getJdbcTemplate());
     }
 
 

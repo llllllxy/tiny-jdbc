@@ -2,11 +2,14 @@ package org.tinycloud.jdbc.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
+import org.tinycloud.jdbc.page.urlparser.JdbcUrlResolver;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Method;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.regex.Pattern;
 
 /**
@@ -30,19 +33,22 @@ public class DbTypeUtils {
      * @return DbType
      */
     public static DbType getDbType(DataSource dataSource) {
-        String jdbcUrl = getJdbcUrl(dataSource);
-        if (!StrUtils.isEmpty(jdbcUrl)) {
+        String jdbcUrl = JdbcUrlResolver.getJdbcUrl(dataSource);
+        if (StrUtils.isNotEmpty(jdbcUrl)) {
             return parseDbType(jdbcUrl);
         }
         throw new TinyJdbcException("Can not get dataSource jdbcUrl: " + dataSource.getClass().getName());
     }
 
     /**
+     * Deprecated since 1.8.9，Now use JdbcUrlResolver to get the jdbcUrl
+     * <br/>
      * 通过数据源中获取 jdbc 的 url 配置
      * 符合 HikariCP, druid, c3p0, DBCP, BEECP 数据源框架 以及 MyBatis UnpooledDataSource 的获取规则
      *
-     * @return jdbc url 配置
+     * @return jdbcUrl
      */
+    @Deprecated
     public static String getJdbcUrl(DataSource dataSource) {
         String[] methodNames = new String[]{"getUrl", "getJdbcUrl"};
         for (String methodName : methodNames) {
@@ -53,10 +59,21 @@ public class DbTypeUtils {
                 //ignore
             }
         }
-        try (Connection connection = dataSource.getConnection()) {
+        Connection connection = null;
+        try {
+            connection = dataSource.getConnection();
             return connection.getMetaData().getURL();
         } catch (Exception e) {
             throw new TinyJdbcException("Can not get the dataSource jdbcUrl!");
+        } finally {
+            if (GlobalConfig.getConfig().getCloseConn()) {
+                if (connection != null) {
+                    try {
+                        connection.close();
+                    } catch (SQLException ignored) {
+                    }
+                }
+            }
         }
     }
 
@@ -102,7 +119,7 @@ public class DbTypeUtils {
             return DbType.PHOENIX;
         } else if (jdbcUrl.contains(":zenith:")) {
             return DbType.GAUSS;
-        }  else if (jdbcUrl.contains(":gaussdb:")) {
+        } else if (jdbcUrl.contains(":gaussdb:")) {
             return DbType.GAUSS_DB;
         } else if (jdbcUrl.contains(":gbase:")) {
             return DbType.GBASE;
@@ -171,7 +188,7 @@ public class DbTypeUtils {
         } else if (jdbcUrl.contains(":hive2:") || jdbcUrl.contains(":inceptor2:")) {
             return DbType.HIVE2;
         } else {
-            logger.warn("The jdbcUrl {}, cannot parse DialectEnum or the database is not supported!", jdbcUrl);
+            logger.warn("The jdbcUrl " + jdbcUrl + ", cannot parse DialectEnum or the database is not supported!");
             return DbType.OTHER;
         }
     }
