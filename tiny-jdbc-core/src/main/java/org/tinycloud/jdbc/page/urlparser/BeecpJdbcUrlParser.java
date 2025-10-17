@@ -1,15 +1,11 @@
 package org.tinycloud.jdbc.page.urlparser;
 
-import javax.sql.DataSource;
+import org.stone.beecp.BeeDataSource;
 
-public class BeecpJdbcUrlParser implements JdbcUrlParser{
-    @Override
-    public boolean supports(DataSource dataSource) {
-        return dataSource instanceof org.stone.beecp.BeeDataSource;
-    }
+public class BeecpJdbcUrlParser extends JdbcUrlParser<BeeDataSource>{
 
     @Override
-    public String getJdbcUrl(DataSource dataSource) {
-        return ((org.stone.beecp.BeeDataSource) dataSource).getJdbcUrl();
+    public String getJdbcUrl(BeeDataSource dataSource) {
+        return dataSource.getJdbcUrl();
     }
 }

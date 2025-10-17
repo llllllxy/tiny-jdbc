@@ -1,15 +1,10 @@
 package org.tinycloud.jdbc.page.urlparser;
 
-import javax.sql.DataSource;
+import com.alibaba.druid.pool.DruidDataSource;
 
-public class DruidJdbcUrlParser implements JdbcUrlParser{
+public class DruidJdbcUrlParser extends JdbcUrlParser<com.alibaba.druid.pool.DruidDataSource>{
     @Override
-    public boolean supports(DataSource dataSource) {
-        return dataSource instanceof com.alibaba.druid.pool.DruidDataSource;
-    }
-
-    @Override
-    public String getJdbcUrl(DataSource dataSource) {
-        return ((com.alibaba.druid.pool.DruidDataSource) dataSource).getUrl();
+    public String getJdbcUrl(DruidDataSource dataSource) {
+        return dataSource.getUrl();
     }
 }

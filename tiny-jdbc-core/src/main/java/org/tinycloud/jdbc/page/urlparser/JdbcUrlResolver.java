@@ -16,23 +16,23 @@ import java.util.Map;
  */
 public class JdbcUrlResolver {
     // 存储所有已注册的解析器（排除初始化失败的），启动时写，运行时只读，所以线程安全
-    private static final List<JdbcUrlParser> PARSERS = new ArrayList<>();
+    private static final List<JdbcUrlParser<?>> PARSERS = new ArrayList<>();
 
     // 存储所有已注册的解析器Class，用于配置datasourceType了时的反射对象创建
-    private static final Map<String, Class<? extends JdbcUrlParser>> PARSER_MAP = new LinkedHashMap<>();
+    private static final Map<String, Class<? extends JdbcUrlParser<?>>> PARSER_MAP = new LinkedHashMap<>();
     // 定义静态缓存Map（key: datasourceType，value: JdbcUrlParser实例）
-    private static final ConcurrentHashMap<String, JdbcUrlParser> PARSER_INSTANCE_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, JdbcUrlParser<?>> PARSER_INSTANCE_CACHE = new ConcurrentHashMap<>();
 
 
     // 静态代码块
     static {
         // 尝试注册所有解析器，忽略因连接池不存在导致的异常
         try {
-            PARSERS.add(new HikariJdbcUrlParser());
+            PARSERS.add(new DruidJdbcUrlParser());
         } catch (Throwable ignore) {
         }
         try {
-            PARSERS.add(new DruidJdbcUrlParser());
+            PARSERS.add(new HikariJdbcUrlParser());
         } catch (Throwable ignore) {
         }
         try {
@@ -81,13 +81,13 @@ public class JdbcUrlResolver {
         if (StrUtils.isNotEmpty(datasourceType)) {
             try {
                 // 先从缓存获取，若不存在则创建并缓存
-                JdbcUrlParser parser = PARSER_INSTANCE_CACHE.computeIfAbsent(datasourceType, type -> {
+                JdbcUrlParser<?> parser = PARSER_INSTANCE_CACHE.computeIfAbsent(datasourceType, type -> {
                     try {
-                        Class<? extends JdbcUrlParser> parserClass;
+                        Class<? extends JdbcUrlParser<?>> parserClass;
                         if (PARSER_MAP.containsKey(type)) {
                             parserClass = PARSER_MAP.get(type);
                         } else {
-                            parserClass = (Class<JdbcUrlParser>) Class.forName(type);
+                            parserClass = (Class<JdbcUrlParser<?>>) Class.forName(type);
                         }
                         return parserClass.newInstance(); // 创建实例
                     } catch (Exception e) {
@@ -95,7 +95,7 @@ public class JdbcUrlResolver {
                         throw new RuntimeException(e);
                     }
                 });
-                return parser.getJdbcUrl(dataSource);
+                return parser.resolveJdbcUrl(dataSource);
             } catch (RuntimeException e) {
                 // 还原原始异常信息
                 Throwable cause = e.getCause();
@@ -109,10 +109,8 @@ public class JdbcUrlResolver {
             }
         } else {
             // 遍历所有解析器，找到第一个支持当前数据源的解析器
-            for (JdbcUrlParser parser : PARSERS) {
-                if (parser.supports(dataSource)) {
-                    return parser.getJdbcUrl(dataSource);
-                }
+            for (JdbcUrlParser<?> parser : PARSERS) {
+                return parser.resolveJdbcUrl(dataSource);
             }
             // 理论上不会走到这里，因为兜底解析器始终返回 true
             throw new TinyJdbcException("No suitable parser found for DataSource: " + dataSource.getClass().getName());

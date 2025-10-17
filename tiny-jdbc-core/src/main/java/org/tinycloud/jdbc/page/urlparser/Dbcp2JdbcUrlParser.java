@@ -1,15 +1,11 @@
 package org.tinycloud.jdbc.page.urlparser;
 
-import javax.sql.DataSource;
+import org.apache.commons.dbcp2.BasicDataSource;
 
-public class Dbcp2JdbcUrlParser implements JdbcUrlParser {
-    @Override
-    public boolean supports(DataSource dataSource) {
-        return dataSource instanceof org.apache.commons.dbcp2.BasicDataSource;
-    }
+public class Dbcp2JdbcUrlParser extends JdbcUrlParser<BasicDataSource> {
 
     @Override
-    public String getJdbcUrl(DataSource dataSource) {
-        return ((org.apache.commons.dbcp2.BasicDataSource) dataSource).getUrl();
+    public String getJdbcUrl(BasicDataSource dataSource) {
+        return dataSource.getUrl();
     }
 }
