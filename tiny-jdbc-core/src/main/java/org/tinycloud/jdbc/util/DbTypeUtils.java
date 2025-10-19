@@ -64,7 +64,7 @@ public class DbTypeUtils {
             connection = dataSource.getConnection();
             return connection.getMetaData().getURL();
         } catch (Exception e) {
-            throw new TinyJdbcException("Can not get the dataSource jdbcUrl!");
+            throw new TinyJdbcException("Can not get the dataSource jdbcUrl from connection metadata!");
         } finally {
             if (GlobalConfig.getConfig().getCloseConn()) {
                 if (connection != null) {
