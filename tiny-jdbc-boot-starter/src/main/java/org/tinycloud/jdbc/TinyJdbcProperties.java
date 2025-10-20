@@ -22,7 +22,7 @@ public class TinyJdbcProperties {
     private Boolean openRuntimeDbType;
 
     /**
-     * 默认值为 true，当使用运行时动态数据源或没有设置 helperDialect 属性自动获取数据库类型时，会自动获取一个数据库连接， 通过该属性来设置是否关闭获取的这个连接，默认true关闭，设置为 false 后，不会关闭获取的连接，这个参数的设置要根据自己选择的数据源来决定。
+     * 默认值为 true，当使用运行时动态数据源自动获取数据库类型时，会自动获取一个数据库连接， 通过该属性来设置是否关闭获取的这个连接，默认true关闭，设置为 false 后，不会关闭获取的连接，这个参数的设置要根据自己选择的数据源来决定。
      */
     private Boolean closeConn;
 
