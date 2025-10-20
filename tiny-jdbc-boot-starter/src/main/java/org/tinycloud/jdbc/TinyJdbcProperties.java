@@ -6,8 +6,14 @@ import org.tinycloud.jdbc.util.DbType;
 @ConfigurationProperties(prefix = "tiny-jdbc")
 public class TinyJdbcProperties {
 
+    /**
+     * 是否打印 banner
+     */
     private Boolean banner;
 
+    /**
+     * 默认数据库类型
+     */
     private DbType dbType;
 
     /**
@@ -21,7 +27,7 @@ public class TinyJdbcProperties {
     private Boolean closeConn;
 
     /**
-     * 数据源类型，允许配置为 hikari,druid,tomcat-jdbc,c3p0,dbcp,beecp,default，默认为 default
+     * 数据源连接池类型（配置获取jdbcUrl的方法），允许配置为 hikari,druid,tomcat-jdbc,c3p0,dbcp,beecp,default，默认为 default
      */
     private String datasourceType;
 

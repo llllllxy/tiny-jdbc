@@ -28,10 +28,10 @@ public class PageHandleFactory {
         try {
             dbType = DbTypeUtils.getDbType(jdbcTemplate.getDataSource());
         } catch (Exception e) {
-            // 自动识别失败，使用配置的默认dbType
+            // 自动识别失败，使用配置的默认dbType兜底
             dbType = GlobalConfig.getConfig().getDbType();
         }
-        // 2. 若自动识别失败且配置未指定，则抛出异常或使用默认实现
+        // 若自动识别失败且配置未指定，则抛出异常或使用默认实现
         if (dbType == null) {
             throw new TinyJdbcException("Could not identify the database type. Please specify tiny-jdbc.db-type in the configuration.");
         }
