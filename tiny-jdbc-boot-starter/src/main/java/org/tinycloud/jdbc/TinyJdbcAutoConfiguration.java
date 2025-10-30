@@ -47,7 +47,7 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware, Initi
         }
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setBanner(tinyJdbcProperties.getBanner());
-        String version = "1.9.0";
+        String version = "1.9.1";
         globalConfig.setVersion(version);
         globalConfig.setDbType(tinyJdbcProperties.getDbType());
         globalConfig.setOpenRuntimeDbType(Objects.isNull(tinyJdbcProperties.getOpenRuntimeDbType()) ? Boolean.FALSE : tinyJdbcProperties.getOpenRuntimeDbType());
