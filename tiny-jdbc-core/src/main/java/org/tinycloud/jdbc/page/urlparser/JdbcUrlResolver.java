@@ -17,7 +17,6 @@ import java.util.Map;
 public class JdbcUrlResolver {
     // 存储所有已注册的解析器（排除初始化失败的），启动时写，运行时只读，所以线程安全
     private static final List<JdbcUrlParser<?>> PARSERS = new ArrayList<>();
-
     // 存储所有已注册的解析器Class，用于配置datasourceType了时的反射对象创建
     private static final Map<String, Class<? extends JdbcUrlParser<?>>> PARSER_MAP = new LinkedHashMap<>();
     // 定义静态缓存Map（key: datasourceType，value: JdbcUrlParser实例）
@@ -110,7 +109,10 @@ public class JdbcUrlResolver {
         } else {
             // 遍历所有解析器，找到第一个支持当前数据源的解析器
             for (JdbcUrlParser<?> parser : PARSERS) {
-                return parser.resolveJdbcUrl(dataSource);
+                String jdbcUrl = parser.resolveJdbcUrl(dataSource);
+                if (jdbcUrl != null) {
+                    return jdbcUrl;
+                }
             }
             // 理论上不会走到这里，因为兜底解析器始终返回 true
             throw new TinyJdbcException("No suitable parser found for DataSource: " + dataSource.getClass().getName());
