@@ -19,7 +19,6 @@ import org.tinycloud.jdbc.id.SnowflakeConfigInterface;
 import org.tinycloud.jdbc.page.*;
 import org.tinycloud.jdbc.util.DbType;
 import org.tinycloud.jdbc.util.DbTypeUtils;
-import org.tinycloud.jdbc.util.TinyJdbcVersion;
 
 import javax.sql.DataSource;
 import java.util.Objects;
@@ -48,7 +47,7 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware, Initi
         }
         GlobalConfig globalConfig = new GlobalConfig();
         globalConfig.setBanner(tinyJdbcProperties.getBanner());
-        String version = TinyJdbcVersion.getVersion();
+        String version = "1.9.0";
         globalConfig.setVersion(version);
         globalConfig.setDbType(tinyJdbcProperties.getDbType());
         globalConfig.setOpenRuntimeDbType(Objects.isNull(tinyJdbcProperties.getOpenRuntimeDbType()) ? Boolean.FALSE : tinyJdbcProperties.getOpenRuntimeDbType());
