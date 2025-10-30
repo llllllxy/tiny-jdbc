@@ -1,7 +1,5 @@
 package org.tinycloud.jdbc.util;
 
-import org.springframework.util.StringUtils;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -26,8 +24,7 @@ public class ConvertUtils {
      * @param targetClass 目标类型
      * @return 转换后的对象
      */
-    @SuppressWarnings("rawtypes")
-    public static Object convert(Object value, Class targetClass) {
+    public static Object convert(Object value, Class<?> targetClass) {
         return convert(value, targetClass, false);
     }
 
@@ -39,15 +36,14 @@ public class ConvertUtils {
      * @param ignoreConvertError 是否忽略转换错误
      * @return 转换后的对象
      */
-    @SuppressWarnings({"rawtypes"})
-    public static Object convert(Object value, Class targetClass, boolean ignoreConvertError) {
+    public static Object convert(Object value, Class<?> targetClass, boolean ignoreConvertError) {
         if (value == null && targetClass.isPrimitive()) {
             return getPrimitiveDefaultValue(targetClass);
         }
-        if (value == null || (targetClass != String.class && value.getClass() == String.class && !StringUtils.hasText((String) value))) {
+        if (value == null || (targetClass != String.class && value.getClass() == String.class && StrUtils.isEmpty((String) value))) {
             return null;
         }
-        if (value.getClass().isAssignableFrom(targetClass)) {
+        if (targetClass.isAssignableFrom(value.getClass())) {
             return value;
         }
         if (targetClass == Serializable.class && value instanceof Serializable) {
@@ -77,17 +73,17 @@ public class ConvertUtils {
             return Float.parseFloat(value.toString());
         } else if (targetClass == Boolean.class || targetClass == boolean.class) {
             String v = value.toString().toLowerCase();
-            if ("1".equals(v) || "true".equalsIgnoreCase(v)) {
+            if ("1".equals(v) || "true".equals(v)) {
                 return Boolean.TRUE;
-            } else if ("0".equals(v) || "false".equalsIgnoreCase(v)) {
+            } else if ("0".equals(v) || "false".equals(v)) {
                 return Boolean.FALSE;
             } else {
-                throw new RuntimeException("Can not parse to boolean type of value: \"" + value + "\"");
+                throw new IllegalArgumentException("Can not parse to boolean type of value: \"" + value + "\"");
             }
-        } else if (targetClass == java.math.BigDecimal.class) {
-            return new java.math.BigDecimal(value.toString());
-        } else if (targetClass == java.math.BigInteger.class) {
-            return new java.math.BigInteger(value.toString());
+        } else if (targetClass == BigDecimal.class) {
+            return new BigDecimal(value.toString());
+        } else if (targetClass == BigInteger.class) {
+            return new BigInteger(value.toString());
         } else if (targetClass == byte[].class) {
             return value.toString().getBytes();
         } else if (targetClass == Short.class || targetClass == short.class) {

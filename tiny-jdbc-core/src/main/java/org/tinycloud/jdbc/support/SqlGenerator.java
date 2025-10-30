@@ -13,14 +13,13 @@ import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.IdUtils;
-import org.tinycloud.jdbc.util.tuple.Pair;
+import org.tinycloud.jdbc.util.ConvertUtils;
 import org.tinycloud.jdbc.util.ReflectUtils;
 import org.tinycloud.jdbc.util.StrUtils;
 import org.tinycloud.jdbc.util.TableParserUtils;
+import org.tinycloud.jdbc.util.tuple.Pair;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
@@ -122,26 +121,10 @@ public class SqlGenerator {
                     } else if (idType == IdType.CUSTOM) {
                         IdGeneratorInterface idGeneratorInterface = GlobalConfig.getConfig().getIdGeneratorInterface();
                         Object id = idGeneratorInterface.nextId(object);
-                        if (fieldType == id.getClass()) {
-                            fieldValue = id;
-                        } else if (Number.class.isAssignableFrom(fieldType)) {
-                            if (Integer.class == fieldType) {
-                                fieldValue = Integer.parseInt(id.toString());
-                            } else if (Long.class == fieldType) {
-                                fieldValue = Long.parseLong(id.toString());
-                            } else if (Short.class == fieldType) {
-                                fieldValue = Short.parseShort(id.toString());
-                            } else if (BigDecimal.class.isAssignableFrom(fieldType)) {
-                                fieldValue = new BigDecimal(id.toString());
-                            } else if (BigInteger.class.isAssignableFrom(fieldType)) {
-                                fieldValue = new BigInteger(id.toString());
-                            } else {
-                                throw new TinyJdbcException("The fieldType of " + fieldName + " is not supported!");
-                            }
-                        } else if (String.class.isAssignableFrom(fieldType)) {
-                            fieldValue = id.toString();
-                        } else {
-                            fieldValue = id;
+                        try {
+                            fieldValue = ConvertUtils.convert(id, fieldType);
+                        } catch (IllegalArgumentException e) {
+                            throw new TinyJdbcException("The fieldType of " + fieldName + " is not supported! Please check if the ID type matches the primary key type.", e);
                         }
                         try {
                             field.set(object, fieldValue);
