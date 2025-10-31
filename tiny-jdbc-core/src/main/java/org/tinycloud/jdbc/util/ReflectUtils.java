@@ -272,7 +272,7 @@ public class ReflectUtils {
      * @param obj       对象
      * @param fieldName 属性名称
      */
-    public static Field getAccessibleField(Object obj, String fieldName) {
+    public static Field getAccessibleField(Object obj, String fieldName) throws NoSuchFieldException {
         for (Class<?> superClass = obj.getClass(); superClass != Object.class; superClass = superClass.getSuperclass()) {
             try {
                 Field field = superClass.getDeclaredField(fieldName);
@@ -282,7 +282,7 @@ public class ReflectUtils {
 
             }
         }
-        return null;
+        throw new NoSuchFieldException("there are no field named " + fieldName + " in class " + obj.getClass().getName());
     }
 
     /**
@@ -292,7 +292,7 @@ public class ReflectUtils {
      * @param clazz     对象类型
      * @param fieldName 属性名称
      */
-    public static Field getAccessibleField(Class<?> clazz, String fieldName) {
+    public static Field getAccessibleField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
         for (Class<?> superClass = clazz; superClass != Object.class; superClass = superClass.getSuperclass()) {
             try {
                 Field field = superClass.getDeclaredField(fieldName);
@@ -302,7 +302,7 @@ public class ReflectUtils {
 
             }
         }
-        return null;
+        throw new NoSuchFieldException("there are no field named " + fieldName + " in class " + clazz.getName());
     }
 
     /**
@@ -311,11 +311,8 @@ public class ReflectUtils {
      * @param obj       对象
      * @param fieldName 对象属性名
      */
-    public static Object getFieldValue(Object obj, String fieldName) {
+    public static Object getFieldValue(Object obj, String fieldName) throws NoSuchFieldException {
         Field field = getAccessibleField(obj, fieldName);
-        if (field == null) {
-            throw new RuntimeException("there are no field named " + fieldName + " in class " + obj.getClass().getName());
-        }
         Object result = null;
         try {
             result = field.get(obj);
@@ -332,11 +329,8 @@ public class ReflectUtils {
      * @param fieldName  对象属性名
      * @param fieldValue 对象属性值
      */
-    public static void setFieldValue(Object obj, String fieldName, Object fieldValue) {
+    public static void setFieldValue(Object obj, String fieldName, Object fieldValue) throws NoSuchFieldException {
         Field field = getAccessibleField(obj, fieldName);
-        if (field == null) {
-            throw new RuntimeException("there are no field named " + fieldName + " in class " + obj.getClass().getName());
-        }
         try {
             field.set(obj, fieldValue);
         } catch (IllegalAccessException e) {

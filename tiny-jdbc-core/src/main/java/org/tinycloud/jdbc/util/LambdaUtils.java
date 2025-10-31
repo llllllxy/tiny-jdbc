@@ -33,40 +33,36 @@ public class LambdaUtils {
      * @param getter 函数式接口，如 UploadFile::getFileId
      * @return String 列名称
      */
-    public static String getLambdaColumnName(Serializable getter) {
+    public static <T> String getLambdaColumnName(TypeFunction<T, ?> getter) {
         SerializedLambda serializedLambda = resolve(getter);
-        String implClass = serializedLambda.getImplClass();
-        String methodName = serializedLambda.getImplMethodName();
-        String fieldName = PropertyNamer.methodToProperty(methodName);
-        // 已有缓存的话，直接返回
-        String lambdaCacheKey = implClass + "." + fieldName;
-        if (LAMBDA_TO_FIELD_CACHE.containsKey(lambdaCacheKey)) {
-            return LAMBDA_TO_FIELD_CACHE.get(lambdaCacheKey);
-        }
-        try {
-            // 通过字段名获取字段
-            Field field = Class.forName(implClass.replace("/", ".")).getDeclaredField(fieldName);
-            // 获取字段上的注解
-            Column annotation = field.getAnnotation(Column.class);
-            String sqlField;
-            if (annotation == null || StrUtils.isEmpty(annotation.value())) {
-                sqlField = StrUtils.camelToUnderline(fieldName);
-            } else {
-                sqlField = annotation.value();
+        String instantiatedMethodType = serializedLambda.getInstantiatedMethodType();
+        final String className = instantiatedMethodType.substring(2, instantiatedMethodType.indexOf(";")).replace("/", ".");
+        final String methodName = serializedLambda.getImplMethodName();
+        final String fieldName = PropertyNamer.methodToProperty(methodName);
+        final ClassLoader classLoader = getter.getClass().getClassLoader();
+        String lambdaCacheKey = classLoader.hashCode() + ":" + className + "." + fieldName;
+        return LAMBDA_TO_FIELD_CACHE.computeIfAbsent(lambdaCacheKey, key -> {
+            try {
+                // 通过字段名获取字段
+                Class<?> clazz = ClassUtils.toClassConfident(className, classLoader);
+                Field field = ReflectUtils.getAccessibleField(clazz, fieldName);
+                // 获取字段上的注解
+                Column annotation = field.getAnnotation(Column.class);
+                if (annotation == null || StrUtils.isEmpty(annotation.value())) {
+                    return StrUtils.camelToUnderline(fieldName);
+                } else {
+                    return annotation.value();
+                }
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Failed to infer property name from method '" + methodName + "': " + e.getMessage(), e);
+            } catch (NoSuchFieldException e) {
+                throw new IllegalArgumentException("Field '" + fieldName + "' not found in class '" + className + "'", e);
+            } catch (SecurityException e) {
+                throw new RuntimeException("Security manager blocked reflection access: " + e.getMessage(), e);
+            } catch (Exception e) {
+                throw new RuntimeException("Unexpected error while getting lambda column name: " + e.getMessage(), e);
             }
-            LAMBDA_TO_FIELD_CACHE.put(lambdaCacheKey, sqlField);
-            return sqlField;
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Failed to infer property name from method '" + methodName + "': " + e.getMessage(), e);
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("Lambda implementation class not found: " + implClass.replace("/", "."), e);
-        } catch (NoSuchFieldException e) {
-            throw new IllegalArgumentException("Field '" + fieldName + "' not found in class '" + implClass.replace("/", ".") + "'", e);
-        } catch (SecurityException e) {
-            throw new RuntimeException("Security manager blocked reflection access: " + e.getMessage(), e);
-        } catch (Exception e) {
-            throw new RuntimeException("Unexpected error while getting lambda column name: " + e.getMessage(), e);
-        }
+        });
     }
 
     /**
