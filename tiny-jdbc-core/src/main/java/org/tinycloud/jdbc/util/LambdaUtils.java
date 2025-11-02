@@ -93,40 +93,38 @@ public class LambdaUtils {
      */
     @SuppressWarnings("unchecked")
     public static <T> TypeFunction<T, ?> getLambdaGetter(Class<T> clazz, String prop) {
-        try {
-            // 构建缓存键
-            String cacheKey = clazz.getName() + "." + prop;
-            // 从缓存中获取
-            if (FIELD_TO_LAMBDA_CACHE.containsKey(cacheKey)) {
-                return (TypeFunction<T, ?>) FIELD_TO_LAMBDA_CACHE.get(cacheKey);
+        String cacheKey = clazz.getName() + "." + prop;
+        // 直接通过computeIfAbsent获取或创建，并强制类型转换返回
+        return (TypeFunction<T, ?>) FIELD_TO_LAMBDA_CACHE.computeIfAbsent(cacheKey, key -> {
+            try {
+                // 反射获取Getter方法
+                String methodName = PropertyNamer.propertyToMethod("get", prop);
+                Method readMethod = clazz.getMethod(methodName);
+
+                // 拿到方法句柄
+                MethodHandles.Lookup lookup = MethodHandles.lookup();
+                final MethodHandle methodHandle = lookup.unreflect(readMethod);
+
+                // 创建动态调用链
+                CallSite callSite = LambdaMetafactory.altMetafactory(
+                        lookup,
+                        "apply",
+                        MethodType.methodType(TypeFunction.class),
+                        MethodType.methodType(Object.class, Object.class),
+                        methodHandle,
+                        MethodType.methodType(readMethod.getReturnType(), clazz),
+                        LambdaMetafactory.FLAG_SERIALIZABLE
+                );
+                // 生成lambda实例并返回
+                return (Serializable) callSite.getTarget().invokeExact();
+            } catch (NoSuchMethodException e) {
+                throw new IllegalArgumentException("Class " + clazz.getName() + " does not define a public getter method for field '" + prop + "'", e);
+            } catch (NoSuchFieldException e) {
+                throw new IllegalArgumentException("Field '" + prop + "' does not exist in class " + clazz.getName(), e);
+            } catch (Throwable e) {
+                throw new RuntimeException("Failed to generate lambda expression", e);
             }
-            // 反射获取 Getter 方法
-            String methodName = PropertyNamer.propertyToMethod("get", prop);
-            Method readMethod = clazz.getMethod(methodName);
-            // 拿到方法句柄
-            MethodHandles.Lookup lookup = MethodHandles.lookup();
-            final MethodHandle methodHandle = lookup.unreflect(readMethod);
-            // 创建动态调用链
-            CallSite callSite = LambdaMetafactory.altMetafactory(
-                    lookup,
-                    "apply",
-                    MethodType.methodType(TypeFunction.class),
-                    MethodType.methodType(Object.class, Object.class),
-                    methodHandle,
-                    MethodType.methodType(readMethod.getReturnType(), clazz),
-                    LambdaMetafactory.FLAG_SERIALIZABLE
-            );
-            TypeFunction<T, ?> function = (TypeFunction<T, ?>) callSite.getTarget().invokeExact();
-            // 放入缓存
-            FIELD_TO_LAMBDA_CACHE.put(cacheKey, (Serializable) function);
-            return function;
-        } catch (NoSuchFieldException e) {
-            throw new IllegalArgumentException("Field '" + prop + "' does not exist in class " + clazz.getName(), e);
-        } catch (NoSuchMethodException e) {
-            throw new IllegalArgumentException("Class " + clazz.getName() + " does not define a public getter method for field '" + prop + "'", e);
-        } catch (Throwable e) {
-            throw new RuntimeException("Failed to generate lambda expression", e);
-        }
+        });
     }
 
 }

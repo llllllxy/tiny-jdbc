@@ -78,20 +78,17 @@ public class TableParserUtils {
      * @return 表名字符串
      */
     public static <T> String getTableName(Class<T> clazz) {
-        String tableName = tableNameCache.get(clazz);
-        if (StrUtils.isNotEmpty(tableName)) {
+        return tableNameCache.computeIfAbsent(clazz, key -> {
+            Table tableAnnotation = key.getAnnotation(Table.class);
+            if (tableAnnotation == null) {
+                throw new TinyJdbcException("getTableName " + key.getName() + " no @Table defined");
+            }
+            String tableName = tableAnnotation.value();
+            if (StrUtils.isEmpty(tableName)) {
+                throw new TinyJdbcException("getTableName " + key.getName() + " @Table value cannot be null");
+            }
             return tableName;
-        }
-        Table tableAnnotation = (Table) clazz.getAnnotation(Table.class);
-        if (tableAnnotation == null) {
-            throw new TinyJdbcException("getTableName " + clazz.getName() + "no @Table defined");
-        }
-        tableName = tableAnnotation.value();
-        if (StrUtils.isEmpty(tableName)) {
-            throw new TinyJdbcException("getTableName " + clazz.getName() + "@Table value cannot be null");
-        }
-        tableNameCache.put(clazz, tableName);
-        return tableName;
+        });
     }
 
     /**
@@ -117,32 +114,35 @@ public class TableParserUtils {
      * @return Pair，左数据库字段名列表，右主键字段名
      */
     public static <T> Pair<List<String>, String> getTableColumn(Class<T> clazz) {
-        Pair<List<String>, String> tableColumn = tableColumnCache.get(clazz);
-        if (tableColumn != null) {
-            return tableColumn;
-        }
-        Field[] fields = resolveFields(clazz);
-        String primaryKeyColumn = null;
-        List<String> columnList = new ArrayList<>();
-        for (Field field : fields) {
-            Column columnAnnotation = field.getAnnotation(Column.class);
-            Id idAnnotation = field.getAnnotation(Id.class);
-            String column;
-            if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                column = (StrUtils.camelToUnderline(field.getName()));
-            } else {
-                column = (columnAnnotation.value());
+        return tableColumnCache.computeIfAbsent(clazz, key -> {
+            Field[] fields = resolveFields(key);
+            String primaryKeyColumn = null;
+            List<String> columnList = new ArrayList<>();
+            for (Field field : fields) {
+                Column columnAnnotation = field.getAnnotation(Column.class);
+                Id idAnnotation = field.getAnnotation(Id.class);
+                String column;
+
+                // 解析列名（注解优先，无注解则驼峰转下划线）
+                if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
+                    column = StrUtils.camelToUnderline(field.getName());
+                } else {
+                    column = columnAnnotation.value();
+                }
+                columnList.add(column);
+
+                // 记录主键列
+                if (idAnnotation != null) {
+                    primaryKeyColumn = column;
+                }
             }
-            columnList.add(column);
-            if (idAnnotation != null) {
-                primaryKeyColumn = column;
+
+            // 校验主键是否存在
+            if (StrUtils.isEmpty(primaryKeyColumn)) {
+                throw new TinyJdbcException("Please correctly set the primary key attribute column!");
             }
-        }
-        if (primaryKeyColumn == null || primaryKeyColumn.isEmpty()) {
-            throw new TinyJdbcException("Please correctly set the primary key attribute column!");
-        }
-        tableColumn = new Pair<>(columnList, primaryKeyColumn);
-        tableColumnCache.put(clazz, tableColumn);
-        return tableColumn;
+
+            return new Pair<>(columnList, primaryKeyColumn);
+        });
     }
 }
