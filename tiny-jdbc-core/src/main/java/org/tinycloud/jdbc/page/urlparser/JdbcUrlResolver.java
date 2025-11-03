@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.page.urlparser;
 
 import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
+import org.tinycloud.jdbc.util.ConcurrentHashMapUtils;
 import org.tinycloud.jdbc.util.StrUtils;
 
 import javax.sql.DataSource;
@@ -80,7 +81,7 @@ public class JdbcUrlResolver {
         if (StrUtils.isNotEmpty(datasourceType)) {
             try {
                 // 先从缓存获取，若不存在则创建并缓存
-                JdbcUrlParser<?> parser = PARSER_INSTANCE_CACHE.computeIfAbsent(datasourceType, type -> {
+                JdbcUrlParser<?> parser = ConcurrentHashMapUtils.computeIfAbsent(PARSER_INSTANCE_CACHE, datasourceType, type -> {
                     try {
                         Class<? extends JdbcUrlParser<?>> parserClass;
                         if (PARSER_MAP.containsKey(type)) {

@@ -78,7 +78,7 @@ public class TableParserUtils {
      * @return 表名字符串
      */
     public static <T> String getTableName(Class<T> clazz) {
-        return tableNameCache.computeIfAbsent(clazz, key -> {
+        return ConcurrentHashMapUtils.computeIfAbsent(tableNameCache, clazz, key -> {
             Table tableAnnotation = key.getAnnotation(Table.class);
             if (tableAnnotation == null) {
                 throw new TinyJdbcException("getTableName " + key.getName() + " no @Table defined");
@@ -114,7 +114,7 @@ public class TableParserUtils {
      * @return Pair，左数据库字段名列表，右主键字段名
      */
     public static <T> Pair<List<String>, String> getTableColumn(Class<T> clazz) {
-        return tableColumnCache.computeIfAbsent(clazz, key -> {
+        return ConcurrentHashMapUtils.computeIfAbsent(tableColumnCache, clazz, key -> {
             Field[] fields = resolveFields(key);
             String primaryKeyColumn = null;
             List<String> columnList = new ArrayList<>();

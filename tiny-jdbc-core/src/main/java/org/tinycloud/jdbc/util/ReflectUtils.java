@@ -49,35 +49,33 @@ public class ReflectUtils {
      * @return 字段数组
      */
     public static Field[] getFields(Class<?> clazz) {
-        Field[] result = declaredFieldsCache.get(clazz);
-        if (result != null) {
-            return result;
+        if (Objects.isNull(clazz)) {
+            return EMPTY_FIELD_ARRAY;
         }
-        /* 先获取本类的所有字段 */
-        Field[] fields = clazz.getDeclaredFields();
+        return ConcurrentHashMapUtils.computeIfAbsent(declaredFieldsCache, clazz, key -> {
+            /* 先获取本类的所有字段 */
+            Field[] fields = key.getDeclaredFields();
+            /*  再遍历其父类的所有字段 */
+            List<Field> superFieldList = new ArrayList<>();
+            Class<?> superClazz = key.getSuperclass();
+            while (Object.class != superClazz && superClazz != null) {
+                Field[] superClassFields = getDeclaredFields(superClazz);
+                Collections.addAll(superFieldList, superClassFields);
+                superClazz = superClazz.getSuperclass();
+            }
 
-        /*  再遍历其父类的所有字段 */
-        List<Field> superFieldList = new ArrayList<>();
-        Class<?> superClazz = clazz.getSuperclass();
-        while (Object.class != superClazz && superClazz != null) {
-            Field[] superClassFields = getDeclaredFields(superClazz);
-            Collections.addAll(superFieldList, superClassFields);
-            superClazz = superClazz.getSuperclass();
-        }
+            /* 去除和父类相同名字的属性 */
+            Map<String, Field> fieldMap = excludeOverrideSuperField(fields, superFieldList);
 
-        /* 去除和父类相同名字的属性 */
-        Map<String, Field> fieldMap = excludeOverrideSuperField(fields, superFieldList);
+            /* 去除静态属性和transient关键字修饰的属性 */
+            return fieldMap.values().stream()
+                    /* 过滤静态属性 */
+                    .filter(f -> !Modifier.isStatic(f.getModifiers()))
+                    /* 过滤 transient 关键字修饰的属性 */
+                    .filter(f -> !Modifier.isTransient(f.getModifiers()))
+                    .toArray(Field[]::new);
 
-        /* 去除静态属性和transient关键字修饰的属性 */
-        result = fieldMap.values().stream()
-                /* 过滤静态属性 */
-                .filter(f -> !Modifier.isStatic(f.getModifiers()))
-                /* 过滤 transient 关键字修饰的属性 */
-                .filter(f -> !Modifier.isTransient(f.getModifiers()))
-                .toArray(Field[]::new);
-
-        declaredFieldsCache.put(clazz, result.length == 0 ? EMPTY_FIELD_ARRAY : result);
-        return result;
+        });
     }
 
     /**
@@ -129,31 +127,37 @@ public class ReflectUtils {
      * 根据类对象获取其方法列表
      *
      * @param clazz 类对象
+     * @param defensive 是否返回防御性拷贝（避免外部修改缓存中的数组）
      * @return 字段数组
      */
     public static Method[] getDeclaredMethods(Class<?> clazz, boolean defensive) {
-        Method[] result = declaredMethodsCache.get(clazz);
-        if (result == null) {
+        if (Objects.isNull(clazz)) {
+            return EMPTY_METHOD_ARRAY;
+        }
+        // 调用自定义封装的 computeIfAbsent，原子性处理“缓存查询+计算+存入”
+        Method[] result = ConcurrentHashMapUtils.computeIfAbsent(declaredMethodsCache, clazz, key -> {
             try {
                 Method[] declaredMethods = clazz.getDeclaredMethods();
                 // 获取接口类里的默认方法
                 List<Method> defaultMethods = findDefaultMethodsOnInterfaces(clazz);
-                if (defaultMethods != null) {
-                    result = new Method[declaredMethods.length + defaultMethods.size()];
-                    System.arraycopy(declaredMethods, 0, result, 0, declaredMethods.length);
+                Method[] finalResult = null;
+                if (defaultMethods != null && !defaultMethods.isEmpty()) {
+                    finalResult = new Method[declaredMethods.length + defaultMethods.size()];
+                    System.arraycopy(declaredMethods, 0, finalResult, 0, declaredMethods.length);
                     int index = declaredMethods.length;
                     for (Method defaultMethod : defaultMethods) {
-                        result[index] = defaultMethod;
+                        finalResult[index] = defaultMethod;
                         index++;
                     }
                 } else {
-                    result = declaredMethods;
+                    finalResult = declaredMethods;
                 }
-                declaredMethodsCache.put(clazz, result.length == 0 ? EMPTY_METHOD_ARRAY : result);
+                return finalResult.length == 0 ? EMPTY_METHOD_ARRAY : finalResult;
             } catch (Throwable ex) {
                 throw new IllegalStateException("Failed to introspect Class [" + clazz.getName() + "] from ClassLoader [" + clazz.getClassLoader() + "]", ex);
             }
-        }
+        });
+        // 按需返回防御性拷贝（避免外部修改缓存中的数组）
         return (result.length == 0 || !defensive) ? result : result.clone();
     }
 

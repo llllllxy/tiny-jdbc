@@ -41,7 +41,7 @@ public class LambdaUtils {
         final String fieldName = PropertyNamer.methodToProperty(methodName);
         final ClassLoader classLoader = getter.getClass().getClassLoader();
         String lambdaCacheKey = classLoader.hashCode() + ":" + className + "." + fieldName;
-        return LAMBDA_TO_FIELD_CACHE.computeIfAbsent(lambdaCacheKey, key -> {
+        return ConcurrentHashMapUtils.computeIfAbsent(LAMBDA_TO_FIELD_CACHE, lambdaCacheKey, key -> {
             try {
                 // 通过字段名获取字段
                 Class<?> clazz = ClassUtils.toClassConfident(className, classLoader);
@@ -95,7 +95,7 @@ public class LambdaUtils {
     public static <T> TypeFunction<T, ?> getLambdaGetter(Class<T> clazz, String prop) {
         String cacheKey = clazz.getName() + "." + prop;
         // 直接通过computeIfAbsent获取或创建，并强制类型转换返回
-        return (TypeFunction<T, ?>) FIELD_TO_LAMBDA_CACHE.computeIfAbsent(cacheKey, key -> {
+        return (TypeFunction<T, ?>) ConcurrentHashMapUtils.computeIfAbsent(FIELD_TO_LAMBDA_CACHE, cacheKey, key -> {
             try {
                 // 反射获取Getter方法
                 String methodName = PropertyNamer.propertyToMethod("get", prop);
