@@ -81,9 +81,9 @@ tiny-jdbc:
   # 是否使用运行时数据库类型，默认值为 false，设置为 true 时，会在运行时根据多数据源自动识别对应的分页处理器
   open-runtime-db-type: false
   # 通过metadata获取jdbcurl时是否自动关闭连接，默认为true
-  closeConn: true
+  close-conn: true
   # 数据源连接池类型（配置获取jdbcUrl的方法），允许配置为 hikari,druid,tomcat-jdbc,c3p0,dbcp,beecp,default，默认为空
-  datasourceType: druid
+  datasource-type: druid
 ```
 
 ### 定义Entity实体类
