@@ -60,7 +60,6 @@ public interface ISqlSupport<T, ID extends Serializable> {
         return this.execute(sql, params);
     }
 
-
     /**
      * 查询给定的SQL和参数列表，返回实例列表
      *
@@ -177,37 +176,113 @@ public interface ISqlSupport<T, ID extends Serializable> {
      */
     <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params);
 
+    /**
+     * 使用提供的SQL对象，执行增删改操作
+     *
+     * @param sql 要执行的SQL对象，封装了SQL语句和参数
+     * @return int 受影响的行数
+     */
     int execute(SQL sql);
 
+    /**
+     * 使用提供的SQL对象，执行删除操作
+     *
+     * @param sql 要执行的SQL对象，封装了SQL语句和参数
+     * @return int 受影响的行数
+     */
     default int delete(SQL sql) {
         return this.execute(sql);
     }
 
+    /**
+     * 使用提供的SQL对象，执行更新操作
+     *
+     * @param sql 要执行的SQL对象，封装了SQL语句和参数
+     * @return int 受影响的行数
+     */
     default int update(SQL sql) {
         return this.execute(sql);
     }
 
+    /**
+     * 使用提供的SQL对象，执行插入操作
+     *
+     * @param sql 要执行的SQL对象，封装了SQL语句和参数
+     * @return int 受影响的行数
+     */
     default int insert(SQL sql) {
         return this.execute(sql);
     }
 
+    /**
+     * 使用提供的SQL对象，执行查询操作
+     *
+     * @param sql 要执行的SQL对象，封装了SQL语句和参数
+     * @return List<T> 包含查询结果的列表
+     */
     List<T> select(SQL sql);
 
+    /**
+     * 使用提供的SQL对象，执行查询操作，返回第一条结果
+     *
+     * @param sql 要执行的SQL对象，封装了SQL语句和参数
+     * @return T 包含查询结果的对象
+     */
     default T selectOne(SQL sql) {
         List<T> resultList = this.select(sql);
         return DataAccessUtils.singleResult(resultList);
     }
 
+    /**
+     * 使用提供的SQL对象，执行查询操作，返回指定类型的结果列表
+     *
+     * @param sql   要执行的SQL对象，封装了SQL语句和参数
+     * @param clazz 结果集中数据的类型
+     * @param <F>   结果对象的泛型类型，由 clazz 参数指定
+     * @return 包含指定类型结果数据的列表，如果没有结果则返回空列表
+     */
     <F> List<F> select(SQL sql, Class<F> clazz);
 
+    /**
+     * 使用提供的SQL对象，执行查询操作，返回指定类型的结果列表，返回第一条结果
+     *
+     * @param sql   要执行的SQL对象，封装了SQL语句和参数
+     * @param clazz 结果集中数据的类型
+     * @param <F>   结果对象的泛型类型，由 clazz 参数指定
+     * @return 包含指定类型结果数据的对象，如果没有结果则返回 null
+     */
     default <F> F selectOne(SQL sql, Class<F> clazz) {
         List<F> resultList = this.select(sql, clazz);
         return DataAccessUtils.singleResult(resultList);
     }
 
+    /**
+     * 使用提供的SQL对象，执行分页查询操作
+     *
+     * @param sql  要执行的SQL对象，封装了SQL语句和参数
+     * @param page 分页参数
+     * @return Page<T> 包含分页查询结果的对象
+     */
     Page<T> paginate(SQL sql, Page<T> page);
 
+    /**
+     * 使用提供的SQL对象，执行分页查询操作，返回指定类型的结果列表
+     *
+     * @param sql   要执行的SQL对象，封装了SQL语句和参数
+     * @param clazz 结果集中数据的类型
+     * @param page  分页参数
+     * @param <F>   结果对象的泛型类型，由 clazz 参数指定
+     * @return Page<F> 包含分页查询结果的对象
+     */
     <F> Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page);
 
+    /**
+     * 使用提供的SQL对象，执行分页查询操作，返回指定类型的结果对象
+     *
+     * @param sql   要执行的SQL对象，封装了SQL语句和参数
+     * @param clazz 结果集中数据的类型
+     * @param <F>   结果对象的泛型类型，由 clazz 参数指定
+     * @return F 包含分页查询结果的对象，如果没有结果则返回 null
+     */
     <F> F selectOneObject(SQL sql, Class<F> clazz);
 }
