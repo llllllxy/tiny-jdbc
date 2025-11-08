@@ -5,8 +5,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnSingleCandidate;
+import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -24,6 +28,9 @@ import javax.sql.DataSource;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+@ConditionalOnClass({DataSource.class, JdbcTemplate.class})
+@ConditionalOnSingleCandidate(DataSource.class)
+@AutoConfigureAfter({JdbcTemplateAutoConfiguration.class})
 @Configuration
 @EnableConfigurationProperties(TinyJdbcProperties.class)
 public class TinyJdbcAutoConfiguration implements ApplicationContextAware, InitializingBean {
@@ -66,10 +73,10 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware, Initi
 
     @ConditionalOnMissingBean(IPageHandle.class)
     @Bean
-    public IPageHandle pageHandle(@Autowired DataSource dataSource) {
+    public IPageHandle pageHandle(@Autowired JdbcTemplate jdbcTemplate) {
         DbType dbType = tinyJdbcProperties.getDbType();
         if (dbType == null) {
-            dbType = DbTypeUtils.getDbType(dataSource);
+            dbType = DbTypeUtils.getDbType(jdbcTemplate.getDataSource());
         }
         if (logger.isInfoEnabled()) {
             logger.info("Tiny-Jdbc create bean IPageHandle, dbType: {}.", dbType.getName());
