@@ -41,6 +41,8 @@
     </developers>
 
     <properties>
+        <!-- 项目作者 -->
+        <project.author>llllllxy</project.author>
         <!-- 项目版本 -->
         <revision>1.9.3</revision>
         <!--编译配置-->
@@ -106,6 +108,23 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Implementation-Version>${revision}</Implementation-Version>
+                            <Build-Time>${maven.build.timestamp}</Build-Time>
+                            <Author>${project.author}</Author>
+                        </manifestEntries>
+                    </archive>
                 </configuration>
             </plugin>
             <plugin>
