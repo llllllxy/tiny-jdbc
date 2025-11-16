@@ -29,12 +29,34 @@ public final class CriteriaBuilder {
     }
 
     /**
+     * 获取 QueryCriteria&lt;T&gt;
+     *
+     * @param <T>   实体类泛型
+     * @param clazz 实体类class对象
+     * @return QueryCriteria&lt;T&gt;
+     */
+    public static <T> QueryCriteria<T> query(Class<T> clazz) {
+        return new QueryCriteria<>();
+    }
+
+    /**
      * 获取 LambdaQueryCriteria&lt;T&gt;
      *
      * @param <T> 实体类泛型
      * @return LambdaQueryCriteria&lt;T&gt;
      */
     public static <T> LambdaQueryCriteria<T> lambdaQuery() {
+        return new LambdaQueryCriteria<>();
+    }
+
+    /**
+     * 获取 LambdaQueryCriteria&lt;T&gt;
+     *
+     * @param <T>   实体类泛型
+     * @param clazz 实体类class对象
+     * @return LambdaQueryCriteria&lt;T&gt;
+     */
+    public static <T> LambdaQueryCriteria<T> lambdaQuery(Class<T> clazz) {
         return new LambdaQueryCriteria<>();
     }
 
@@ -49,12 +71,34 @@ public final class CriteriaBuilder {
     }
 
     /**
+     * 获取 UpdateCriteria&lt;T&gt;
+     *
+     * @param <T>   实体类泛型
+     * @param clazz 实体类class对象
+     * @return UpdateCriteria&lt;T&gt;
+     */
+    public static <T> UpdateCriteria<T> update(Class<T> clazz) {
+        return new UpdateCriteria<>();
+    }
+
+    /**
      * 获取 LambdaUpdateCriteria&lt;T&gt;
      *
      * @param <T> 实体类泛型
      * @return LambdaUpdateCriteria&lt;T&gt;
      */
     public static <T> LambdaUpdateCriteria<T> lambdaUpdate() {
+        return new LambdaUpdateCriteria<>();
+    }
+
+    /**
+     * 获取 LambdaUpdateCriteria&lt;T&gt;
+     *
+     * @param <T>   实体类泛型
+     * @param clazz 实体类class对象
+     * @return LambdaUpdateCriteria&lt;T&gt;
+     */
+    public static <T> LambdaUpdateCriteria<T> lambdaUpdate(Class<T> clazz) {
         return new LambdaUpdateCriteria<>();
     }
 }
