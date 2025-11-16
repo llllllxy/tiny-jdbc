@@ -2,7 +2,7 @@ package org.tinycloud.jdbc.sql.condition;
 
 import org.tinycloud.jdbc.sql.enums.JoinType;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,6 +38,6 @@ public class SimpleCondition implements ConditionElement {
 
     @Override
     public List<Object> getParameters() {
-        return Arrays.asList(value);
+        return Collections.singletonList(value);
     }
 }

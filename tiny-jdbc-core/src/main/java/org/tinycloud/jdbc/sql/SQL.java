@@ -12,6 +12,14 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * <p>
+ *     SQL语句构建器
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2025-05-21 14:00
+ */
 public class SQL {
     private final String table;
     private Operation operation;
@@ -612,5 +620,3 @@ public class SQL {
         return sql.toString();
     }
 }
-
-

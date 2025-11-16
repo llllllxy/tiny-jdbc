@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.page;
 
 /**
  * <p>
+ *     Trino数据库分页处理实现类
  * </p>
  *
  * @author liuxingyu01

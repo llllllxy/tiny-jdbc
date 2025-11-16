@@ -2,7 +2,7 @@ package org.tinycloud.jdbc.sql;
 
 /**
  * <p>
- *     排序规则
+ * 排序规则
  * </p>
  *
  * @author liuxingyu01
@@ -10,7 +10,7 @@ package org.tinycloud.jdbc.sql;
  */
 public class OrderBy {
     private String column;
-   private boolean isDesc;
+    private boolean isDesc;
 
     public String getColumn() {
         return column;

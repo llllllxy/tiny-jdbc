@@ -1,8 +1,6 @@
 package org.tinycloud.jdbc.page;
 
 
-import java.util.List;
-
 /**
  * <p>
  * 分页处理结果实体类

@@ -417,7 +417,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         }
         SqlProvider sqlProvider = SqlGenerator.deleteLambdaCriteriaSql(criteria, entityClass);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
-            throw new TinyJdbcException("deleteById parameters cannot be null");
+            throw new TinyJdbcException("delete parameters cannot be null");
         }
         return delete(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
@@ -429,7 +429,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         }
         SqlProvider sqlProvider = SqlGenerator.deleteCriteriaSql(criteria, entityClass);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
-            throw new TinyJdbcException("deleteById parameters cannot be null");
+            throw new TinyJdbcException("delete parameters cannot be null");
         }
         return delete(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }

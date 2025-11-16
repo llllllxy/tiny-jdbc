@@ -1,11 +1,11 @@
 package org.tinycloud.jdbc.page;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * <p>
+ * 分页SQL提供器，用于提供分页查询的SQL语句和参数
  * </p>
  *
  * @author liuxingyu01
