@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 /**
  * <p>
- *     SQL语句构建器
+ * SQL语句构建器
  * </p>
  *
  * @author liuxingyu01
@@ -560,18 +560,13 @@ public class SQL {
         if (this.insertValues.isEmpty()) {
             throw new TinyJdbcException("The INSERT statement requires columns and values to be specified.");
         }
-        StringBuilder sql = new StringBuilder("INSERT INTO ").append(this.table);
-
-        // 构建列名
-        StringJoiner columnsJoiner = new StringJoiner(", ", "(", ")");
-        this.insertValues.keySet().forEach(columnsJoiner::add);
-        sql.append(columnsJoiner);
-
-        // 构建占位符
-        StringJoiner valuesJoiner = new StringJoiner(", ", " VALUES (", ")");
-        this.insertValues.keySet().forEach(col -> valuesJoiner.add("?"));
-        sql.append(valuesJoiner);
-        return sql.toString();
+        // 1. 构建列名：(col1, col2, col3)
+        String columns = this.insertValues.keySet().stream().collect(Collectors.joining(", ", " (", ")"));
+        // 2. 构建占位符：VALUES (?, ?, ?)
+        String placeholders = this.insertValues.keySet().stream().map(col -> "?") // 每个列名对应一个 "?"
+                .collect(Collectors.joining(", ", " VALUES (", ")"));
+        // 3. 拼接完整 SQL
+        return "INSERT INTO " + this.table + columns + placeholders;
     }
 
     /**
@@ -586,20 +581,17 @@ public class SQL {
         if (this.updateValues.isEmpty()) {
             throw new TinyJdbcException("The UPDATE statement requires at least one SET clause.");
         }
-        StringBuilder sql = new StringBuilder("UPDATE ").append(this.table).append(" SET ");
-
-        // 构建 SET 子句
-        StringJoiner setJoiner = new StringJoiner(", ");
-        this.updateValues.forEach((col, val) -> setJoiner.add(col + " = ?"));
-        sql.append(setJoiner);
-
-        // 构建 WHERE 子句
-        if (!this.whereCondition.isEmpty()) {
-            sql.append(" WHERE ").append(this.whereCondition.toSql());
-        } else {
+        // 1. 构建 SET 子句：col1 = ?, col2 = ?, ...
+        String setClause = this.updateValues.keySet().stream()
+                .map(col -> col + " = ?")
+                .collect(Collectors.joining(", "));
+        // 2. 构建 WHERE 子句
+        if (this.whereCondition.isEmpty()) {
             throw new TinyJdbcException("The UPDATE statement requires a WHERE clause.");
         }
-        return sql.toString();
+        String whereClause = " WHERE " + this.whereCondition.toSql();
+        // 3. 拼接完整 SQL
+        return "UPDATE " + this.table + " SET " + setClause + whereClause;
     }
 
     /**

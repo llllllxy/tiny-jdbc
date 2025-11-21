@@ -123,15 +123,21 @@ public class TableParserUtils {
                 Id idAnnotation = field.getAnnotation(Id.class);
                 String column;
 
-                // 解析列名（注解优先，无注解则驼峰转下划线）
-                if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                    column = StrUtils.camelToUnderline(field.getName());
-                } else {
-                    column = columnAnnotation.value();
+                // 1. 优先处理 Column 注解的 exist 属性：exist=false 直接跳过
+                if (columnAnnotation != null && !columnAnnotation.exist()) {
+                    continue;
                 }
+
+                // 2. 解析列名（注解value优先，无注解则驼峰转下划线）
+                if (columnAnnotation != null && StrUtils.isNotEmpty(columnAnnotation.value())) {
+                    column = columnAnnotation.value();
+                } else {
+                    column = StrUtils.camelToUnderline(field.getName());
+                }
+                // 3. 加入字段列表（此时 column 一定是有效数据库字段）
                 columnList.add(column);
 
-                // 记录主键列
+                // 4. 记录主键列（仅当字段存在且有 @Id 注解时）
                 if (idAnnotation != null) {
                     primaryKeyColumn = column;
                 }

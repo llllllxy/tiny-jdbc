@@ -16,4 +16,9 @@ public @interface Column {
      * 数据库字段对应
      */
     String value() default "";
+
+     /**
+     * 是否存在该字段，默认存在
+     */
+    boolean exist() default true;
 }

@@ -48,6 +48,10 @@ public class LambdaUtils {
                 Field field = ReflectUtils.getAccessibleField(clazz, fieldName);
                 // 获取字段上的注解
                 Column annotation = field.getAnnotation(Column.class);
+                // 处理 Column 注解的 exist 属性：exist=false 时直接抛出异常
+                if (annotation != null && !annotation.exist()) {
+                    throw new IllegalArgumentException("Field '" + fieldName + "' marked with @Column(exist=false), which is not allowed to be used in a lambda expression.");
+                }
                 if (annotation == null || StrUtils.isEmpty(annotation.value())) {
                     return StrUtils.camelToUnderline(fieldName);
                 } else {
