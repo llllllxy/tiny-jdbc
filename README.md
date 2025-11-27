@@ -316,6 +316,9 @@ public class UploadFile implements Serializable {
 | `int insert(T entity, boolean ignoreNulls);`                     | 插入entity里的数据，可选择是否忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值 |
 | `Long insertReturnAutoIncrement(T entity);`                      | 插入entity里的数据，将忽略entity里属性值为null的属性，并且返回自增的主键                                                   |
 | `Long insertReturnAutoIncrement(T entity, boolean ignoreNulls);` | 插入entity里的数据，可选择是否忽略entity里值为null的属性，并且返回自增的主键                                                 |
+| `int[] batchInsert(Collection<T> collection);`                     | 批量插入给定的实例集合，默认忽略 null 值，返回数组长度与集合长度相同，每个元素表示对应实例受影响的行数。注意：当忽略 null 值时，所有实例中非 null 的属性列必须一致，否则可能导致插入不正确。 |
+| `int[] batchInsert(Collection<T> collection, boolean ignoreNulls);` | 批量插入给定的实例集合，可选择是否忽略 null 值，返回数组长度与集合长度相同，每个元素表示对应实例受影响的行数。注意：当 ignoreNulls 为 true 时，所有实例中非 null 的属性列必须一致，否则可能导致参数绑定错误或插入不正确。 |
+
 
 ### 更新操作
 
