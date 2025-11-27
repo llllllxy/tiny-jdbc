@@ -459,21 +459,18 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     }
 
     @Override
-    public int[] batchInsert(Collection<T> collection) {
+    public int[] batchInsert(Collection<T> collection, boolean ignoreNulls) {
         if (CollectionUtils.isEmpty(collection)) {
             throw new TinyJdbcException("batchInsert collection cannot be null or empty");
         }
-        List<Object[]> batchArgs = new ArrayList<>();
+        List<Object[]> batchArgs = new ArrayList<>(collection.size());
         String sql = null;
         for (T t : collection) {
-            SqlProvider sqlProvider = SqlGenerator.insertSql(t, true, getJdbcTemplate());
+            SqlProvider sqlProvider = SqlGenerator.insertSql(t, ignoreNulls, getJdbcTemplate());
             if (sql == null || sql.isEmpty()) {
                 sql = sqlProvider.getSql();
             }
             batchArgs.add(sqlProvider.getParameters().toArray());
-        }
-        if (batchArgs.isEmpty()) {
-            throw new TinyJdbcException("batchInsert batchArgs cannot be null");
         }
         return getJdbcTemplate().batchUpdate(sql, batchArgs);
     }
