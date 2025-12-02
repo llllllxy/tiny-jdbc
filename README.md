@@ -58,13 +58,9 @@
 
 ```xml
 <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-jdbc</artifactId>
-</dependency>
-<dependency>
-<groupId>top.lxyccc</groupId>
-<artifactId>tiny-jdbc-boot-starter</artifactId>
-<version>1.9.3</version>
+  <groupId>top.lxyccc</groupId>
+  <artifactId>tiny-jdbc-boot-starter</artifactId>
+  <version>1.9.3</version>
 </dependency>
 ```
 
