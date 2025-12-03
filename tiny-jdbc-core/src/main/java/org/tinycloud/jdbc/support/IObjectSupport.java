@@ -1,12 +1,12 @@
 package org.tinycloud.jdbc.support;
 
-import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
 import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.Page;
+import org.tinycloud.jdbc.util.ArrayUtils;
 import org.tinycloud.jdbc.util.DataAccessUtils;
 
 import java.io.Serializable;
@@ -172,7 +172,7 @@ public interface IObjectSupport<T, ID extends Serializable> {
      */
     @SuppressWarnings("unchecked")
     default int deleteByIds(ID... id) {
-        if (ObjectUtils.isEmpty(id)) {
+        if (ArrayUtils.isEmpty(id)) {
             throw new TinyJdbcException("deleteByIds ids cannot be null or empty");
         }
         List<ID> ids = Arrays.asList(id);
@@ -259,7 +259,7 @@ public interface IObjectSupport<T, ID extends Serializable> {
      */
     @SuppressWarnings("unchecked")
     default List<T> selectByIds(ID... id) {
-        if (ObjectUtils.isEmpty(id)) {
+        if (ArrayUtils.isEmpty(id)) {
             throw new TinyJdbcException("selectByIds ids cannot be null or empty");
         }
         List<ID> ids = Arrays.asList(id);

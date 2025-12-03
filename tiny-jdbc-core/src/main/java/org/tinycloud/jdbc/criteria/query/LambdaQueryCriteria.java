@@ -1,8 +1,8 @@
 package org.tinycloud.jdbc.criteria.query;
 
-import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.criteria.AbstractLambdaCriteria;
 import org.tinycloud.jdbc.criteria.TypeFunction;
+import org.tinycloud.jdbc.util.ArrayUtils;
 
 /**
  * <p>
@@ -22,7 +22,7 @@ public class LambdaQueryCriteria<T> extends AbstractLambdaCriteria<T, LambdaQuer
      */
     @SafeVarargs
     public final LambdaQueryCriteria<T> select(TypeFunction<T, ?>... field) {
-        if (!ObjectUtils.isEmpty(field)) {
+        if (ArrayUtils.isNotEmpty(field)) {
             for (TypeFunction<T, ?> f : field) {
                 String columnName = this.getColumnName(f);
                 this.selectFields.add(columnName);

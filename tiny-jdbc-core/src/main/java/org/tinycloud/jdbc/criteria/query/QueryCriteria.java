@@ -1,7 +1,7 @@
 package org.tinycloud.jdbc.criteria.query;
 
-import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.criteria.AbstractCriteria;
+import org.tinycloud.jdbc.util.ArrayUtils;
 
 import java.util.Arrays;
 
@@ -22,7 +22,7 @@ public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
      * @return 返回当前 QueryCriteria 对象，支持链式调用。
      */
     public final QueryCriteria<T> select(String... field) {
-        if (!ObjectUtils.isEmpty(field)) {
+        if (ArrayUtils.isNotEmpty(field)) {
             this.selectFields.addAll(Arrays.asList(field));
         }
         return this;

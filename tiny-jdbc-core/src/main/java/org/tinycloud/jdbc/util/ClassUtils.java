@@ -1,12 +1,12 @@
 package org.tinycloud.jdbc.util;
 
-import org.springframework.util.Assert;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -76,7 +76,9 @@ public class ClassUtils {
      * @return 如果是代理的class，返回父 class，否则返回自身
      */
     public static Class<?> getUserClass(Class<?> clazz) {
-        Assert.notNull(clazz, "Class must not be null");
+        if (Objects.isNull(clazz)) {
+            throw new TinyJdbcException("Class must not be null");
+        }
         return isProxy(clazz) ? clazz.getSuperclass() : clazz;
     }
 
@@ -89,7 +91,9 @@ public class ClassUtils {
      * @return 返回对象的 user class
      */
     public static Class<?> getUserClass(Object object) {
-        Assert.notNull(object, "Instance must not be null");
+        if (Objects.isNull(object)) {
+            throw new TinyJdbcException("Instance must not be null");
+        }
         return getUserClass(object.getClass());
     }
 
@@ -179,7 +183,9 @@ public class ClassUtils {
      * is defined in the default package
      */
     public static String getPackageName(Class<?> clazz) {
-        Assert.notNull(clazz, "Class must not be null");
+        if (Objects.isNull(clazz)) {
+            throw new TinyJdbcException("Class must not be null");
+        }
         return getPackageName(clazz.getName());
     }
 
@@ -192,7 +198,9 @@ public class ClassUtils {
      * is defined in the default package
      */
     public static String getPackageName(String fqClassName) {
-        Assert.notNull(fqClassName, "Class name must not be null");
+        if (Objects.isNull(fqClassName)) {
+            throw new TinyJdbcException("Class name must not be null");
+        }
         int lastDotIndex = fqClassName.lastIndexOf(".");
         return (lastDotIndex != -1 ? fqClassName.substring(0, lastDotIndex) : "");
     }

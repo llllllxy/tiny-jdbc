@@ -4,8 +4,6 @@ import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
@@ -17,6 +15,7 @@ import org.tinycloud.jdbc.page.PageCheck;
 import org.tinycloud.jdbc.page.PageHandleResult;
 import org.tinycloud.jdbc.sql.SQL;
 import org.tinycloud.jdbc.util.ArrayUtils;
+import org.tinycloud.jdbc.util.CollectionUtils;
 
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
@@ -302,7 +301,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         getJdbcTemplate().update(new PreparedStatementCreator() {
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
                 PreparedStatement ps = con.prepareStatement(sqlProvider.getSql(), PreparedStatement.RETURN_GENERATED_KEYS);
-                if (!ObjectUtils.isEmpty(params)) {
+                if (ArrayUtils.isNotEmpty(params)) {
                     for (int i = 0; i < params.length; i++) {
                         ps.setObject(i + 1, params[i]);
                     }

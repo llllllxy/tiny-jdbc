@@ -1,7 +1,6 @@
 package org.tinycloud.jdbc.support;
 
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.util.ObjectUtils;
 import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Id;
 import org.tinycloud.jdbc.annotation.IdType;
@@ -22,6 +21,7 @@ import org.tinycloud.jdbc.util.tuple.Pair;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -81,7 +81,7 @@ public class SqlGenerator {
             }
 
             // 判断是否忽略null
-            if (ignoreNulls && ObjectUtils.isEmpty(fieldValue)) {
+            if (ignoreNulls && Objects.isNull(fieldValue)) {
                 continue;
             }
             columns.append(column).append(",");
@@ -120,7 +120,7 @@ public class SqlGenerator {
     private static Object processPrimaryKey(Field field, Object fieldValue, String fieldName, Class<?> fieldType,
                                             Id idAnnotation, Object object, JdbcTemplate jdbcTemplate) {
         // 只有用户没有自己设置主键值时，才需要走自动生成的策略
-        if (ObjectUtils.isEmpty(fieldValue)) {
+        if (Objects.isNull(fieldValue)) {
             IdType idType = idAnnotation.idType();
             if (idType == IdType.AUTO_INCREMENT) {
                 // 自增主键：返回 null，外层逻辑会跳过该字段
