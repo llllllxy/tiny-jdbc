@@ -134,7 +134,11 @@ public class SnowflakeId {
         String name = ManagementFactory.getRuntimeMXBean().getName();
         if (name != null && !name.isEmpty()) {
             // GET jvmPid
-            mpId.append(name.split("@")[0]);
+            int pid = Integer.parseInt(name.split("@")[0]);
+            if (pid < 10) { // 疑似容器环境
+                pid = ThreadLocalRandom.current().nextInt(10, 4194304);
+            }
+            mpId.append(pid);
         }
         // MAC + PID 的 hashcode 获取16个低位
         return (mpId.toString().hashCode() & 0xffff) % (maxWorkerId + 1);
