@@ -17,6 +17,11 @@ import java.util.stream.Stream;
 public abstract class Criteria<T> {
 
     /**
+     * 标记下一个条件是否用 OR 连接（默认 AND）
+     */
+    protected boolean nextIsOr;
+
+    /**
      * 查询字段-键
      */
     protected final List<String> selectFields;
@@ -55,6 +60,7 @@ public abstract class Criteria<T> {
      * 构造方法
      */
     public Criteria() {
+        this.nextIsOr = false;
         this.updateFields = new ArrayList<>();
         this.selectFields = new ArrayList<>();
         this.conditions = new ArrayList<>();
@@ -62,6 +68,18 @@ public abstract class Criteria<T> {
         this.whereParameters = new ArrayList<>();
         this.updateParameters = new ArrayList<>();
         this.lastSqls = new ArrayList<>();
+    }
+
+
+    /**
+     * 获取条件前缀（根据 isNextOr 决定是 AND 还是 OR）
+     * 执行后重置 isNextOr 为 false，避免影响后续条件
+     */
+    public String getConditionPrefix() {
+        String prefix = this.nextIsOr ? " OR " : " AND ";
+        // 重置状态，确保下一个条件默认用 AND
+        this.nextIsOr = false;
+        return prefix;
     }
 
     /**
@@ -115,25 +133,27 @@ public abstract class Criteria<T> {
         if (!this.conditions.isEmpty()) {
             sql.append(" WHERE ");
             for (int i = 0; i < this.conditions.size(); i++) {
+                String condition = this.conditions.get(i);
                 if (i == 0) {
-                    if (this.conditions.get(i).startsWith(" OR ")) {
-                        throw new TinyJdbcException("Criteria can not start with a function orXXX!");
+                    if (condition.startsWith(" OR ")) {
+                        throw new TinyJdbcException("Criteria can not start with a function OR!");
                     }
-                    sql.append(this.conditions.get(i).replaceFirst(" AND ", ""));
-                } else {
-                    sql.append(this.conditions.get(i));
+                    if (condition.startsWith(" AND ")) {
+                        condition = condition.substring(5);
+                    }
                 }
+                sql.append(condition);
             }
         }
         if (!this.orderBys.isEmpty()) {
-            sql.append(" ORDER BY ");
-            sql.append(String.join(",", this.orderBys));
+            sql.append(" ORDER BY ").append(String.join(",", this.orderBys));
         }
         if (!this.lastSqls.isEmpty()) {
             sql.append(" ").append(this.lastSqls.get(0));
         }
         return sql.toString();
     }
+
 
     /**
      * 用于构造子条件SQL片段的生成
@@ -145,14 +165,16 @@ public abstract class Criteria<T> {
         if (!this.conditions.isEmpty()) {
             sql.append("(");
             for (int i = 0; i < this.conditions.size(); i++) {
+                String condition = this.conditions.get(i);
                 if (i == 0) {
-                    if (this.conditions.get(i).startsWith(" OR ")) {
-                        throw new TinyJdbcException("Criteria can not start with a function orXXX!");
+                    if (condition.startsWith(" OR ")) {
+                        throw new TinyJdbcException("Criteria can not start with a function OR!");
                     }
-                    sql.append(this.conditions.get(i).replaceFirst(" AND ", ""));
-                } else {
-                    sql.append(this.conditions.get(i));
+                    if (condition.startsWith(" AND ")) {
+                        condition = condition.substring(5);
+                    }
                 }
+                sql.append(condition);
             }
             sql.append(")");
         }
