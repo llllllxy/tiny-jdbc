@@ -60,7 +60,7 @@
 <dependency>
   <groupId>top.lxyccc</groupId>
   <artifactId>tiny-jdbc-boot-starter</artifactId>
-  <version>1.9.3</version>
+  <version>1.9.4</version>
 </dependency>
 ```
 
@@ -370,50 +370,31 @@ public class UploadFile implements Serializable {
 >
 以下方法均有重载whether参数（第一个参数）后的方法，当whether=false时，不执行后面的条件，例如：`eq(boolean whether, String field, R value)`
 
-| 方法             | 说明                    | 普通示例                                       | lambda示例                                                 | 等价SQL                            |
-|----------------|-----------------------|--------------------------------------------|----------------------------------------------------------|----------------------------------|
-| eq             | 等于 =                  | eq("name", "张三")                           | eq(User::getName, "张三")                                  | AND name = '张三'                  |
-| orEq           | 等于 =                  | orEq("name", "张三")                         | orEq(User::getName, "张三")                                | OR name = '张三'                   |
-| notEq          | 不等于 <>                | notEq("name", "张三")                        | notEq(User::getName, "张三")                               | AND name <> '张三'                 |
-| orNotEq        | 不等于 <>                | orNotEq("name", "张三")                      | orNotEq(User::getName, "张三")                             | OR name <> '张三'                  |
-| isNull         | 等于null                | isNull("name")                             | isNull(User::getName)                                    | AND name IS NULL                 |
-| orIsNull       | 等于null                | orIsNull("name")                           | orIsNull(User::getName)                                  | OR name IS NULL                  |
-| isNotNull      | 不等于null               | isNotNull("name")                          | isNotNull(User::getName)                                 | AND name IS NOT NULL             |
-| orIsNotNull    | 不等于null               | orIsNotNull("name")                        | orIsNotNull(User::getName)                               | OR name IS NOT NULL              |
-| lt             | 小于 <                  | lt("name", "张三")                           | lt(User::getName, "张三")                                  | AND name < '张三'                  |
-| orLt           | 小于 <                  | orLt("name", "张三")                         | orLt(User::getName, "张三")                                | OR name < '张三'                   |
-| lte            | 小于等于 <=               | lte("name", "张三")                          | lte(User::getName, "张三")                                 | AND name <= '张三'                 |
-| orLte          | 小于等于 <=               | orLte("name", "张三")                        | orLte(User::getName, "张三")                               | OR name <= '张三'                  |
-| gt             | 大于 >                  | gt("name", "张三")                           | gt(User::getName, "张三")                                  | AND name > '张三'                  | 
-| orGt           | 大于 >                  | orGt("name", "张三")                         | orGt(User::getName, "张三")                                | OR name > '张三'                   |
-| gte            | 大于等于 >=               | gte("name", "张三")                          | gte(User::getName, "张三")                                 | AND name >= '张三'                 |
-| orGte          | 大于等于 >=               | orGte("name", "张三")                        | orGte(User::getName, "张三")                               | OR name >= '张三'                  |
-| in             | SQL里的IN操作             | in("name", {"张三","李四"})                    | in(User::getName, "张三")                                  | AND name IN ('张三','李四')          |
-| orIn           | SQL里的IN操作             | orIn("name", {"张三","李四"})                  | orIn(User::getName, "张三")                                | OR name IN ('张三','李四')           |
-| notIn          | SQL里的IN操作             | notIn("name", "张三")                        | notIn(User::getName, "张三")                               | AND name NOT IN ('张三','李四')      |
-| orNotIn        | SQL里的IN操作             | orNotIn("name", {"张三","李四"})               | orNotIn(User::getName, "张三")                             | OR name NOT IN ('张三','李四')       |
-| between        | NOT BETWEEN 值1 AND 值2 | between("age", 10, 18)                     | between(User::getAge, 10, 18)                            | AND (age BETWEEN 10 AND 18 )     |
-| orBetween      | NOT BETWEEN 值1 AND 值2 | orBetween("age", 10, 18)                   | orBetween(User::getAge, 10, 18)                          | OR (age BETWEEN 10 AND 18 )      |
-| notBetween     | NOT BETWEEN 值1 AND 值2 | notBetween("age", 10, 18)                  | notBetween(User::getAge, 10, 18)                         | AND (age NOT BETWEEN 10 AND 18 ) |
-| orNotBetween   | NOT BETWEEN 值1 AND 值2 | orNotBetween("age", 10, 18)                | orNotBetween(User::getAge, 10, 18)                       | OR (age NOT BETWEEN 10 AND 18 )  |
-| like           | LIKE '%值%'            | like("name", "张三")                         | like(User::getName, "张三")                                | AND name LIKE '%张三%'             |
-| orLike         | LIKE '%值%'            | orLike("name", "张三")                       | orLike(User::getName, "张三")                              | OR name LIKE '%张三%'              |
-| notLike        | NOT LIKE '%值%'        | notLike("name", "张三")                      | notLike(User::getName, "张三")                             | AND name NOT LIKE '%张三%'         |
-| orNotLike      | NOT LIKE '%值%'        | orNotLike("name", "张三")                    | orNotLike(User::getName, "张三")                           | OR name NOT LIKE '%张三%'          |
-| like           | LIKE '%值%'            | like("name", "张三")                         | like(User::getName, "张三")                                | AND name LIKE '%张三%'             |
-| orLike         | LIKE '%值%'            | orLike("name", "张三")                       | orLike(User::getName, "张三")                              | OR name LIKE '%张三%'              |
-| notLike        | NOT LIKE '%值%'        | notLike("name", "张三")                      | notLike(User::getName, "张三")                             | AND name NOT LIKE '%张三%'         |
-| orNotLike      | NOT LIKE '%值%'        | orNotLike("name", "张三")                    | orNotLike(User::getName, "张三")                           | OR name NOT LIKE '%张三%'          |
-| leftLike       | LIKE '%值'             | leftLike("name", "张三")                     | leftLike(User::getName, "张三")                            | AND name LIKE '%张三'              |
-| orLeftLike     | LIKE '%值'             | orLeftLike("name", "张三")                   | orLeftLike(User::getName, "张三")                          | OR name LIKE '%张三'               |
-| notLeftLike    | NOT LIKE '%值'         | notLeftLike("name", "张三")                  | notLeftLike(User::getName, "张三")                         | AND name NOT LIKE '%张三'          |
-| orNotLeftLike  | NOT LIKE '%值'         | orNotLeftLike("name", "张三")                | orNotLeftLike(User::getName, "张三")                       | OR name NOT LIKE '%张三'           |
-| rightLike      | LIKE '值%'             | rightLike("name", "张三")                    | rightLike(User::getName, "张三")                           | AND name LIKE '张三%'              |
-| orRightLike    | LIKE '值%'             | orRightLike("name", "张三")                  | orRightLike(User::getName, "张三")                         | OR name LIKE '张三%'               |
-| notRightLike   | NOT LIKE '值%'         | notRightLike("name", "张三")                 | notRightLike(User::getName, "张三")                        | AND name NOT LIKE '张三%'          |
-| orNotRightLike | NOT LIKE '值%'         | orNotRightLike("name", "张三")               | orNotRightLike(User::getName, "张三")                      | OR name NOT LIKE '张三%'           |
-| or             | OR 嵌套                 | or(i -> i.eq("name", "张三").lt("age", 18))  | or(i -> i.eq(User::getName, "张三").lt(User::getAge, 18))  | OR (name = '张三' AND age < 18)    |
-| and            | AND 嵌套                | and(i -> i.eq("name", "张三").lt("age", 18)) | and(i -> i.eq(User::getName, "张三").lt(User::getAge, 18)) | AND (name = '张三' AND age < 18)   |
+| 方法           | 说明                    | 普通示例                                       | lambda示例                                                 | 等价SQL                            |
+|--------------|-----------------------|--------------------------------------------|----------------------------------------------------------|----------------------------------|
+| eq           | 等于 =                  | eq("name", "张三")                           | eq(User::getName, "张三")                                  | AND name = '张三'                  |
+| notEq        | 不等于 <>                | notEq("name", "张三")                        | notEq(User::getName, "张三")                               | AND name <> '张三'                 |
+| isNull       | 等于null                | isNull("name")                             | isNull(User::getName)                                    | AND name IS NULL                 |
+| isNotNull    | 不等于null               | isNotNull("name")                          | isNotNull(User::getName)                                 | AND name IS NOT NULL             |
+| lt           | 小于 <                  | lt("name", "张三")                           | lt(User::getName, "张三")                                  | AND name < '张三'                  |
+| lte          | 小于等于 <=               | lte("name", "张三")                          | lte(User::getName, "张三")                                 | AND name <= '张三'                 |
+| gt           | 大于 >                  | gt("name", "张三")                           | gt(User::getName, "张三")                                  | AND name > '张三'                  | 
+| gte          | 大于等于 >=               | gte("name", "张三")                          | gte(User::getName, "张三")                                 | AND name >= '张三'                 |
+| in           | SQL里的IN操作             | in("name", {"张三","李四"})                    | in(User::getName, "张三")                                  | AND name IN ('张三','李四')          |
+| notIn        | SQL里的IN操作             | notIn("name", "张三")                        | notIn(User::getName, "张三")                               | AND name NOT IN ('张三','李四')      |
+| between      | NOT BETWEEN 值1 AND 值2 | between("age", 10, 18)                     | between(User::getAge, 10, 18)                            | AND (age BETWEEN 10 AND 18 )     |
+| notBetween   | NOT BETWEEN 值1 AND 值2 | notBetween("age", 10, 18)                  | notBetween(User::getAge, 10, 18)                         | AND (age NOT BETWEEN 10 AND 18 ) |
+| like         | LIKE '%值%'            | like("name", "张三")                         | like(User::getName, "张三")                                | AND name LIKE '%张三%'             |
+| notLike      | NOT LIKE '%值%'        | notLike("name", "张三")                      | notLike(User::getName, "张三")                             | AND name NOT LIKE '%张三%'         |
+| like         | LIKE '%值%'            | like("name", "张三")                         | like(User::getName, "张三")                                | AND name LIKE '%张三%'             |
+| notLike      | NOT LIKE '%值%'        | notLike("name", "张三")                      | notLike(User::getName, "张三")                             | AND name NOT LIKE '%张三%'         |
+| leftLike     | LIKE '%值'             | leftLike("name", "张三")                     | leftLike(User::getName, "张三")                            | AND name LIKE '%张三'              |
+| notLeftLike  | NOT LIKE '%值'         | notLeftLike("name", "张三")                  | notLeftLike(User::getName, "张三")                         | AND name NOT LIKE '%张三'          |
+| rightLike    | LIKE '值%'             | rightLike("name", "张三")                    | rightLike(User::getName, "张三")                           | AND name LIKE '张三%'              |
+| notRightLike | NOT LIKE '值%'         | notRightLike("name", "张三")                 | notRightLike(User::getName, "张三")                        | AND name NOT LIKE '张三%'          |
+| or()         | 改变下一个查询条件的连接方式为 OR    | or().eq("name", "张三")              | or().eq(User::getName, "张三")                        | OR name NOT LIKE '张三%'           |
+| or(Consumer consumer)       | OR 嵌套条件               | or(i -> i.eq("name", "张三").lt("age", 18))  | or(i -> i.eq(User::getName, "张三").lt(User::getAge, 18))  | OR (name = '张三' AND age < 18)    |
+| and(Consumer consumer)      | AND 嵌套条件              | and(i -> i.eq("name", "张三").lt("age", 18)) | and(i -> i.eq(User::getName, "张三").lt(User::getAge, 18)) | AND (name = '张三' AND age < 18)   |
 
 #### 查询构造器(QueryCriteria & LambdaQueryCriteria)
 
