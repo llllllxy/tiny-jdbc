@@ -1,5 +1,7 @@
 package org.tinycloud.jdbc.id;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.util.LocalHostUtils;
 
@@ -14,6 +16,7 @@ import java.util.UUID;
  * @since 2023-07-26 15:11:53
  */
 public class IdUtils {
+    private static final Logger logger = LoggerFactory.getLogger(IdUtils.class);
 
     /**
      * 私有构造函数，防止外部实例化
@@ -26,7 +29,7 @@ public class IdUtils {
      * 特点：1. 懒加载（仅在首次调用时初始化） 2. 线程安全（JVM保证类加载过程线程安全）
      */
     private static class InstanceHolder {
-        private static final SnowflakeId INSTANCE;
+        private static SnowflakeId INSTANCE;
 
         static {
             // 根据配置初始化雪花ID生成器单例
@@ -36,10 +39,20 @@ public class IdUtils {
                 if (provider != null && provider.getDatacenterId() != null && provider.getWorkerId() != null) {
                     INSTANCE = new SnowflakeId(provider.getWorkerId(), provider.getDatacenterId());
                 } else {
-                    INSTANCE = new SnowflakeId(LocalHostUtils.getInetAddress());
+                    try {
+                        INSTANCE = new SnowflakeId(LocalHostUtils.getInetAddress());
+                    } catch (Exception e) {
+                        logger.warn("Unable to obtain correct IP address information, the machine ID and serial number of the fixed machine will be used to generate the primary key.");
+                        INSTANCE = new SnowflakeId(1L, 1L);
+                    }
                 }
             } else {
-                INSTANCE = new SnowflakeId(LocalHostUtils.getInetAddress());
+                try {
+                    INSTANCE = new SnowflakeId(LocalHostUtils.getInetAddress());
+                } catch (Exception e) {
+                    logger.warn("Unable to obtain correct IP address information, the machine ID and serial number of the fixed machine will be used to generate the primary key.");
+                    INSTANCE = new SnowflakeId(1L, 1L);
+                }
             }
         }
     }
