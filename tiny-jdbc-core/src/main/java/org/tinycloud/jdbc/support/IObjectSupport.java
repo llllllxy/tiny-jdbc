@@ -26,7 +26,7 @@ import java.util.List;
  **/
 public interface IObjectSupport<T, ID extends Serializable> {
     /**
-     * 持久化插入给定的实例（默认忽略null值）
+     * 持久化插入给定的实例（默认忽略null值，仅插入非空字段）
      *
      * @param entity 实例
      * @return int 受影响的行数
@@ -43,7 +43,7 @@ public interface IObjectSupport<T, ID extends Serializable> {
     int insert(T entity, boolean ignoreNulls);
 
     /**
-     * 持久化插入给定的实例，并且返回自增主键（默认忽略null值）
+     * 持久化插入给定的实例，并且返回自增主键（默认忽略null值，仅插入非空字段）
      *
      * @param entity 实例
      * @return Integer 返回主键
@@ -60,7 +60,7 @@ public interface IObjectSupport<T, ID extends Serializable> {
     Long insertReturnAutoIncrement(T entity, boolean ignoreNulls);
 
     /**
-     * 持久化更新给定的实例（默认忽略null值），根据主键值更新
+     * 持久化更新给定的实例（默认忽略null值，仅更新非空字段），根据主键值更新
      *
      * @param entity 实例
      * @return int 受影响的行数
@@ -77,32 +77,38 @@ public interface IObjectSupport<T, ID extends Serializable> {
     int updateById(T entity, boolean ignoreNulls);
 
     /**
-     * 持久化更新给定的实例（默认忽略null值）
+     * 持久化更新给定的实例，实例出更新内容，条件构造器出条件
      *
-     * @param criteria 条件构造器
+     * @param entity      实例
+     * @param ignoreNulls 是否忽略null值，true忽略，false不忽略
+     * @param criteria    条件构造器
      * @return int 受影响的行数
      */
     int update(T entity, boolean ignoreNulls, UpdateCriteria<T> criteria);
 
     /**
-     * 持久化更新给定的实例（默认忽略null值）
+     * 持久化更新给定的实例，实例出更新内容，条件构造器出条件
      *
+     * @param entity         实例
+     * @param ignoreNulls    是否忽略null值，true忽略，false不忽略
      * @param lambdaCriteria 条件构造器(lambda版)
      * @return int 受影响的行数
      */
     int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria<T> lambdaCriteria);
 
     /**
-     * 持久化更新给定的实例（默认忽略null值）
+     * 持久化更新给定的实例，实例出更新内容，条件构造器出条件（默认忽略null值，仅更新非空字段）
      *
+     * @param entity   实例
      * @param criteria 条件构造器
      * @return int 受影响的行数
      */
     int update(T entity, UpdateCriteria<T> criteria);
 
     /**
-     * 持久化更新给定的实例（默认忽略null值）
+     * 持久化更新给定的实例，实例出更新内容，条件构造器出条件（默认忽略null值，仅更新非空字段）
      *
+     * @param entity         实例
      * @param lambdaCriteria 条件构造器(lambda版)
      * @return int 受影响的行数
      */
