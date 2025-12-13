@@ -4,11 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.tinycloud.jdbc.config.GlobalConfig;
+import org.tinycloud.jdbc.interceptor.SqlInterceptor;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.PageHandleFactory;
 import org.tinycloud.jdbc.support.AbstractSqlSupport;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -37,6 +39,9 @@ public class BaseDao<T, ID extends Serializable> extends AbstractSqlSupport<T, I
     @Autowired
     private IPageHandle pageHandle;
 
+    @Autowired(required = false)
+    private List<SqlInterceptor> sqlInterceptors;
+
     /**
      * 获取 JdbcTemplate 实例
      *
@@ -59,6 +64,15 @@ public class BaseDao<T, ID extends Serializable> extends AbstractSqlSupport<T, I
                 : PageHandleFactory.getDynamicPageHandle(this.getJdbcTemplate());
     }
 
+    /**
+     * 获取 SQL 拦截器列表
+     *
+     * @return 当前类中注入的 SQLInterceptor 实例列表
+     */
+    @Override
+    protected List<SqlInterceptor> getSqlInterceptors() {
+        return this.sqlInterceptors;
+    }
 
     /**
      * 获取 NamedParameterJdbcTemplate 实例

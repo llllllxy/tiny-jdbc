@@ -19,13 +19,11 @@ import java.util.Map;
 public interface ISqlSupport<T, ID extends Serializable> {
 
     /**
-     * 使用提供的SQL语句和提供的参数，执行增删改
+     * 使用提供的SQL语句和提供的参数，执行 DDL 语句（CREATE / ALTER / DROP / TRUNCATE 等）
      *
-     * @param sql    要执行的SQL
-     * @param params 要绑定到SQL的参数
-     * @return int 受影响的行数
+     * @param sql 要执行的SQL
      */
-    int execute(String sql, Object... params);
+    void execute(String sql);
 
     /**
      * 使用提供的SQL语句和提供的参数，执行删
@@ -35,7 +33,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @return int 受影响的行数
      */
     default int delete(String sql, final Object... params) {
-        return this.execute(sql, params);
+        return this.update(sql, params);
     }
 
     /**
@@ -45,9 +43,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param params 要绑定到SQL的参数
      * @return int 受影响的行数
      */
-    default int update(String sql, final Object... params) {
-        return this.execute(sql, params);
-    }
+    int update(String sql, final Object... params);
 
     /**
      * 使用提供的SQL语句和提供的参数，执行增
@@ -57,7 +53,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @return int 受影响的行数
      */
     default int insert(String sql, final Object... params) {
-        return this.execute(sql, params);
+        return this.update(sql, params);
     }
 
     /**
@@ -177,21 +173,13 @@ public interface ISqlSupport<T, ID extends Serializable> {
     <F> Page<F> paginate(String sql, Class<F> clazz, Page<F> page, final Object... params);
 
     /**
-     * 使用提供的SQL对象，执行增删改操作
-     *
-     * @param sql 要执行的SQL对象，封装了SQL语句和参数
-     * @return int 受影响的行数
-     */
-    int execute(SQL sql);
-
-    /**
      * 使用提供的SQL对象，执行删除操作
      *
      * @param sql 要执行的SQL对象，封装了SQL语句和参数
      * @return int 受影响的行数
      */
     default int delete(SQL sql) {
-        return this.execute(sql);
+        return this.update(sql);
     }
 
     /**
@@ -200,9 +188,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param sql 要执行的SQL对象，封装了SQL语句和参数
      * @return int 受影响的行数
      */
-    default int update(SQL sql) {
-        return this.execute(sql);
-    }
+    int update(SQL sql);
 
     /**
      * 使用提供的SQL对象，执行插入操作
@@ -211,7 +197,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @return int 受影响的行数
      */
     default int insert(SQL sql) {
-        return this.execute(sql);
+        return this.update(sql);
     }
 
     /**

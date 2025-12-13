@@ -69,7 +69,9 @@ public class PageHandleFactory {
         } else if (dbType == DbType.GAUSS_DB) {
             pageHandle = new GaussDBPageHandleImpl();
         } else {
-            logger.warn("{} database not supported, default to PostgreSQL Implements", dbType.getName());
+            if (logger.isWarnEnabled()) {
+                logger.warn("{} database not supported, default to PostgreSQL Implements", dbType.getName());
+            }
             pageHandle = new PostgreSqlPageHandleImpl();
         }
         return pageHandle;

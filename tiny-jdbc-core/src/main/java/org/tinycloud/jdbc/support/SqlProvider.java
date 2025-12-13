@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc.support;
 
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -21,6 +22,11 @@ public class SqlProvider {
      */
     private List<Object> parameters;
 
+    /**
+     * 主键字段
+     */
+    private Field autoIncrementPrimaryKeyField;
+
     public String getSql() {
         return sql;
     }
@@ -35,6 +41,14 @@ public class SqlProvider {
 
     public void setParameters(List<Object> parameters) {
         this.parameters = parameters;
+    }
+
+    public Field getAutoIncrementPrimaryKeyField() {
+        return autoIncrementPrimaryKeyField;
+    }
+
+    public void setAutoIncrementPrimaryKeyField(Field autoIncrementPrimaryKeyField) {
+        this.autoIncrementPrimaryKeyField = autoIncrementPrimaryKeyField;
     }
 
     public static SqlProvider create(String sql, List<Object> parameters) {

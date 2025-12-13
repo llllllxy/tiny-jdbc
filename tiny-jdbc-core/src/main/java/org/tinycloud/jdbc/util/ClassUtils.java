@@ -147,10 +147,13 @@ public class ClassUtils {
     }
 
     /**
+     * <p>
+     * 将全类名转换为 Class 对象
+     * </p>
+     *
      * @param name        全类名
      * @param classLoader 类加载器
      * @return Class信息
-     * @since 3.4.3
      */
     public static Class<?> toClassConfident(String name, ClassLoader classLoader) {
         try {
@@ -219,7 +222,6 @@ public class ClassUtils {
      * ClassLoader isn't accessible)
      * @see Thread#getContextClassLoader()
      * @see ClassLoader#getSystemClassLoader()
-     * @since 3.3.2
      */
     @Deprecated
     public static ClassLoader getDefaultClassLoader() {

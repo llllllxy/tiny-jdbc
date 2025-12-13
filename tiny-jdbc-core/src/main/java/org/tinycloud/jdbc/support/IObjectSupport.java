@@ -43,23 +43,6 @@ public interface IObjectSupport<T, ID extends Serializable> {
     int insert(T entity, boolean ignoreNulls);
 
     /**
-     * 持久化插入给定的实例，并且返回自增主键（默认忽略null值，仅插入非空字段）
-     *
-     * @param entity 实例
-     * @return Integer 返回主键
-     */
-    Long insertReturnAutoIncrement(T entity);
-
-    /**
-     * 持久化插入给定的实例，并且返回自增主键
-     *
-     * @param entity      实例
-     * @param ignoreNulls 是否忽略null值，true忽略，false不忽略
-     * @return Integer 返回主键
-     */
-    Long insertReturnAutoIncrement(T entity, boolean ignoreNulls);
-
-    /**
      * 持久化更新给定的实例（默认忽略null值，仅更新非空字段），根据主键值更新
      *
      * @param entity 实例
@@ -189,9 +172,8 @@ public interface IObjectSupport<T, ID extends Serializable> {
      * 清空表
      * truncate table操作的返回值是0
      *
-     * @return 0
      */
-    int truncate();
+    void truncate();
 
     /**
      * 批量持久化插入给定的实例集合。

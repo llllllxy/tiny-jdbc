@@ -46,6 +46,7 @@ public class SqlGenerator {
 
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
+        SqlProvider sqlProvider = new SqlProvider();
 
         StringBuilder columns = new StringBuilder();
         StringBuilder values = new StringBuilder();
@@ -76,6 +77,8 @@ public class SqlGenerator {
                 fieldValue = processPrimaryKey(field, fieldValue, fieldName, fieldType, idAnnotation, object, jdbcTemplate);
                 // 为自增主键时，返回 null，此时跳过该字段（无需加入 SQL）
                 if (fieldValue == null) {
+                    // 自增主键：跳过列/值，但保存 Field 到 SqlProvider，后续处理时需要使用
+                    sqlProvider.setAutoIncrementPrimaryKeyField(field);
                     continue;
                 }
             }
@@ -98,10 +101,9 @@ public class SqlGenerator {
         sql.append(" (").append(tableColumns).append(")");
         sql.append(" VALUES (").append(tableValues).append(")");
 
-        SqlProvider so = new SqlProvider();
-        so.setSql(sql.toString());
-        so.setParameters(parameters);
-        return so;
+        sqlProvider.setSql(sql.toString());
+        sqlProvider.setParameters(parameters);
+        return sqlProvider;
     }
 
 
