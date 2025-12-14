@@ -94,6 +94,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     /**
      * 私有工具方法：执行查询，返回指定类型的列表
      */
+    @SuppressWarnings("unchecked")
     private <F> List<F> doQuery(String sql, RowMapper<F> rowMapper, Object... params) {
         SqlInvocation invocation = new SqlInvocation(sql, params, SqlType.QUERY);
         JdbcTemplate jdbcTemplate = this.getJdbcTemplate();
@@ -105,6 +106,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     /**
      * 私有工具方法：执行查询，返回Map列表
      */
+    @SuppressWarnings("unchecked")
     private List<Map<String, Object>> doQueryForList(String sql, Object... params) {
         SqlInvocation invocation = new SqlInvocation(sql, params, SqlType.QUERY);
         JdbcTemplate jdbcTemplate = this.getJdbcTemplate();
@@ -116,6 +118,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     /**
      * 私有工具方法：执行查询，返回单个对象
      */
+    @SuppressWarnings("unchecked")
     private <F> F doQueryForObject(String sql, Class<F> clazz, Object... params) {
         SqlInvocation invocation = new SqlInvocation(sql, params, SqlType.QUERY);
         JdbcTemplate jdbcTemplate = this.getJdbcTemplate();
