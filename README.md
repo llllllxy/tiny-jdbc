@@ -60,7 +60,7 @@
 <dependency>
   <groupId>top.lxyccc</groupId>
   <artifactId>tiny-jdbc-boot-starter</artifactId>
-  <version>1.9.4</version>
+  <version>1.9.5</version>
 </dependency>
 ```
 
@@ -78,8 +78,10 @@ tiny-jdbc:
   open-runtime-db-type: false
   # 通过metadata获取jdbcurl时是否自动关闭连接，默认为true
   close-conn: true
-  # 数据源连接池类型（配置获取jdbcUrl的方法），允许配置为 hikari,druid,tomcat-jdbc,c3p0,dbcp,beecp,default，默认为空
+  # 数据源连接池类型（配置获取jdbcUrl的方法），允许配置为 hikari,druid,tomcat-jdbc,c3p0,dbcp,beecp,default，默认空
   datasource-type: druid
+  # 是否开启sql统计，默认false
+  sql-stat-enabled: false
 ```
 
 ### 定义Entity实体类
@@ -310,8 +312,6 @@ public class UploadFile implements Serializable {
 | `int insert(String sql, Object... params);`                      | 根据提供的sql语句和提供的参数，执行插入                                                                          |
 | `int insert(T entity);`                                          | 插入entity里的数据，忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值      |
 | `int insert(T entity, boolean ignoreNulls);`                     | 插入entity里的数据，可选择是否忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值 |
-| `Long insertReturnAutoIncrement(T entity);`                      | 插入entity里的数据，将忽略entity里属性值为null的属性，并且返回自增的主键                                                   |
-| `Long insertReturnAutoIncrement(T entity, boolean ignoreNulls);` | 插入entity里的数据，可选择是否忽略entity里值为null的属性，并且返回自增的主键                                                 |
 | `int[] batchInsert(Collection<T> collection);`                     | 批量插入给定的实例集合，默认忽略 null 值，返回数组长度与集合长度相同，每个元素表示对应实例受影响的行数。注意：当忽略 null 值时，所有实例中非 null 的属性列必须一致，否则可能导致插入不正确。 |
 | `int[] batchInsert(Collection<T> collection, boolean ignoreNulls);` | 批量插入给定的实例集合，可选择是否忽略 null 值，返回数组长度与集合长度相同，每个元素表示对应实例受影响的行数。注意：当 ignoreNulls 为 true 时，所有实例中非 null 的属性列必须一致，否则可能导致参数绑定错误或插入不正确。 |
 
@@ -342,20 +342,28 @@ public class UploadFile implements Serializable {
 | `int delete(UpdateCriteria<T> criteria);`       | 根据条件构造器，将作为where参数                            |
 | `int delete(LambdaUpdateCriteria<T> criteria);` | 根据条件构造器（lambda），将作为where参数                    |
 
+### DDL操作
+
+| 方法                                         | 说明                                                             |
+|--------------------------------------------|----------------------------------------------------------------|
+| `void execute(String sql);`     | 使用提供的SQL语句，执行 DDL 操作（CREATE / ALTER / DROP / TRUNCATE 等） |
+| `void truncate();`                      | 清空表                             |
+
+
 ### 使用SQL构造器进行操作（`1.8.2`版本新增）
 
-| 方法                                                         | 说明                                                |
-|------------------------------------------------------------|---------------------------------------------------|
-| `int execute(SQL sql);`                                    | 根据提供的SQL构造器，执行删除、新增、或更新操作                         |
-| `int delete(SQL sql);`                                     | 根据提供的SQL构造器，执行删除操作                                |
-| `int update(SQL sql);`                                     | 根据提供的SQL构造器，执行更新操作                                |
-| `int insert(SQL sql);`                                     | 根据提供的SQL构造器，执行新增操作                                |
-| `<F> List<F> select(String SQL, Class<F> classz);`         | 根据给定的SQL构造器和实体类型数，查询数据库并返回实体类对象列表                 |
-| `List<T> select(SQL sql)`                                  | 根据给定的SQL构造器，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型    |
-| `Page<T> paginate(SQL sql, Page<T> page);`                 | 根据给定的SQL构造器，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型    |
+| 方法                                                         | 说明                                               |
+|------------------------------------------------------------|--------------------------------------------------|
+| `int delete(SQL sql);`                                     | 根据提供的SQL构造器，执行删除操作                               |
+| `int update(SQL sql);`                                     | 根据提供的SQL构造器，执行更新操作                               |
+| `int insert(SQL sql);`                                     | 根据提供的SQL构造器，执行新增操作                               |
+| `<F> List<F> select(String SQL, Class<F> classz);`         | 根据给定的SQL构造器和实体类型数，查询数据库并返回实体类对象列表                |
+| `List<T> select(SQL sql)`                                  | 根据给定的SQL构造器，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型   |
+| `Page<T> paginate(SQL sql, Page<T> page);`                 | 根据给定的SQL构造器，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型   |
 | `Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page);` | 根据给定的SQL构造器，执行分页查询，返回Page对象，类型使用的Class<F>传入的自定义类型 |
-| `T selectOne(SQL sql);`                                    | 根据给定的SQL构造器，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型     |
-| `<F> F selectOne(SQL sql, Class<F> clazz);`                | 根据给定的SQL构造器，查询数据并返回一个实体类对象，类型使用的Class<F>传入的自定义类型  |
+| `T selectOne(SQL sql);`                                    | 根据给定的SQL构造器，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型    |
+| `<F> F selectOne(SQL sql, Class<F> clazz);`                | 根据给定的SQL构造器，查询数据并返回一个实体类对象，类型使用的Class<F>传入的自定义类型 |
+| `<F> F selectOneObject(SQL sql, Class<F> clazz);`                | 根据给定的SQL构造器，查询数据并返回单个结果对象，类型使用的Class<F>传入的自定义类型  |
 
 ## 5、条件构造器（Criteria）
 
@@ -558,6 +566,7 @@ public IdGeneratorInterface idGenerator() {
 }
 ```
 
+
 ## 8、自定义雪花ID算法数据中心标识和机器标识
 
 需要实现 SnowflakeConfigInterface 接口，并且声明为 Bean 供 Spring 扫描注入
@@ -662,7 +671,36 @@ public class OtherDao {
 }
 ```
 
-## 10、一些使用示例
+
+## 10、拦截器机制
+提供了拦截器机制，用于在执行 SQL 语句前后进行自定义操作。
+
+使用示例：
+```java
+@Component
+public class StatInterceptor implements SqlInterceptor {
+  private static final Logger log = LoggerFactory.getLogger(StatInterceptor.class);
+
+  @Override
+  public void before(SqlInvocation invocation, JdbcTemplate jdbcTemplate) {
+    log.info("执行SQL开始时间：{}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")));
+    log.info("原始SQL：{}", invocation.getSql());
+    log.info("原始SQL参数：{}", Arrays.toString(invocation.getArgs()));
+    log.info("完整SQL：{}", SqlUtils.replaceSqlParams(invocation.getSql(), invocation.getArgs()));
+    invocation.putMetadata("startTime", LocalDateTime.now());
+  }
+
+  @Override
+  public Object after(Object result, SqlInvocation invocation, JdbcTemplate jdbcTemplate) {
+    log.info("执行SQL结束时间：{}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")));
+    LocalDateTime startTime = (LocalDateTime) invocation.getMetadata("startTime");
+    log.info("执行SQL耗时：{}毫秒", Duration.between(startTime, LocalDateTime.now()).toMillis());
+    return result;
+  }
+}
+```
+
+## 11、一些使用示例
 
 1. 创建 ProjectInfoDao
 
@@ -898,13 +936,13 @@ UpdateCriteria<TProjectInfo> criteria = new UpdateCriteria<>().eq("id", 1L);
 int result = baseDao.delete(criteria);
 ``` 
 
-## 11、安全使用说明
+## 12、安全使用说明
 
 使用`QueryCriteria`和`UpdateCriteria`时应避免前端传入字段名，防止`SQL注入`的风险；
 如若必须使用由前端传入的动态内容，如使用QueryCriteria.orderBy("任意前端传入字段")
 进行动态排序，推荐使用工具类 `SqlInjectionUtils.check(内容)` 先行验证字符串是否存在 `SQL注入`， 存在则拒绝操作。
 
-## 12、SQL日志打印分析
+## 13、SQL日志打印分析
 
 **该功能依赖 p6spy 组件，需进行配置后方可使用**
 
@@ -919,7 +957,6 @@ int result = baseDao.delete(criteria);
 1. 引入 `p6spy` 依赖
 
 ```xml
-
 <dependency>
     <groupId>p6spy</groupId>
     <artifactId>p6spy</artifactId>
@@ -1168,6 +1205,6 @@ logMessageFormat=org.tinycloud.jdbc.p6spy.P6SpyLogger
 #outagedetectioninterval=30
 ```
 
-## 13、许可证
+## 14、许可证
 
 [Apache License 2.0](https://github.com/llllllxy/tiny-jdbc/blob/master/LICENSE) 免费用于个人和商业，请放心使用

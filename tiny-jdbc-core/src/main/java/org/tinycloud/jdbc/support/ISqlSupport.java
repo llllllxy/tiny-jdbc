@@ -263,7 +263,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
     <F> Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page);
 
     /**
-     * 使用提供的SQL对象，执行分页查询操作，返回指定类型的结果对象
+     * 使用提供的SQL对象，执行 SQL 查询，返回单个结果对象
      *
      * @param sql   要执行的SQL对象，封装了SQL语句和参数
      * @param clazz 结果集中数据的类型
