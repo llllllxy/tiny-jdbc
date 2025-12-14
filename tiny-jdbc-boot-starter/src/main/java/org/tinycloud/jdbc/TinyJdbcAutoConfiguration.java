@@ -6,10 +6,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnSingleCandidate;
+import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -20,7 +17,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.SnowflakeConfigInterface;
-import org.tinycloud.jdbc.page.*;
+import org.tinycloud.jdbc.interceptor.SqlInterceptor;
+import org.tinycloud.jdbc.interceptor.StatInterceptor;
+import org.tinycloud.jdbc.page.IPageHandle;
+import org.tinycloud.jdbc.page.PageHandleFactory;
 import org.tinycloud.jdbc.util.DbType;
 import org.tinycloud.jdbc.util.DbTypeUtils;
 import org.tinycloud.jdbc.util.TinyJdbcVersion;
@@ -94,6 +94,15 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware, Initi
             logger.info("Tiny-Jdbc create bean JdbcTemplateHelper.");
         }
         return new JdbcTemplateHelper(jdbcTemplate, pageHandle);
+    }
+
+    @ConditionalOnProperty(name = "tiny-jdbc.sql-stat-enabled", havingValue = "true", matchIfMissing = false)
+    @Bean
+    public SqlInterceptor statInterceptor() {
+        if (logger.isInfoEnabled()) {
+            logger.info("Tiny-Jdbc create bean StatInterceptor.");
+        }
+        return new StatInterceptor();
     }
 
     /**
