@@ -29,31 +29,37 @@ public class IdUtils {
      * 特点：1. 懒加载（仅在首次调用时初始化） 2. 线程安全（JVM保证类加载过程线程安全）
      */
     private static class InstanceHolder {
-        private static SnowflakeId INSTANCE;
+        private static final SnowflakeId INSTANCE;
 
         static {
-            // 根据配置初始化雪花ID生成器单例
+            SnowflakeId instance;
+            // 根据配置初始化雪花ID生成器单例，配置必须在首次调用前完成才能生效
             SnowflakeConfigInterface snowflakeConfigInterface = GlobalConfig.getConfig().getSnowflakeConfigInterface();
             if (snowflakeConfigInterface != null) {
                 DatacenterAndWorkerProvider provider = snowflakeConfigInterface.getDatacenterIdAndWorkerId();
                 if (provider != null && provider.getDatacenterId() != null && provider.getWorkerId() != null) {
-                    INSTANCE = new SnowflakeId(provider.getWorkerId(), provider.getDatacenterId());
+                    instance = new SnowflakeId(provider.getWorkerId(), provider.getDatacenterId());
                 } else {
-                    try {
-                        INSTANCE = new SnowflakeId(LocalHostUtils.getInetAddress());
-                    } catch (Exception e) {
-                        logger.warn("Unable to obtain correct IP address information, the machine ID and serial number of the fixed machine will be used to generate the primary key.");
-                        INSTANCE = new SnowflakeId(1L, 1L);
-                    }
+                    instance = createSnowflakeIdByLocalHost();
                 }
             } else {
-                try {
-                    INSTANCE = new SnowflakeId(LocalHostUtils.getInetAddress());
-                } catch (Exception e) {
-                    logger.warn("Unable to obtain correct IP address information, the machine ID and serial number of the fixed machine will be used to generate the primary key.");
-                    INSTANCE = new SnowflakeId(1L, 1L);
-                }
+                instance = createSnowflakeIdByLocalHost();
             }
+            INSTANCE = instance;
+        }
+    }
+
+    /**
+     * 创建雪花ID生成器实例（根据本地主机IP地址）
+     *
+     * @return SnowflakeId实例
+     */
+    private static SnowflakeId createSnowflakeIdByLocalHost() {
+        try {
+            return new SnowflakeId(LocalHostUtils.getInetAddress());
+        } catch (Exception e) {
+            logger.warn("Unable to obtain correct IP address information, the machine ID and serial number of the fixed machine will be used to generate the primary key.");
+            return new SnowflakeId(1L, 1L);
         }
     }
 
