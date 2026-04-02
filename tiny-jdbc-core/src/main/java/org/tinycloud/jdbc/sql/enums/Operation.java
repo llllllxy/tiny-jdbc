@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.sql.enums;
 
 /**
  * <p>
+ *    操作类型
  * </p>
  *
  * @author liuxingyu01

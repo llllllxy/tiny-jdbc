@@ -6,10 +6,10 @@
 
 ```java
 // 使用表名初始化
-SQL sql = SQL.table("user");
+SQL<?> sql = SQL.table("user");
 
 // 使用实体类初始化（需配合@Table注解）
-SQL sql = SQL.table(User.class);
+SQL<User> sql = SQL.table(User.class);
 ```
 
 ### 1.2 选择操作类型
@@ -22,7 +22,7 @@ sql.select("id", "name", "age");
 // 使用实体类方法引用
 sql.select(User::getId, User::getName);
 
-// 使用Expression表达式，Expression支持各方方式混用（在使用聚合函数或者混用时，必须使用表达式形式）
+// 使用Expression表达式，Expression支持各种方式混用（在使用聚合函数或者混用时，必须使用表达式形式）
 sql.select(
     Expression.of("id"),  
     Expression.of(User::getEmail),
@@ -118,7 +118,6 @@ sql.delete()
 ### 3.1 聚合函数与 GROUP BY
 ```java
 sql.select(
-    "name",
     Expression.count("*").as("total"),
     Expression.sum("amount").as("totalAmount"),
     Expression.avg("score").as("avgScore"),
@@ -135,7 +134,7 @@ sql.select(
 sql.orderBy("created_at").desc()  // 降序
    .orderBy("id").asc();          // 升序（默认）
 
-// 分页
+// 分页，不常用，请使用BaseDao提供的分页能力
 sql.limit(10)  // 每页10条
    .offset(20); // 偏移量20（第3页）
 ```
@@ -178,7 +177,7 @@ class User {
 
 ### 4.2 在查询中使用
 ```java
-SQL sql = SQL.table(User.class)
+SQL<User> sql = SQL.table(User.class)
     .select(User::getId, User::getName)
     .where(i -> i
         .eq(User::getAge, 25)
@@ -206,7 +205,7 @@ System.out.println("Parameters: " + parameters);
 
 ```java
 // 示例：简单条件
-SQL sql1 = SQL.table("user")
+SQL<?> sql1 = SQL.table("user")
         .select("id", "name")
         .where(i -> i.leftLike("name", "张")
                 .ge("age", 20)
@@ -218,7 +217,7 @@ SQL sql1 = SQL.table("user")
 
 ```java
 // 示例： 简单条件(使用OR)
-SQL selectSql7 = SQL.table(User.class)
+SQL<User> selectSql7 = SQL.table(User.class)
                 .select(User::getId, User::getName)
                 .where(i -> i.eq(User::getAge, 25)
                         .or().eq(User::getAge, 30));
@@ -229,7 +228,7 @@ SQL selectSql7 = SQL.table(User.class)
 
 ```java
 // 示例：嵌套 AND/OR 条件
-SQL sql1 = SQL.table("user")
+SQL<?> sql1 = SQL.table("user")
         .select("id", "birthday")
         .where(i -> i.and(j -> j.eq("name", "李白").eq("status", "alive"))
                 .or(j -> j.eq("name", "杜甫").eq("status", "alive")))
@@ -241,7 +240,7 @@ SQL sql1 = SQL.table("user")
 
 ```java
 // 示例：多层嵌套条件
-SQL sql2 = SQL.table("article").select()
+SQL<?> sql2 = SQL.table("article").select()
         .where(i -> i.and(j -> j.eq("category", "java").like("title", "spring"))
                 .or(j -> j.eq("author", "张三").and(k -> k.lt("views", 1000).ge("comments", 5))))
         .limit(20);
@@ -252,30 +251,30 @@ SQL sql2 = SQL.table("article").select()
 
 ```java
 // 示例：混合条件
-        SQL sql3 = SQL.table("product")
-                .select("id", "name", "price")
-                .where(i -> i.eq("status", "active")
-                        .and(j -> j.gt("price", 100).or(k -> k.like("name", "pro")))
-                        .and(j -> j.in("category", Arrays.asList("electronics", "books"))))
-                .orderBy("price").desc();
+SQL<?> sql3 = SQL.table("product")
+        .select("id", "name", "price")
+        .where(i -> i.eq("status", "active")
+                .and(j -> j.gt("price", 100).or(k -> k.like("name", "pro")))
+                .and(j -> j.in("category", Arrays.asList("electronics", "books"))))
+        .orderBy("price").desc();
 // SELECT id, name, price FROM product WHERE status = ? AND (price > ? OR (name LIKE ?)) AND (category IN (?, ?)) ORDER BY price DESC
 // Parameters: [active, 100, %pro%, electronics, books]
 ```
 
 ```java
 // 示例：复杂 OR 分组
-        SQL sql4 = SQL.table("order").select("id", "order_no", "amount", "create_time")
-                .where(i -> i.or(j -> j.eq("status", "paid").eq("amount", 1000))
-                        .or(j -> j.eq("status", "pending").gt("amount", 5000))
-                        .or(j -> j.eq("status", "cancelled").le("create_time", "2023-01-01")))
-                .orderBy("create_time").desc();
+SQL<?> sql4 = SQL.table("order").select("id", "order_no", "amount", "create_time")
+        .where(i -> i.or(j -> j.eq("status", "paid").eq("amount", 1000))
+                .or(j -> j.eq("status", "pending").gt("amount", 5000))
+                .or(j -> j.eq("status", "cancelled").le("create_time", "2023-01-01")))
+        .orderBy("create_time").desc();
 // SQL: SELECT id, order_no, amount, create_time FROM order WHERE (status = ? AND amount = ?) OR (status = ? AND amount > ?) OR (status = ? AND create_time <= ?) ORDER BY create_time DESC
 // Parameters: [paid, 1000, pending, 5000, cancelled, 2023-01-01]
 ```
 
 ```java
 // 示例：复杂嵌套 with like
-SQL sql6 = SQL.table("order").select("id", "order_no", "amount", "create_time")
+SQL<?> sql6 = SQL.table("order").select("id", "order_no", "amount", "create_time")
         .where(i -> i.and(j -> j.eq("status", "paid").leftLike("order_no", "ORD2023"))
                 .or(j -> j.rightLike("customer_name", "先生").gt("amount", 1000)));
 // SELECT id, order_no, amount, create_time FROM order WHERE (status = ? AND order_no LIKE ?) OR (customer_name LIKE ? AND amount > ?)
@@ -284,7 +283,7 @@ SQL sql6 = SQL.table("order").select("id", "order_no", "amount", "create_time")
 
 ```java
 // 示例：使用orderBy
-SQL selectSql = SQL.table("user")
+SQL<?> selectSql = SQL.table("user")
                 .select("id", "name")
                 .where(i -> i.leftLike("name", "张")
                         .and().ge("age", 20)
@@ -297,7 +296,7 @@ SQL selectSql = SQL.table("user")
 
 ```java
 // 示例：使用实体类方法引用
- SQL selectSql6 = SQL.table(User.class)
+ SQL<User> selectSql6 = SQL.table(User.class)
                 .select(User::getId, User::getName)
                 .where(i -> i.eq(User::getAge, 25)
                         .or(j -> j.like(User::getName, "张")))
@@ -309,7 +308,7 @@ SQL selectSql = SQL.table("user")
 
 ```java
 // 示例： 使用group()方法添加括号
-SQL selectSql8 = SQL.table("user")
+SQL<?> selectSql8 = SQL.table("user")
         .select("*")
         .where(i -> i.group(j -> j.eq("age", 25).or().eq("age", 30))
                 .and().like("name", "张"));
@@ -319,7 +318,7 @@ SQL selectSql8 = SQL.table("user")
 
 ```java
 // 示例：嵌套括号
-SQL complexSql9 = SQL.table("user")
+SQL<?> complexSql9 = SQL.table("user")
         .select("*")
         .where(i -> i.group(j -> j.eq("status", "ACTIVE")
                         .and().group(k -> k.gt("age", 18).and().lt("age", 60)))
@@ -330,7 +329,7 @@ SQL complexSql9 = SQL.table("user")
 
 ```java
 // 示例：使用表达式配合GROUP BY、聚合函数、AS使用
-SQL complexSql10 = SQL.table("user")
+SQL<?> complexSql10 = SQL.table("user")
                 // 传入多个列名和表达式（顺序任意）
                 .select(Expression.of("id"),
                         Expression.of("birthday"),
@@ -347,7 +346,7 @@ SQL complexSql10 = SQL.table("user")
 
 ```java
 // 示例：使用GROUP BY 和 HAVING子句
-SQL sql = SQL.table("user")
+SQL<?> sql = SQL.table("user")
                 // 传入多个列名和表达式（顺序任意）
                 .select(Expression.of("id"),
                         Expression.of("birthday"),
@@ -365,7 +364,7 @@ SQL sql = SQL.table("user")
 
 ```java
 // 示例：使用GROUP BY 和 HAVING子句（在HAVING子句子句中使用表达式）
-SQL sql = SQL.table("user")
+SQL<?> sql = SQL.table("user")
                 // 传入多个列名和表达式（顺序任意）
                 .select(Expression.of("id"),
                         Expression.of("birthday"),
@@ -384,7 +383,7 @@ SQL sql = SQL.table("user")
 
 ### 6.2 INSERT 语句
 ```java
- SQL insertSql = SQL.table("user")
+ SQL<?> insertSql = SQL.table("user")
         .insert("id", "name", "age")
         .values(1, "张三", 25);
 // SQL: INSERT INTO user(id, name, age) VALUES (?, ?, ?)
@@ -393,7 +392,7 @@ SQL sql = SQL.table("user")
 
 ### 6.3 UPDATE 语句
 ```java
- SQL updateSql = SQL.table("user")
+ SQL<?> updateSql = SQL.table("user")
         .update()
         .set("name", "李四")
         .set("age", 30)
@@ -405,7 +404,7 @@ SQL sql = SQL.table("user")
 ###  6.4 DELETE 语句
 ```java
 // 测试用例 3：DELETE
-SQL deleteSql = SQL.table("user")
+SQL<?> deleteSql = SQL.table("user")
         .delete()
         .where(i -> i.eq("id", 1).or(j -> j.eq("name", "测试")));
 // DELETE FROM user WHERE id = ? OR (name = ?)
@@ -418,4 +417,4 @@ SQL deleteSql = SQL.table("user")
 - 参数安全：所有值参数会自动转为占位符?，防止 SQL 注入。
 - Lambda 表达式：使用实体类方法引用时，确保方法存在且符合 Java Bean 规范。
 - NULL 值处理：isNull()和isNotNull()用于判断 NULL 值，无需传入参数。
-- 聚合函数：使用Expression类的静态方法创建聚合表达式，必须使用as()设置别名。
+- 聚合函数：使用Expression类的静态方法创建聚合表达式时，默认使用字段名作为结果别名，可使用as()方法进行设置别名；count函数的结果默认别名为total小写；caseWhen函数必须使用as()方法指定别名。

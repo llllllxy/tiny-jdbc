@@ -223,7 +223,7 @@ public class JdbcTemplateHelper {
      * @param sql 自定义 SQL 对象，封装了 SQL 语句和对应的参数
      * @return 执行 SQL 语句后受影响的行数
      */
-    public int execute(SQL sql) {
+    public int execute(SQL<?> sql) {
         return execute(sql.toSql(), sql.getParameters().toArray());
     }
 
@@ -235,7 +235,7 @@ public class JdbcTemplateHelper {
      * @param sql 自定义 SQL 对象，封装了 INSERT SQL 语句和对应的参数
      * @return 执行插入操作后受影响的行数
      */
-    public int insert(SQL sql) {
+    public int insert(SQL<?> sql) {
         return insert(sql.toSql(), sql.getParameters().toArray());
     }
 
@@ -247,7 +247,7 @@ public class JdbcTemplateHelper {
      * @param sql 自定义 SQL 对象，封装了 UPDATE SQL 语句和对应的参数
      * @return 执行更新操作后受影响的行数
      */
-    public int update(SQL sql) {
+    public int update(SQL<?> sql) {
         return update(sql.toSql(), sql.getParameters().toArray());
     }
 
@@ -259,7 +259,7 @@ public class JdbcTemplateHelper {
      * @param sql 自定义 SQL 对象，封装了 DELETE SQL 语句和对应的参数
      * @return 执行删除操作后受影响的行数
      */
-    public int delete(SQL sql) {
+    public int delete(SQL<?> sql) {
         return delete(sql.toSql(), sql.getParameters().toArray());
     }
 
@@ -273,7 +273,7 @@ public class JdbcTemplateHelper {
      * @param <F>   结果对象的泛型类型
      * @return 包含查询结果的对象列表
      */
-    public <F> List<F> select(SQL sql, Class<F> clazz) {
+    public <F> List<F> select(SQL<F> sql, Class<F> clazz) {
         return select(sql.toSql(), clazz, sql.getParameters().toArray());
     }
 
@@ -288,7 +288,7 @@ public class JdbcTemplateHelper {
      * @param <F>   结果对象的泛型类型
      * @return 包含分页信息和查询结果的分页对象
      */
-    public <F> Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page) {
+    public <F> Page<F> paginate(SQL<F> sql, Class<F> clazz, Page<F> page) {
         return paginate(sql.toSql(), clazz, page, sql.getParameters().toArray());
     }
 
@@ -302,7 +302,7 @@ public class JdbcTemplateHelper {
      * @param <F>   结果对象的泛型类型
      * @return 查询结果中的单个对象
      */
-    public <F> F selectForObject(SQL sql, Class<F> clazz) {
+    public <F> F selectForObject(SQL<F> sql, Class<F> clazz) {
         return selectForObject(sql.toSql(), clazz, sql.getParameters().toArray());
     }
 
@@ -315,7 +315,7 @@ public class JdbcTemplateHelper {
      * @param <F>   结果对象的泛型类型
      * @return 查询结果中的单个对象，若结果为空则返回 {@code null}
      */
-    public <F> F selectOne(SQL sql, Class<F> clazz) {
+    public <F> F selectOne(SQL<F> sql, Class<F> clazz) {
         List<F> resultList = select(sql, clazz);
         return DataAccessUtils.singleResult(resultList);
     }

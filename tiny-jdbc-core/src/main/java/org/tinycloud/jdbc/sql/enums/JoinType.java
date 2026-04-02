@@ -12,7 +12,7 @@ public enum JoinType {
     AND("AND"),
     OR("OR");
 
-    private String sql;
+    private final String sql;
 
     public String getSql() {
         return sql;

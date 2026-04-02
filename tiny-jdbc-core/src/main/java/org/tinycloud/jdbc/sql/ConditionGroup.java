@@ -17,240 +17,238 @@ import java.util.function.Consumer;
  * @author liuxingyu01
  * @since 2025-05-21 14:05
  */
-public class ConditionGroup {
+public class ConditionGroup<T> {
 
     private final List<ConditionElement> elements = new ArrayList<>();
     private JoinType defaultJoinType = JoinType.AND;
 
-    public ConditionGroup and(Consumer<ConditionGroup> subGroup) {
-        ConditionGroup group = new ConditionGroup();
+    public ConditionGroup<T> and(Consumer<ConditionGroup<T>> subGroup) {
+        ConditionGroup<T> group = new ConditionGroup<>();
         subGroup.accept(group);
         this.elements.add(new GroupElement(JoinType.AND, group));
         return this;
     }
 
-    public ConditionGroup or(Consumer<ConditionGroup> subGroup) {
-        ConditionGroup group = new ConditionGroup();
+    public ConditionGroup<T> or(Consumer<ConditionGroup<T>> subGroup) {
+        ConditionGroup<T> group = new ConditionGroup<>();
         subGroup.accept(group);
         this.elements.add(new GroupElement(JoinType.OR, group));
         return this;
     }
 
     // 新增：括号优先级控制方法
-    public ConditionGroup group(Consumer<ConditionGroup> subGroup) {
-        ConditionGroup group = new ConditionGroup();
+    public ConditionGroup<T> group(Consumer<ConditionGroup<T>> subGroup) {
+        ConditionGroup<T> group = new ConditionGroup<>();
         subGroup.accept(group);
         this.elements.add(new GroupElement(this.defaultJoinType, group));
         return this;
     }
 
-    public ConditionGroup eq(String column, Object value) {
+    public ConditionGroup<T> eq(String column, Object value) {
         this.elements.add(new SimpleCondition(column, "=", value, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup eq(TypeFunction<T, R> field, Object value) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> eq(TypeFunction<T, R> field, Object value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new SimpleCondition(column, "=", value, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup notEq(String column, Object value) {
-        this.elements.add(new SimpleCondition(column, "!=", value, this.defaultJoinType));
+    public ConditionGroup<T> notEq(String column, Object value) {
+        this.elements.add(new SimpleCondition(column, "<>", value, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup notEq(TypeFunction<T, R> field, Object value) {
-        String column = this.getColumnName(field);
-        this.elements.add(new SimpleCondition(column, "!=", value, this.defaultJoinType));
+    public <R> ConditionGroup<T> notEq(TypeFunction<T, R> field, Object value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
+        this.elements.add(new SimpleCondition(column, "<>", value, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup gt(String column, Object value) {
+    public ConditionGroup<T> gt(String column, Object value) {
         this.elements.add(new SimpleCondition(column, ">", value, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup gt(TypeFunction<T, R> field, Object value) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> gt(TypeFunction<T, R> field, Object value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new SimpleCondition(column, ">", value, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup lt(String column, Object value) {
+    public ConditionGroup<T> lt(String column, Object value) {
         this.elements.add(new SimpleCondition(column, "<", value, this.defaultJoinType));
         return this;
     }
 
 
-    public <T, R> ConditionGroup lt(TypeFunction<T, R> field, Object value) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> lt(TypeFunction<T, R> field, Object value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new SimpleCondition(column, "<", value, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup ge(String column, Object value) {
+    public ConditionGroup<T> ge(String column, Object value) {
         this.elements.add(new SimpleCondition(column, ">=", value, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup ge(TypeFunction<T, R> field, Object value) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> ge(TypeFunction<T, R> field, Object value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new SimpleCondition(column, ">=", value, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup le(String column, Object value) {
+    public ConditionGroup<T> le(String column, Object value) {
         this.elements.add(new SimpleCondition(column, "<=", value, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup le(TypeFunction<T, R> field, Object value) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> le(TypeFunction<T, R> field, Object value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new SimpleCondition(column, "<=", value, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup like(String column, String value) {
+    public ConditionGroup<T> like(String column, String value) {
         this.elements.add(new SimpleCondition(column, "LIKE", "%" + value + "%", this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup like(TypeFunction<T, R> field, String value) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> like(TypeFunction<T, R> field, String value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new SimpleCondition(column, "LIKE", "%" + value + "%", this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup notLike(String column, String value) {
+    public ConditionGroup<T> notLike(String column, String value) {
         this.elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value + "%", this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup notLike(TypeFunction<T, R> field, String value) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> notLike(TypeFunction<T, R> field, String value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value + "%", this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup leftLike(String column, String value) {
+    public ConditionGroup<T> leftLike(String column, String value) {
         this.elements.add(new SimpleCondition(column, "LIKE", "%" + value, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup leftLike(TypeFunction<T, R> field, String value) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> leftLike(TypeFunction<T, R> field, String value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new SimpleCondition(column, "LIKE", "%" + value, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup notLeftLike(String column, String value) {
+    public ConditionGroup<T> notLeftLike(String column, String value) {
         this.elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup notLeftLike(TypeFunction<T, R> field, String value) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> notLeftLike(TypeFunction<T, R> field, String value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new SimpleCondition(column, "NOT LIKE", "%" + value, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup rightLike(String column, String value) {
+    public ConditionGroup<T> rightLike(String column, String value) {
         this.elements.add(new SimpleCondition(column, "LIKE", value + "%", this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup rightLike(TypeFunction<T, R> field, String value) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> rightLike(TypeFunction<T, R> field, String value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new SimpleCondition(column, "LIKE", value + "%", this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup notRightLike(String column, String value) {
+    public ConditionGroup<T> notRightLike(String column, String value) {
         this.elements.add(new SimpleCondition(column, "NOT LIKE", value + "%", this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup notRightLike(TypeFunction<T, R> field, String value) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> notRightLike(TypeFunction<T, R> field, String value) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new SimpleCondition(column, "NOT LIKE", value + "%", this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup in(String column, List<?> values) {
+    public ConditionGroup<T> in(String column, List<?> values) {
         this.elements.add(new InCondition(column, values, false, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup in(TypeFunction<T, R> field, List<?> values) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> in(TypeFunction<T, R> field, List<?> values) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new InCondition(column, values, false, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup notIn(String column, List<?> values) {
+    public ConditionGroup<T> notIn(String column, List<?> values) {
         this.elements.add(new InCondition(column, values, true, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup notIn(TypeFunction<T, R> field, List<?> values) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> notIn(TypeFunction<T, R> field, List<?> values) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new InCondition(column, values, true, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup betweenAnd(String column, Object value1, Object value2) {
+    public ConditionGroup<T> betweenAnd(String column, Object value1, Object value2) {
         this.elements.add(new BetweenCondition(column, value1, value2, false, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup betweenAnd(TypeFunction<T, R> field, Object value1, Object value2) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> betweenAnd(TypeFunction<T, R> field, Object value1, Object value2) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new BetweenCondition(column, value1, value2, false, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup notBetweenAnd(String column, Object value1, Object value2) {
+    public ConditionGroup<T> notBetweenAnd(String column, Object value1, Object value2) {
         this.elements.add(new BetweenCondition(column, value1, value2, true, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup notBetweenAnd(TypeFunction<T, R> field, Object value1, Object value2) {
-        String column = this.getColumnName(field);
+    public <R> ConditionGroup<T> notBetweenAnd(TypeFunction<T, R> field, Object value1, Object value2) {
+        String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new BetweenCondition(column, value1, value2, true, this.defaultJoinType));
         return this;
     }
 
-
-    public ConditionGroup isNull(String column) {
+    public ConditionGroup<T> isNull(String column) {
         this.elements.add(new NullCondition(column, true, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup isNull(TypeFunction<T, R> field) {
-        String columnName = this.getColumnName(field);
+    public <R> ConditionGroup<T> isNull(TypeFunction<T, R> field) {
+        String columnName = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new NullCondition(columnName, true, this.defaultJoinType));
         return this;
     }
 
-
-    public ConditionGroup isNotNull(String column) {
+    public ConditionGroup<T> isNotNull(String column) {
         this.elements.add(new NullCondition(column, false, this.defaultJoinType));
         return this;
     }
 
-    public <T, R> ConditionGroup isNotNull(TypeFunction<T, R> field) {
-        String columnName = this.getColumnName(field);
+    public <R> ConditionGroup<T> isNotNull(TypeFunction<T, R> field) {
+        String columnName = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new NullCondition(columnName, false, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup and() {
+    public ConditionGroup<T> and() {
         this.defaultJoinType = JoinType.AND;
         return this;
     }
 
-    public ConditionGroup or() {
+    public ConditionGroup<T> or() {
         this.defaultJoinType = JoinType.OR;
         return this;
     }
@@ -278,9 +276,5 @@ public class ConditionGroup {
             params.addAll(element.getParameters());
         }
         return params;
-    }
-
-    private <T, R> String getColumnName(TypeFunction<T, R> field) {
-        return LambdaUtils.getLambdaColumnName(field);
     }
 }

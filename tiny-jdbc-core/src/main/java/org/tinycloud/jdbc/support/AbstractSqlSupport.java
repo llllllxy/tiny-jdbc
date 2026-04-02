@@ -269,32 +269,32 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     // ======================== ISqlSupport（SQL构造器实现）实现开始 ========================
 
     @Override
-    public int update(SQL sql) {
+    public int update(SQL<T> sql) {
         return this.update(sql.toSql(), sql.getParameters().toArray());
     }
 
     @Override
-    public List<T> select(SQL sql) {
+    public List<T> select(SQL<T> sql) {
         return this.select(sql.toSql(), sql.getParameters().toArray());
     }
 
     @Override
-    public <F> List<F> select(SQL sql, Class<F> clazz) {
+    public <F> List<F> select(SQL<T> sql, Class<F> clazz) {
         return this.select(sql.toSql(), clazz, sql.getParameters().toArray());
     }
 
     @Override
-    public Page<T> paginate(SQL sql, Page<T> page) {
+    public Page<T> paginate(SQL<T> sql, Page<T> page) {
         return this.paginate(sql.toSql(), page, sql.getParameters().toArray());
     }
 
     @Override
-    public <F> Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page) {
+    public <F> Page<F> paginate(SQL<T> sql, Class<F> clazz, Page<F> page) {
         return this.paginate(sql.toSql(), clazz, page, sql.getParameters().toArray());
     }
 
     @Override
-    public <F> F selectOneObject(SQL sql, Class<F> clazz) {
+    public <F> F selectOneObject(SQL<T> sql, Class<F> clazz) {
         return this.selectOneObject(sql.toSql(), clazz, sql.getParameters().toArray());
     }
 

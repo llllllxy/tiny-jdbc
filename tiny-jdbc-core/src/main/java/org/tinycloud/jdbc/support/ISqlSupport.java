@@ -178,7 +178,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param sql 要执行的SQL对象，封装了SQL语句和参数
      * @return int 受影响的行数
      */
-    default int delete(SQL sql) {
+    default int delete(SQL<T> sql) {
         return this.update(sql);
     }
 
@@ -188,7 +188,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param sql 要执行的SQL对象，封装了SQL语句和参数
      * @return int 受影响的行数
      */
-    int update(SQL sql);
+    int update(SQL<T> sql);
 
     /**
      * 使用提供的SQL对象，执行插入操作
@@ -196,7 +196,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param sql 要执行的SQL对象，封装了SQL语句和参数
      * @return int 受影响的行数
      */
-    default int insert(SQL sql) {
+    default int insert(SQL<T> sql) {
         return this.update(sql);
     }
 
@@ -206,7 +206,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param sql 要执行的SQL对象，封装了SQL语句和参数
      * @return List<T> 包含查询结果的列表
      */
-    List<T> select(SQL sql);
+    List<T> select(SQL<T> sql);
 
     /**
      * 使用提供的SQL对象，执行查询操作，返回第一条结果
@@ -214,7 +214,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param sql 要执行的SQL对象，封装了SQL语句和参数
      * @return T 包含查询结果的对象
      */
-    default T selectOne(SQL sql) {
+    default T selectOne(SQL<T> sql) {
         List<T> resultList = this.select(sql);
         return DataAccessUtils.singleResult(resultList);
     }
@@ -227,7 +227,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param <F>   结果对象的泛型类型，由 clazz 参数指定
      * @return 包含指定类型结果数据的列表，如果没有结果则返回空列表
      */
-    <F> List<F> select(SQL sql, Class<F> clazz);
+    <F> List<F> select(SQL<T> sql, Class<F> clazz);
 
     /**
      * 使用提供的SQL对象，执行查询操作，返回指定类型的结果列表，返回第一条结果
@@ -237,7 +237,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param <F>   结果对象的泛型类型，由 clazz 参数指定
      * @return 包含指定类型结果数据的对象，如果没有结果则返回 null
      */
-    default <F> F selectOne(SQL sql, Class<F> clazz) {
+    default <F> F selectOne(SQL<T> sql, Class<F> clazz) {
         List<F> resultList = this.select(sql, clazz);
         return DataAccessUtils.singleResult(resultList);
     }
@@ -249,7 +249,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param page 分页参数
      * @return Page<T> 包含分页查询结果的对象
      */
-    Page<T> paginate(SQL sql, Page<T> page);
+    Page<T> paginate(SQL<T> sql, Page<T> page);
 
     /**
      * 使用提供的SQL对象，执行分页查询操作，返回指定类型的结果列表
@@ -260,7 +260,7 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param <F>   结果对象的泛型类型，由 clazz 参数指定
      * @return Page<F> 包含分页查询结果的对象
      */
-    <F> Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page);
+    <F> Page<F> paginate(SQL<T> sql, Class<F> clazz, Page<F> page);
 
     /**
      * 使用提供的SQL对象，执行 SQL 查询，返回单个结果对象
@@ -270,5 +270,5 @@ public interface ISqlSupport<T, ID extends Serializable> {
      * @param <F>   结果对象的泛型类型，由 clazz 参数指定
      * @return F 包含分页查询结果的对象，如果没有结果则返回 null
      */
-    <F> F selectOneObject(SQL sql, Class<F> clazz);
+    <F> F selectOneObject(SQL<T> sql, Class<F> clazz);
 }

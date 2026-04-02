@@ -1,8 +1,5 @@
 package org.tinycloud.jdbc.id;
 
-import org.tinycloud.jdbc.util.tuple.Pair;
-
-import java.net.InetAddress;
 
 /**
  * <p>

@@ -20,16 +20,16 @@ import java.util.stream.Stream;
  * @author liuxingyu01
  * @since 2025-05-21 14:00
  */
-public class SQL {
+public class SQL<T> {
     private final String table;
     private Operation operation;
     private final List<String> selectFields = new ArrayList<>();
     private final Map<String, Object> insertValues = new LinkedHashMap<>();
     private final Map<String, Object> updateValues = new LinkedHashMap<>();
-    private final ConditionGroup whereCondition = new ConditionGroup();
+    private final ConditionGroup<T> whereCondition = new ConditionGroup<>();
     private final List<OrderBy> orderByClauses = new ArrayList<>();
     private final List<String> groupByColumns = new ArrayList<>();
-    private final ConditionGroup havingCondition = new ConditionGroup();
+    private final ConditionGroup<T> havingCondition = new ConditionGroup<>();
     private Integer limit;
     private Integer offset;
 
@@ -47,8 +47,8 @@ public class SQL {
      * @param table 表名
      * @return SQL对象
      */
-    public static SQL table(String table) {
-        return new SQL(table);
+    public static <T> SQL<T> table(String table) {
+        return new SQL<>(table);
     }
 
     /**
@@ -60,12 +60,12 @@ public class SQL {
      * @return 一个基于指定表名创建的 SQL 对象
      * @throws TinyJdbcException 当传入的实体类缺少 @Table 注解时抛出此异常
      */
-    public static SQL table(Class<?> entityClass) {
+    public static <T> SQL<T> table(Class<T> entityClass) {
         Table tableAnnotation = entityClass.getAnnotation(Table.class);
         if (tableAnnotation == null) {
             throw new TinyJdbcException("Class " + entityClass.getName() + " is missing the @Table annotation.");
         }
-        return new SQL(tableAnnotation.value());
+        return new SQL<>(tableAnnotation.value());
     }
 
 
@@ -76,7 +76,7 @@ public class SQL {
      *
      * @return 当前 SQL 对象实例，用于支持链式调用。
      */
-    public SQL select() {
+    public SQL<T> select() {
         this.validateOperation(Operation.SELECT);
         this.selectFields.add("*");
         return this;
@@ -88,7 +88,7 @@ public class SQL {
      * @param columns 要查询的列名，可变参数形式，可传入一个或多个列名
      * @return 当前 SQL 对象实例，用于支持链式调用。
      */
-    public SQL select(String... columns) {
+    public SQL<T> select(String... columns) {
         this.validateOperation(Operation.SELECT);
         this.selectFields.addAll(Arrays.asList(columns));
         return this;
@@ -98,12 +98,11 @@ public class SQL {
      * 构建一个 SELECT 语句，使用 Lambda 表达式指定要查询的列，支持链式调用。
      * 该方法会将 Lambda 表达式转换为对应的数据库列名，并添加到查询字段列表中。
      *
-     * @param <T>    实体类的类型
      * @param fields 一个或多个 TypeFunction 类型的 Lambda 表达式，用于引用实体类的属性
      * @return 当前 SQL 对象实例，用于支持链式调用。
      */
     @SafeVarargs
-    public final <T> SQL select(TypeFunction<T, ?>... fields) {
+    public final SQL<T> select(TypeFunction<T, ?>... fields) {
         this.validateOperation(Operation.SELECT);
         for (TypeFunction<T, ?> field : fields) {
             String columnName = LambdaUtils.getLambdaColumnName(field);
@@ -119,7 +118,7 @@ public class SQL {
      * @param expressions 一个或多个 Expression 对象，用于表示 SQL 查询中的表达式
      * @return 当前 SQL 对象实例，用于支持链式调用。
      */
-    public SQL select(Expression... expressions) {
+    public SQL<T> select(Expression... expressions) {
         this.validateOperation(Operation.SELECT);
         for (Expression expr : expressions) {
             this.selectFields.add(expr.toString());
@@ -131,12 +130,11 @@ public class SQL {
      * 为 SELECT 语句添加 ORDER BY 子句，使用 Lambda 表达式指定排序字段，支持链式调用。
      * 该方法会将 Lambda 表达式转换为对应的数据库列名，并将其添加到排序规则列表中，默认按升序排序。
      *
-     * @param <T>   实体类的类型
      * @param field 一个 TypeFunction 类型的 Lambda 表达式，用于引用实体类的属性
      * @return 当前 SQL 对象实例，用于支持链式调用。
      * @throws TinyJdbcException 如果当前操作不是 SELECT 操作，抛出此异常
      */
-    public <T> SQL orderBy(TypeFunction<T, ?> field) {
+    public SQL<T> orderBy(TypeFunction<T, ?> field) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The ORDER BY clause can only be used in SELECT statements.");
         }
@@ -153,7 +151,7 @@ public class SQL {
      * @return 当前 SQL 对象实例，用于支持链式调用。
      * @throws TinyJdbcException 如果当前操作不是 SELECT 操作，抛出此异常
      */
-    public SQL orderBy(String column) {
+    public SQL<T> orderBy(String column) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The ORDER BY clause can only be used in SELECT statements.");
 
@@ -171,7 +169,7 @@ public class SQL {
      * @return 当前 SQL 对象实例，用于支持链式调用。
      * @throws TinyJdbcException 如果当前操作不是 SELECT 操作，抛出此异常
      */
-    public SQL groupBy(String... columns) {
+    public SQL<T> groupBy(String... columns) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The GROUP BY clause can only be used in SELECT statements.");
         }
@@ -184,13 +182,12 @@ public class SQL {
      * 该方法会将 Lambda 表达式转换为对应的数据库列名，并将这些列名添加到分组字段列表中。
      * 若当前操作不是 SELECT 操作，会抛出 TinyJdbcException 异常。
      *
-     * @param <T>    实体类的类型
      * @param fields 一个或多个 TypeFunction 类型的 Lambda 表达式，用于引用实体类的属性
      * @return 当前 SQL 对象实例，用于支持链式调用。
      * @throws TinyJdbcException 如果当前操作不是 SELECT 操作，抛出此异常
      */
     @SafeVarargs
-    public final <T> SQL groupBy(TypeFunction<T, ?>... fields) {
+    public final SQL<T> groupBy(TypeFunction<T, ?>... fields) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The GROUP BY clause can only be used in SELECT statements.");
         }
@@ -211,7 +208,7 @@ public class SQL {
      * @throws TinyJdbcException 当当前操作不是 SELECT 操作时，抛出此异常，提示 HAVING 子句仅能用于 SELECT 语句；
      *                           当 HAVING 子句已经被调用过时，抛出此异常，提示不能重复调用 HAVING 子句。
      */
-    public SQL having(Consumer<ConditionGroup> conditions) {
+    public SQL<T> having(Consumer<ConditionGroup<T>> conditions) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The HAVING clause can only be used in SELECT statements.");
         }
@@ -229,7 +226,7 @@ public class SQL {
      *
      * @return 当前 SQL 对象实例，用于支持链式调用。
      */
-    public SQL desc() {
+    public SQL<T> desc() {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The DESC clause can only be used in SELECT statements.");
         }
@@ -249,7 +246,7 @@ public class SQL {
      * @return 当前 SQL 对象实例，用于支持链式调用。
      * @throws TinyJdbcException 当当前操作不是 SELECT 操作时，抛出此异常，提示 LIMIT 子句仅能用于 SELECT 语句。
      */
-    public SQL limit(int limit) {
+    public SQL<T> limit(int limit) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The LIMIT clause can only be used in SELECT statements.");
         }
@@ -267,7 +264,7 @@ public class SQL {
      * @return 当前 SQL 对象实例，用于支持链式调用。
      * @throws TinyJdbcException 当当前操作不是 SELECT 操作时，抛出此异常，提示 OFFSET 子句仅能用于 SELECT 语句。
      */
-    public SQL offset(int offset) {
+    public SQL<T> offset(int offset) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The OFFSET clause can only be used in SELECT statements.");
         }
@@ -287,7 +284,7 @@ public class SQL {
      * @return 当前 SQL 对象实例，用于支持链式调用。
      * @throws TinyJdbcException 当已经设置了其他操作类型，却尝试同时使用 INSERT 操作类型时抛出此异常
      */
-    public SQL insert(String... columns) {
+    public SQL<T> insert(String... columns) {
         this.validateOperation(Operation.INSERT);
         for (String column : columns) {
             this.insertValues.put(column, null);
@@ -301,13 +298,12 @@ public class SQL {
      * 同时为每个列名对应的值设置为 null 作为占位。
      * 调用此方法后，可继续链式调用 values 方法设置要插入的值。
      *
-     * @param <T>    实体类的类型
      * @param fields 一个或多个 TypeFunction 类型的 Lambda 表达式，用于引用实体类的属性
      * @return 当前 SQL 对象实例，用于支持链式调用。
      * @throws TinyJdbcException 当已经设置了其他操作类型，却尝试同时使用 INSERT 操作类型时抛出此异常
      */
     @SafeVarargs
-    public final <T> SQL insert(TypeFunction<T, ?>... fields) {
+    public final SQL<T> insert(TypeFunction<T, ?>... fields) {
         this.validateOperation(Operation.INSERT);
         for (TypeFunction<T, ?> field : fields) {
             String columnName = LambdaUtils.getLambdaColumnName(field);
@@ -325,7 +321,7 @@ public class SQL {
      * @return 当前 SQL 对象实例，用于支持链式调用。
      * @throws TinyJdbcException 当当前操作不是 INSERT 操作，或者未调用 insert() 方法指定列时抛出此异常。当传入值的数量与指定列的数量不匹配时抛出此异常。
      */
-    public SQL values(Object... values) {
+    public SQL<T> values(Object... values) {
         if (this.operation != Operation.INSERT) {
             throw new TinyJdbcException("The values() method can only be called after insert().");
         }
@@ -354,7 +350,7 @@ public class SQL {
      * @return 当前 SQL 对象实例，用于支持链式调用后续的方法，如添加 SET 子句、WHERE 子句等。
      * @throws TinyJdbcException 当已经设置了其他操作类型，却尝试同时使用 UPDATE 操作类型时抛出此异常
      */
-    public SQL update() {
+    public SQL<T> update() {
         this.validateOperation(Operation.UPDATE);
         return this;
     }
@@ -368,7 +364,7 @@ public class SQL {
      * @return 当前 SQL 对象实例，用于支持链式调用。
      * @throws TinyJdbcException 当当前操作不是 UPDATE 操作时，抛出此异常，提示只能在调用 update() 方法后调用此方法。
      */
-    public SQL set(String column, Object value) {
+    public SQL<T> set(String column, Object value) {
         if (this.operation != Operation.UPDATE) {
             throw new TinyJdbcException("The set() method can only be called after update().");
         }
@@ -381,13 +377,12 @@ public class SQL {
      * 该方法使用 Lambda 表达式指定要更新的列，会将 Lambda 表达式转换为对应的数据库列名，
      * 并将列名和对应的值添加到待更新的值映射中。
      *
-     * @param <T>   实体类的类型
      * @param field 一个 TypeFunction 类型的 Lambda 表达式，用于引用实体类的属性
      * @param value 要更新到数据库中的值
      * @return 当前 SQL 对象实例，用于支持链式调用。
      * @throws TinyJdbcException 当当前操作不是 UPDATE 操作时，抛出此异常，提示只能在调用 update() 方法后调用此方法。
      */
-    public <T> SQL set(TypeFunction<T, ?> field, Object value) {
+    public SQL<T> set(TypeFunction<T, ?> field, Object value) {
         if (this.operation != Operation.UPDATE) {
             throw new TinyJdbcException("The set() method can only be called after update().");
         }
@@ -406,7 +401,7 @@ public class SQL {
      * @return 当前 SQL 对象实例，用于支持链式调用后续的方法，如添加 WHERE 子句等。
      * @throws TinyJdbcException 当已经设置了其他操作类型，却尝试同时使用 DELETE 操作类型时抛出此异常
      */
-    public SQL delete() {
+    public SQL<T> delete() {
         this.validateOperation(Operation.DELETE);
         return this;
     }
@@ -424,7 +419,7 @@ public class SQL {
      *                           当操作类型为 INSERT 时，抛出此异常，因为 INSERT 语句不支持 WHERE 子句；
      *                           当 WHERE 子句已经被调用过时，抛出此异常。
      */
-    public SQL where(Consumer<ConditionGroup> conditions) {
+    public SQL<T> where(Consumer<ConditionGroup<T>> conditions) {
         if (this.operation == null) {
             throw new TinyJdbcException("Please call the select(), update(), or delete() method first.");
         }
@@ -610,5 +605,20 @@ public class SQL {
             throw new TinyJdbcException("The DELETE statement requires a WHERE clause.");
         }
         return sql.toString();
+    }
+
+    public static void main(String[] args) {
+        // 正确的用法：使用User类的Lambda表达式
+        System.out.println("=== 正确的用法 ===");
+        SQL<?> sql1 = SQL.table("user")
+                .select("id", "age")
+                .where(i -> i
+                        .eq("age", 25)
+                        .or().like("name", "张三")
+                )
+                .orderBy("id").desc()
+                .limit(10);
+        System.out.println("SQL: " + sql1.toSql());
+        System.out.println("Parameters: " + sql1.getParameters());
     }
 }

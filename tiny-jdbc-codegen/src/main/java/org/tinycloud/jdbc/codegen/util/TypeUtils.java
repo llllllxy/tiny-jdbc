@@ -58,11 +58,7 @@ public class TypeUtils {
                 return "Boolean";
 
             case Types.TINYINT:
-                return "Integer";
-
             case Types.SMALLINT:
-                return "Integer";
-
             case Types.INTEGER:
                 return "Integer";
 
