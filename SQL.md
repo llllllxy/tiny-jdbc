@@ -380,6 +380,41 @@ SQL<?> sql = SQL.table("user")
 // Parameters: [active, 25]
 ```
 
+```java
+// 示例：使用Expression表达式进行CASE WHEN操作
+Expression caseWhenExpr = Expression.caseWhen()
+        .when("age < 18", "'未成年'")
+        .when("age >= 18 AND age < 60", "'成年'")
+        .otherwise("'老年'")
+        .build();
+SQL<?> sql = SQL.table("user")
+        .select(Expression.of("id"), Expression.of("name"), caseWhenExpr.as("age_group"))
+        .limit(10);
+
+// SQL: SELECT id, name, CASE WHEN age < 18 THEN '未成年' WHEN age >= 18 AND age < 60 THEN '成年' ELSE '老年' END AS age_group FROM user LIMIT 10
+// Parameters: []
+```
+
+```java
+// 示例：使用Expression表达式进行COALESCE函数操作
+SQL<?> sql = SQL.table("user")
+        .select(Expression.of("id"), Expression.coalesce("name", "'未知'"))
+        .limit(10);
+
+// SQL: SELECT id, COALESCE(name, '未知') AS name FROM user LIMIT 10
+// Parameters: []
+```
+
+```java
+// 示例：使用Expression表达式进行IFNULL函数操作
+Expression ifNullExpr = Expression.ifNull("email", "'no-email@example.com'");
+SQL<?> sql = SQL.table("user")
+        .select(Expression.of("id"), ifNullExpr.as("user_email"))
+        .limit(10);
+
+// SQL: SELECT id, IFNULL(email, 'no-email@example.com') AS user_email FROM user LIMIT 10
+// Parameters: []
+```
 
 ### 6.2 INSERT 语句
 ```java

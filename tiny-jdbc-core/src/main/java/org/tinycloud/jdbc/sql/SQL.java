@@ -606,19 +606,4 @@ public class SQL<T> {
         }
         return sql.toString();
     }
-
-    public static void main(String[] args) {
-        // 正确的用法：使用User类的Lambda表达式
-        System.out.println("=== 正确的用法 ===");
-        SQL<?> sql1 = SQL.table("user")
-                .select("id", "age")
-                .where(i -> i
-                        .eq("age", 25)
-                        .or().like("name", "张三")
-                )
-                .orderBy("id").desc()
-                .limit(10);
-        System.out.println("SQL: " + sql1.toSql());
-        System.out.println("Parameters: " + sql1.getParameters());
-    }
 }
