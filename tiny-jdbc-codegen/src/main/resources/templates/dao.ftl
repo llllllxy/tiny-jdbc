@@ -10,7 +10,7 @@ import ${entityPackageName}.${entityClassName};
 * ${className} DAO接口
 </#if>
 *
-* @author tiny-jdbc
+* @author ${author}
 * @date ${createDate}
 */
 public interface ${className} extends BaseDao<${entityClassName}, ${idType}> {

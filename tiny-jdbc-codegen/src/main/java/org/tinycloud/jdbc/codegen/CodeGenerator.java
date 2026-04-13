@@ -11,12 +11,13 @@ import org.tinycloud.jdbc.codegen.util.TypeUtils;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 
 /**
  * <p>
- *  FreeMarker 实现的代码生成器核心代码
+ * FreeMarker 实现的代码生成器核心代码
  * </p>
  *
  * @author liuxingyu01
@@ -103,9 +104,10 @@ public class CodeGenerator {
         model.put("packageName", packageName);
         model.put("className", className);
         model.put("tableName", table.getTableName());
-        model.put("tableComment", safeString(table.getRemarks()));
+        model.put("tableComment", table.getRemarks() == null ? "" : table.getRemarks());
         model.put("enableLombok", config.getStrategyConfig().isEnableLombok());
-        model.put("createDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+        model.put("createDate", new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+        model.put("author", config.getAuthor());
 
         List<ColumnInfo> columns = new ArrayList<>();
         Set<String> importTypes = new LinkedHashSet<>();
@@ -128,7 +130,7 @@ public class CodeGenerator {
             columnInfo.setPrimaryKey(column.isPrimaryKey());
             columnInfo.setAutoIncrement(column.isAutoIncrement());
             columnInfo.setNullable(column.isNullable());
-            columnInfo.setComment(safeString(column.getRemarks()));
+            columnInfo.setComment(table.getRemarks() == null ? "" : table.getRemarks());
             if (column.isPrimaryKey()) {
                 // 优先使用用户配置
                 if (config.getStrategyConfig().getIdType() != null) {
@@ -177,8 +179,9 @@ public class CodeGenerator {
         model.put("className", daoClassName);
         model.put("entityClassName", entityClassName);
         model.put("entityPackageName", entityPackageName);
-        model.put("tableComment", safeString(table.getRemarks()));
-        model.put("createDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+        model.put("tableComment", table.getRemarks() == null ? "" : table.getRemarks());
+        model.put("createDate", new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+        model.put("author", config.getAuthor());
 
         String idType = "Void";
         List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
@@ -206,10 +209,6 @@ public class CodeGenerator {
                 packageName.replace('.', File.separatorChar)).getAbsolutePath();
     }
 
-    private String safeString(String value) {
-        return value == null ? "" : value;
-    }
-
     /**
      * 内部类，用于模板列信息
      */
@@ -223,21 +222,68 @@ public class CodeGenerator {
         private String idType;
         private String comment;
 
-        public String getColumnName() { return columnName; }
-        public void setColumnName(String columnName) { this.columnName = columnName; }
-        public String getJavaType() { return javaType; }
-        public void setJavaType(String javaType) { this.javaType = javaType; }
-        public String getFieldName() { return fieldName; }
-        public void setFieldName(String fieldName) { this.fieldName = fieldName; }
-        public boolean isPrimaryKey() { return primaryKey; }
-        public void setPrimaryKey(boolean primaryKey) { this.primaryKey = primaryKey; }
-        public boolean isAutoIncrement() { return autoIncrement; }
-        public void setAutoIncrement(boolean autoIncrement) { this.autoIncrement = autoIncrement; }
-        public boolean isNullable() { return nullable; }
-        public void setNullable(boolean nullable) { this.nullable = nullable; }
-        public String getIdType() { return idType; }
-        public void setIdType(String idType) { this.idType = idType; }
-        public String getComment() { return comment; }
-        public void setComment(String comment) { this.comment = comment; }
+        public String getColumnName() {
+            return columnName;
+        }
+
+        public void setColumnName(String columnName) {
+            this.columnName = columnName;
+        }
+
+        public String getJavaType() {
+            return javaType;
+        }
+
+        public void setJavaType(String javaType) {
+            this.javaType = javaType;
+        }
+
+        public String getFieldName() {
+            return fieldName;
+        }
+
+        public void setFieldName(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        public boolean isPrimaryKey() {
+            return primaryKey;
+        }
+
+        public void setPrimaryKey(boolean primaryKey) {
+            this.primaryKey = primaryKey;
+        }
+
+        public boolean isAutoIncrement() {
+            return autoIncrement;
+        }
+
+        public void setAutoIncrement(boolean autoIncrement) {
+            this.autoIncrement = autoIncrement;
+        }
+
+        public boolean isNullable() {
+            return nullable;
+        }
+
+        public void setNullable(boolean nullable) {
+            this.nullable = nullable;
+        }
+
+        public String getIdType() {
+            return idType;
+        }
+
+        public void setIdType(String idType) {
+            this.idType = idType;
+        }
+
+        public String getComment() {
+            return comment;
+        }
+
+        public void setComment(String comment) {
+            this.comment = comment;
+        }
     }
 }

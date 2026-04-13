@@ -19,12 +19,16 @@ public class CodegenConfig {
     private final StrategyConfig strategyConfig;
     /** 输出目录配置信息 */
     private final String outputDir;
+    /** 输出作者信息 */
+    private final String author;
+
 
     private CodegenConfig(Builder builder) {
         this.dataSourceConfig = builder.dataSourceConfig;
         this.packageConfig = builder.packageConfig;
         this.strategyConfig = builder.strategyConfig;
         this.outputDir = builder.outputDir;
+        this.author = builder.author;
     }
 
     public static Builder builder() {
@@ -46,6 +50,10 @@ public class CodegenConfig {
 
     public String getOutputDir() {
         return outputDir;
+    }
+
+    public String getAuthor() {
+        return author;
     }
 
     /**
@@ -72,6 +80,8 @@ public class CodegenConfig {
         private PackageConfig packageConfig;
         private StrategyConfig strategyConfig;
         private String outputDir;
+        private String author;
+
 
         public Builder dataSourceConfig(DataSourceConfig dataSourceConfig) {
             this.dataSourceConfig = dataSourceConfig;
@@ -90,6 +100,11 @@ public class CodegenConfig {
 
         public Builder outputDir(String outputDir) {
             this.outputDir = outputDir;
+            return this;
+        }
+
+        public Builder author(String author) {
+            this.author = author;
             return this;
         }
 
@@ -112,6 +127,10 @@ public class CodegenConfig {
             // outputDir 可选，给默认值
             if (outputDir == null || outputDir.isEmpty()) {
                 outputDir = "generated";
+            }
+            // author 可选，给默认值
+            if (author == null || author.isEmpty()) {
+                author = "tiny-jdbc";
             }
             return new CodegenConfig(this);
         }

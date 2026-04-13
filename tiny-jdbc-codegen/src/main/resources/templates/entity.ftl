@@ -18,7 +18,7 @@ import ${importItem};
 /**
 * ${tableComment}
 *
-* @author tiny-jdbc
+* @author ${author}
 * @date ${createDate}
 */
 </#if>

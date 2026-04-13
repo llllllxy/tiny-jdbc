@@ -42,6 +42,7 @@ public class CodegenApplication {
                 .packageConfig(packageConfig)
                 .strategyConfig(strategyConfig)
                 .outputDir("generated")
+                .author("XXXX")
                 .build();
 
         CodeGenerator generator = new CodeGenerator(config);
