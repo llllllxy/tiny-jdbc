@@ -3,6 +3,14 @@ package org.tinycloud.jdbc.codegen.meta;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * <p>
+ *  表元数据类，封装数据库表的信息
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2026-03-21 11:22
+ */
 public class TableMeta {
     private String tableName;
     private String remarks;

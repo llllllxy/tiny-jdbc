@@ -6,6 +6,15 @@ import org.tinycloud.jdbc.codegen.config.DataSourceConfig;
 import org.tinycloud.jdbc.codegen.config.PackageConfig;
 import org.tinycloud.jdbc.codegen.config.StrategyConfig;
 
+
+/**
+ * <p>
+ * 代码生成器示例，用于根据数据库表结构自对应的Java代码
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2026-03-21 11:22
+ */
 public class CodegenApplication {
     public static void main(String[] args) throws Exception {
         DataSourceConfig dataSourceConfig = DataSourceConfig.builder()

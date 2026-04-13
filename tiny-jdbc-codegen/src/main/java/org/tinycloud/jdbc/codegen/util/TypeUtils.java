@@ -5,6 +5,15 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+
+/**
+ * <p>
+ *  类型工具类， 用于处理数据库类型和Java类型之间的转换
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2026-03-21 11:22
+ */
 public class TypeUtils {
     private static final Set<String> JAVA_KEYWORDS = new HashSet<>();
 

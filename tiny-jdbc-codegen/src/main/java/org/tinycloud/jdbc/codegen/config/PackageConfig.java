@@ -1,9 +1,20 @@
 package org.tinycloud.jdbc.codegen.config;
 
-public class PackageConfig {
 
+/**
+ * <p>
+ *  包结构配置信息类，封装代码生成器的包结构信息
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2026-03-21 11:22
+ */
+public class PackageConfig {
+    /**父包名*/
     private final String parent;
+    /**实体类包名*/
     private final String entity;
+    /**数据访问层包名*/
     private final String dao;
 
     private PackageConfig(Builder builder) {

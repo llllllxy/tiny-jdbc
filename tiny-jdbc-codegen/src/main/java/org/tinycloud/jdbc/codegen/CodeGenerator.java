@@ -13,8 +13,14 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.util.*;
 
+
 /**
- * FreeMarker 实现的代码生成器
+ * <p>
+ *  FreeMarker 实现的代码生成器核心代码
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2026-03-21 11:22
  */
 public class CodeGenerator {
 

@@ -12,6 +12,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+
+/**
+ * <p>
+ * 数据库元数据类，封装数据库的元数据信息
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2026-03-21 11:22
+ */
 public class DatabaseMeta {
     private final DataSourceConfig dataSourceConfig;
 
@@ -19,6 +28,17 @@ public class DatabaseMeta {
         this.dataSourceConfig = dataSourceConfig;
     }
 
+
+    /**
+     * 获取数据库中所有表的元数据信息
+     * <p>
+     * 该方法通过JDBC连接数据库，读取数据库元数据，获取所有用户表的信息，
+     * 包括表名、表备注以及每个表的列信息。
+     * </p>
+     *
+     * @return 表元数据列表，包含数据库中所有表的详细信息
+     * @throws Exception 当加载数据库驱动、建立数据库连接或读取元数据失败时抛出异常
+     */
     public List<TableMeta> getTables() throws Exception {
         Class.forName(dataSourceConfig.getDriverClassName());
 
@@ -51,6 +71,18 @@ public class DatabaseMeta {
         }
     }
 
+    /**
+     * 获取指定表的所有列的元数据信息
+     * <p>
+     * 该方法通过JDBC连接数据库，读取数据库元数据，获取指定表的所有列的信息，
+     * 包括列名、数据类型、列大小、小数位数、是否为空、列的注释、列的顺序。
+     * </p>
+     *
+     * @param metaData  数据库元数据对象
+     * @param catalog   数据库的目录名
+     * @param schema    数据库的架构名
+     * @param tableName 表名
+     */
     private List<ColumnMeta> getColumns(DatabaseMetaData metaData, String catalog, String schema, String tableName) throws SQLException {
         List<ColumnMeta> columns = new ArrayList<>();
         Map<String, ColumnMeta> columnMap = new LinkedHashMap<>();
@@ -89,6 +121,16 @@ public class DatabaseMeta {
         return columns;
     }
 
+
+    /**
+     * 获取数据库的目录名
+     * <p>
+     * 该方法通过JDBC连接数据库，获取数据库的目录名。
+     * </p>
+     *
+     * @param connection 数据库连接对象
+     * @return 数据库的目录名
+     */
     private String safeCatalog(Connection connection) {
         try {
             return connection.getCatalog();
@@ -97,6 +139,15 @@ public class DatabaseMeta {
         }
     }
 
+    /**
+     * 获取数据库的架构名
+     * <p>
+     * 该方法通过JDBC连接数据库，获取数据库的架构名。
+     * </p>
+     *
+     * @param connection 数据库连接对象
+     * @return 数据库的架构名
+     */
     private String safeSchema(Connection connection) {
         try {
             return connection.getSchema();
@@ -105,6 +156,13 @@ public class DatabaseMeta {
         }
     }
 
+    /**
+     * 获取结果集的指定列的值，如果列不存在则返回null
+     *
+     * @param rs         结果集对象
+     * @param columnLabel 列标签
+     * @return 列的值，如果列不存在则返回null
+     */
     private String getStringSafely(ResultSet rs, String columnLabel) {
         try {
             return rs.getString(columnLabel);

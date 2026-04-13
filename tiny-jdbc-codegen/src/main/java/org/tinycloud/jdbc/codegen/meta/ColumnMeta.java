@@ -1,5 +1,14 @@
 package org.tinycloud.jdbc.codegen.meta;
 
+
+/**
+ * <p>
+ *  列元数据类，封装数据库表列的元数据信息
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2026-03-21 11:22
+ */
 public class ColumnMeta {
     private String columnName;
     private int dataType;

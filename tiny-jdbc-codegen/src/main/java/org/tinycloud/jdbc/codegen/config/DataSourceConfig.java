@@ -1,5 +1,14 @@
 package org.tinycloud.jdbc.codegen.config;
 
+
+/**
+ * <p>
+ *  数据源配置信息类，封装数据库连接信息
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2026-03-21 11:22
+ */
 public class DataSourceConfig {
 
     private final String url;

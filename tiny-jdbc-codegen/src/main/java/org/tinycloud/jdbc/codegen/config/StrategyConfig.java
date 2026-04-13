@@ -4,10 +4,22 @@ import org.tinycloud.jdbc.annotation.IdType;
 
 import java.util.Arrays;
 
+
+/**
+ * <p>
+ *  生成策略配置信息类，封装代码生成器的生成策略信息
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2026-03-21 11:22
+ */
 public class StrategyConfig {
 
+    /**包含的数据库表名数组*/
     private final String[] includeTables;
+    /**是否使用实际列名*/
     private final boolean useActualColumnNames;
+    /**是否启用Lombok注解*/
     private final boolean enableLombok;
 
     /**
