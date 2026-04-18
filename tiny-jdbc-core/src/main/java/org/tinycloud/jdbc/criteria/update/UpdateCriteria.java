@@ -1,9 +1,9 @@
 package org.tinycloud.jdbc.criteria.update;
 
 import org.tinycloud.jdbc.criteria.AbstractCriteria;
+import org.tinycloud.jdbc.criteria.RawUpdateSqlValue;
 
 import java.math.BigDecimal;
-
 
 /**
  * <p>
@@ -27,8 +27,7 @@ public class UpdateCriteria<T> extends AbstractCriteria<T, UpdateCriteria<T>> {
      */
     public final <R> UpdateCriteria<T> set(boolean whether, String field, R value) {
         if (whether) {
-            this.updateFields.add(field + " = ?");
-            this.updateParameters.add(value);
+            this.updateValues.put(field, value);
         }
         return this;
     }
@@ -58,7 +57,8 @@ public class UpdateCriteria<T> extends AbstractCriteria<T, UpdateCriteria<T>> {
      * @return 当前的 UpdateCriteria 实例，用于链式调用
      */
     public UpdateCriteria<T> setIncrement(String field, Number value) {
-        this.updateFields.add(String.format("%s=%s + %s", field, field, value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
+        String increaseValue = value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : String.valueOf(value);
+        this.updateValues.put(field, new RawUpdateSqlValue(field + " + " + increaseValue));
         return this;
     }
 
@@ -73,7 +73,8 @@ public class UpdateCriteria<T> extends AbstractCriteria<T, UpdateCriteria<T>> {
      * @return 当前的 UpdateCriteria 实例，用于链式调用
      */
     public UpdateCriteria<T> setDecrement(String field, Number value) {
-        this.updateFields.add(String.format("%s=%s - %s", field, field, value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
+        String decreaseValue = value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : String.valueOf(value);
+        this.updateValues.put(field, new RawUpdateSqlValue(field + " - " + decreaseValue));
         return this;
     }
 

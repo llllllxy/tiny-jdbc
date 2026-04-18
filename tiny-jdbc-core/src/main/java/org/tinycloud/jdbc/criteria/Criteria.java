@@ -1,12 +1,11 @@
 package org.tinycloud.jdbc.criteria;
 
-
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Map;
 
 /**
  * 条件构造器抽象类，抽象了一些公共的方法
@@ -27,11 +26,6 @@ public abstract class Criteria<T> {
     protected final List<String> selectFields;
 
     /**
-     * 修改字段-键
-     */
-    protected final List<String> updateFields;
-
-    /**
      * 查询条件-键
      */
     protected final List<String> conditions;
@@ -42,9 +36,9 @@ public abstract class Criteria<T> {
     protected final List<Object> whereParameters;
 
     /**
-     * 更新set-值
+     * 更新字段和值（按插入顺序保存，重复字段会被覆盖）
      */
-    protected final List<Object> updateParameters;
+    protected final Map<String, Object> updateValues;
 
     /**
      * 排序的条件
@@ -61,12 +55,11 @@ public abstract class Criteria<T> {
      */
     public Criteria() {
         this.nextIsOr = false;
-        this.updateFields = new ArrayList<>();
+        this.updateValues = new LinkedHashMap<>();
         this.selectFields = new ArrayList<>();
         this.conditions = new ArrayList<>();
         this.orderBys = new ArrayList<>();
         this.whereParameters = new ArrayList<>();
-        this.updateParameters = new ArrayList<>();
         this.lastSqls = new ArrayList<>();
     }
 
@@ -88,7 +81,14 @@ public abstract class Criteria<T> {
      * @return 参数列表
      */
     public List<Object> getParameters() {
-        return Stream.concat(this.updateParameters.stream(), this.whereParameters.stream()).collect(Collectors.toList());
+        List<Object> parameters = new ArrayList<>();
+        for (Object updateValue : this.updateValues.values()) {
+            if (!(updateValue instanceof RawUpdateSqlValue)) {
+                parameters.add(updateValue);
+            }
+        }
+        parameters.addAll(this.whereParameters);
+        return parameters;
     }
 
     /**
@@ -115,11 +115,35 @@ public abstract class Criteria<T> {
      */
     public String updateSql() {
         StringBuilder update = new StringBuilder();
-        if (!this.updateFields.isEmpty()) {
-            update.append(String.join(",", this.updateFields));
+        if (!this.updateValues.isEmpty()) {
+            int index = 0;
+            for (Map.Entry<String, Object> entry : this.updateValues.entrySet()) {
+                if (index > 0) {
+                    update.append(",");
+                }
+                String column = entry.getKey();
+                Object value = entry.getValue();
+                if (value instanceof RawUpdateSqlValue) {
+                    update.append(column).append(" = ").append(((RawUpdateSqlValue) value).getSqlExpression());
+                } else {
+                    update.append(column).append(" = ?");
+                }
+                index++;
+            }
         }
         return update.toString();
     }
+
+    /**
+     * 判断更新字段是否已存在
+     *
+     * @param columnName 数据库字段名
+     * @return true=已存在，false=不存在
+     */
+    public boolean hasUpdateColumn(String columnName) {
+        return this.updateValues.containsKey(columnName);
+    }
+
 
     /**
      * 根据条件生成对应的条件部分的SQL片段，带WHERE

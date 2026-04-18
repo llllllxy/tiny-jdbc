@@ -126,7 +126,7 @@ public class ReflectUtils {
     /**
      * 根据类对象获取其方法列表
      *
-     * @param clazz 类对象
+     * @param clazz     类对象
      * @param defensive 是否返回防御性拷贝（避免外部修改缓存中的数组）
      * @return 字段数组
      */
@@ -386,5 +386,21 @@ public class ReflectUtils {
     public static boolean isPublicStaticFinal(Field field) {
         int modifiers = field.getModifiers();
         return Modifier.isPublic(modifiers) && Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers);
+    }
+
+    /**
+     * 判断实体是否包含指定字段
+     *
+     * @param clazz     类对象
+     * @param fieldName 字段名称
+     * @return true or false
+     */
+    public static boolean hasField(Class<?> clazz, String fieldName) {
+        try {
+            getAccessibleField(clazz, fieldName);
+            return true;
+        } catch (NoSuchFieldException e) {
+            return false;
+        }
     }
 }

@@ -7,11 +7,14 @@ import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
 import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
+import org.tinycloud.jdbc.fill.FillMetaObject;
+import org.tinycloud.jdbc.fill.MetaObjectHandler;
 import org.tinycloud.jdbc.interceptor.SqlInterceptor;
 import org.tinycloud.jdbc.interceptor.SqlInvocation;
 import org.tinycloud.jdbc.interceptor.SqlType;
@@ -174,6 +177,78 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         this.doBefore(invocation, jdbcTemplate);
         jdbcTemplate.execute(sql);
         this.doAfter(null, invocation, jdbcTemplate);
+    }
+
+    /**
+     * 私有工具方法：执行新增前自动填充
+     */
+    private void doInsertFill(T entity) {
+        if (entity == null) {
+            return;
+        }
+        GlobalConfig globalConfig = GlobalConfig.getConfig();
+        if (globalConfig == null) {
+            return;
+        }
+        MetaObjectHandler metaObjectHandler = globalConfig.getMetaObjectHandler();
+        if (metaObjectHandler == null) {
+            return;
+        }
+        metaObjectHandler.insertFill(new FillMetaObject(entity));
+    }
+
+    /**
+     * 私有工具方法：执行更新前自动填充
+     */
+    private void doUpdateFill(T entity) {
+        if (entity == null) {
+            return;
+        }
+        GlobalConfig globalConfig = GlobalConfig.getConfig();
+        if (globalConfig == null) {
+            return;
+        }
+        MetaObjectHandler metaObjectHandler = globalConfig.getMetaObjectHandler();
+        if (metaObjectHandler == null) {
+            return;
+        }
+        metaObjectHandler.updateFill(new FillMetaObject(entity));
+    }
+
+    /**
+     * 私有工具方法：仅条件构造器更新前自动填充（字符串字段版）
+     */
+    private void doUpdateCriteriaFill(UpdateCriteria<T> criteria) {
+        if (criteria == null) {
+            return;
+        }
+        GlobalConfig globalConfig = GlobalConfig.getConfig();
+        if (globalConfig == null) {
+            return;
+        }
+        MetaObjectHandler metaObjectHandler = globalConfig.getMetaObjectHandler();
+        if (metaObjectHandler == null) {
+            return;
+        }
+        metaObjectHandler.updateCriteriaFill(criteria, entityClass);
+    }
+
+    /**
+     * 私有工具方法：仅条件构造器更新前自动填充（Lambda 字段版）
+     */
+    private void doUpdateLambdaCriteriaFill(LambdaUpdateCriteria<T> criteria) {
+        if (criteria == null) {
+            return;
+        }
+        GlobalConfig globalConfig = GlobalConfig.getConfig();
+        if (globalConfig == null) {
+            return;
+        }
+        MetaObjectHandler metaObjectHandler = globalConfig.getMetaObjectHandler();
+        if (metaObjectHandler == null) {
+            return;
+        }
+        metaObjectHandler.updateLambdaCriteriaFill(criteria, entityClass);
     }
 
 
@@ -400,6 +475,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (entity == null) {
             throw new TinyJdbcException("insert entity cannot be null");
         }
+        this.doInsertFill(entity);
         SqlProvider sqlProvider = SqlGenerator.insertSql(entity, ignoreNulls, getJdbcTemplate());
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("insert parameters cannot be null");
@@ -427,6 +503,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (entity == null) {
             throw new TinyJdbcException("update entity cannot be null");
         }
+        this.doUpdateFill(entity);
         SqlProvider sqlProvider = SqlGenerator.updateByIdSql(entity, ignoreNulls);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
@@ -452,6 +529,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             throw new TinyJdbcException("criteria cannot be null");
         }
+        this.doUpdateFill(entity);
         SqlProvider sqlProvider = SqlGenerator.updateByEntityAndCriteriaSql(entity, ignoreNulls, criteria);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
@@ -467,6 +545,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             throw new TinyJdbcException("criteria cannot be null");
         }
+        this.doUpdateFill(entity);
         SqlProvider sqlProvider = SqlGenerator.updateByEntityAndLambdaCriteriaSql(entity, ignoreNulls, criteria);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
@@ -479,6 +558,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             throw new TinyJdbcException("criteria cannot be null");
         }
+        this.doUpdateCriteriaFill(criteria);
         SqlProvider sqlProvider = SqlGenerator.updateByCriteriaSql(criteria, entityClass);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
@@ -491,6 +571,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (lambdaCriteria == null) {
             throw new TinyJdbcException("lambdaCriteria cannot be null");
         }
+        this.doUpdateLambdaCriteriaFill(lambdaCriteria);
         SqlProvider sqlProvider = SqlGenerator.updateByLambdaCriteriaSql(lambdaCriteria, entityClass);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");

@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.config;
 
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.SnowflakeConfigInterface;
+import org.tinycloud.jdbc.fill.MetaObjectHandler;
 import org.tinycloud.jdbc.util.DbType;
 
 import java.io.Serializable;
@@ -56,6 +57,11 @@ public class GlobalConfig implements Serializable {
      * 雪花算法 workerId 和 datacenterId 配置
      */
     private SnowflakeConfigInterface snowflakeConfigInterface;
+
+    /**
+     * 实体字段自动填充处理器
+     */
+    private MetaObjectHandler metaObjectHandler;
 
     public boolean isBanner() {
         return banner;
@@ -119,6 +125,14 @@ public class GlobalConfig implements Serializable {
 
     public void setSnowflakeConfigInterface(SnowflakeConfigInterface snowflakeConfigInterface) {
         this.snowflakeConfigInterface = snowflakeConfigInterface;
+    }
+
+    public MetaObjectHandler getMetaObjectHandler() {
+        return metaObjectHandler;
+    }
+
+    public void setMetaObjectHandler(MetaObjectHandler metaObjectHandler) {
+        this.metaObjectHandler = metaObjectHandler;
     }
 
 

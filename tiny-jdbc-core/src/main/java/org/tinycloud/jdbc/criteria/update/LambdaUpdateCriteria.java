@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc.criteria.update;
 
 import org.tinycloud.jdbc.criteria.AbstractLambdaCriteria;
+import org.tinycloud.jdbc.criteria.RawUpdateSqlValue;
 import org.tinycloud.jdbc.criteria.TypeFunction;
 
 import java.math.BigDecimal;
@@ -20,16 +21,15 @@ public class LambdaUpdateCriteria<T> extends AbstractLambdaCriteria<T, LambdaUpd
      * 若条件为真，则将指定字段和对应的值添加到更新字段列表和参数列表中。
      *
      * @param whether 一个布尔值，决定是否执行字段和值的添加操作。若为 true 则添加，为 false 则忽略。
-     * @param field 一个 Lambda 表达式，用于引用实体类的属性，通过该属性可获取对应的数据库字段名。
-     * @param value 要设置给该字段的新值，泛型类型，可接受任意类型的值。
-     * @param <R> 值的泛型类型。
+     * @param field   一个 Lambda 表达式，用于引用实体类的属性，通过该属性可获取对应的数据库字段名。
+     * @param value   要设置给该字段的新值，泛型类型，可接受任意类型的值。
+     * @param <R>     值的泛型类型。
      * @return 当前的 LambdaUpdateCriteria 实例，用于链式调用。
      */
     public <R> LambdaUpdateCriteria<T> set(boolean whether, TypeFunction<T, ?> field, R value) {
         if (whether) {
             String columnName = this.getColumnName(field);
-            this.updateFields.add(columnName + " = ?");
-            this.updateParameters.add(value);
+            this.updateValues.put(columnName, value);
         }
         return this;
     }
@@ -41,7 +41,7 @@ public class LambdaUpdateCriteria<T> extends AbstractLambdaCriteria<T, LambdaUpd
      *
      * @param field 一个 Lambda 表达式，用于引用实体类的属性，通过该属性可获取对应的数据库字段名。
      * @param value 要设置给该字段的新值，泛型类型，可接受任意类型的值。
-     * @param <R> 值的泛型类型。
+     * @param <R>   值的泛型类型。
      * @return 当前的 LambdaUpdateCriteria 实例，用于链式调用。
      */
     public <R> LambdaUpdateCriteria<T> set(TypeFunction<T, ?> field, R value) {
@@ -60,7 +60,8 @@ public class LambdaUpdateCriteria<T> extends AbstractLambdaCriteria<T, LambdaUpd
      */
     public LambdaUpdateCriteria<T> setIncrement(TypeFunction<T, ?> field, Number value) {
         String columnName = this.getColumnName(field);
-        this.updateFields.add(String.format("%s=%s + %s", columnName, columnName, value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
+        String increaseValue = value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : String.valueOf(value);
+        this.updateValues.put(columnName, new RawUpdateSqlValue(columnName + " + " + increaseValue));
         return this;
     }
 
@@ -76,7 +77,8 @@ public class LambdaUpdateCriteria<T> extends AbstractLambdaCriteria<T, LambdaUpd
      */
     public LambdaUpdateCriteria<T> setDecrement(TypeFunction<T, ?> field, Number value) {
         String columnName = this.getColumnName(field);
-        this.updateFields.add(String.format("%s=%s - %s", columnName, columnName, value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : value));
+        String decreaseValue = value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : String.valueOf(value);
+        this.updateValues.put(columnName, new RawUpdateSqlValue(columnName + " - " + decreaseValue));
         return this;
     }
 

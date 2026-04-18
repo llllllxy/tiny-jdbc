@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.tinycloud.jdbc.config.GlobalConfig;
+import org.tinycloud.jdbc.fill.MetaObjectHandler;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.SnowflakeConfigInterface;
 import org.tinycloud.jdbc.interceptor.SqlInterceptor;
@@ -65,6 +66,8 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware, Initi
         this.getBeanThen(IdGeneratorInterface.class, globalConfig::setIdGeneratorInterface);
         /* 获取自定义的（雪花算法 workerId 和 datacenterId 配置） */
         this.getBeanThen(SnowflakeConfigInterface.class, globalConfig::setSnowflakeConfigInterface);
+        /* 获取自定义的（实体字段自动填充处理器） */
+        this.getBeanThen(MetaObjectHandler.class, globalConfig::setMetaObjectHandler);
         GlobalConfig.setConfig(globalConfig);
 
         if (logger.isInfoEnabled()) {
