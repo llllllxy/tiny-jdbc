@@ -647,6 +647,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         List<Object[]> batchArgs = new ArrayList<>(collection.size());
         String sql = null;
         for (T t : collection) {
+            this.doInsertFill(t);
             SqlProvider sqlProvider = SqlGenerator.insertSql(t, ignoreNulls, getJdbcTemplate());
             if (sql == null || sql.isEmpty()) {
                 sql = sqlProvider.getSql();

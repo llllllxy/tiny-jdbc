@@ -61,17 +61,18 @@ public class FillMetaObject {
     /**
      * 新增场景严格填充：仅当当前字段值为 null 时才写入
      */
-    public void strictInsertFill(String fieldName, Supplier<?> valueSupplier) {
+    public void strictInsertFill(String fieldName, Object value) {
         if (this.getValue(fieldName) == null) {
-            this.setValue(fieldName, valueSupplier.get());
+            if (value != null) {
+                this.setValue(fieldName, value);
+            }
         }
     }
 
     /**
-     * 更新场景严格填充：仅当字段存在并且 supplier 返回值非 null 时写入
+     * 更新场景严格填充：仅当当前字段值为 null 时才写入
      */
-    public void strictUpdateFill(String fieldName, Supplier<?> valueSupplier) {
-        Object value = valueSupplier.get();
+    public void strictUpdateFill(String fieldName, Object value) {
         if (value != null) {
             this.setValue(fieldName, value);
         }
@@ -80,14 +81,14 @@ public class FillMetaObject {
     /**
      * 新增场景填充：字段为空才填充（别名方法，语义更直观）
      */
-    public void fillIfNull(String fieldName, Supplier<?> valueSupplier) {
-        this.strictInsertFill(fieldName, valueSupplier);
+    public void fillIfNull(String fieldName, Object value) {
+        this.strictInsertFill(fieldName, value);
     }
 
     /**
      * 更新场景覆盖填充：只要有值就覆盖
      */
-    public void fillOverride(String fieldName, Supplier<?> valueSupplier) {
-        this.strictUpdateFill(fieldName, valueSupplier);
+    public void fillOverride(String fieldName, Object value) {
+        this.strictUpdateFill(fieldName, value);
     }
 }

@@ -41,16 +41,16 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
         LocalDateTime now = LocalDateTime.now();
 
         if (ReflectUtils.hasField(entity.getClass(), CREATE_USER_ID_FIELD)) {
-            metaObject.strictInsertFill(CREATE_USER_ID_FIELD, () -> userId);
+            metaObject.strictInsertFill(CREATE_USER_ID_FIELD, userId);
         }
         if (ReflectUtils.hasField(entity.getClass(), CREATE_TIME_FIELD)) {
-            metaObject.strictInsertFill(CREATE_TIME_FIELD, () -> now);
+            metaObject.strictInsertFill(CREATE_TIME_FIELD, now);
         }
         if (ReflectUtils.hasField(entity.getClass(), UPDATE_USER_ID_FIELD)) {
-            metaObject.strictInsertFill(UPDATE_USER_ID_FIELD, () -> userId);
+            metaObject.strictInsertFill(UPDATE_USER_ID_FIELD, userId);
         }
         if (ReflectUtils.hasField(entity.getClass(), UPDATE_TIME_FIELD)) {
-            metaObject.strictInsertFill(UPDATE_TIME_FIELD, () -> now);
+            metaObject.strictInsertFill(UPDATE_TIME_FIELD, now);
         }
     }
 
@@ -61,10 +61,10 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
         LocalDateTime now = LocalDateTime.now();
 
         if (ReflectUtils.hasField(entity.getClass(), UPDATE_USER_ID_FIELD)) {
-            metaObject.strictUpdateFill(UPDATE_USER_ID_FIELD, () -> userId);
+            metaObject.strictUpdateFill(UPDATE_USER_ID_FIELD, userId);
         }
         if (ReflectUtils.hasField(entity.getClass(), UPDATE_TIME_FIELD)) {
-            metaObject.strictUpdateFill(UPDATE_TIME_FIELD, () -> now);
+            metaObject.strictUpdateFill(UPDATE_TIME_FIELD, now);
         }
     }
 
