@@ -1,7 +1,5 @@
 package org.tinycloud.jdbc.criteria;
 
-import org.tinycloud.jdbc.util.LambdaUtils;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -318,12 +316,6 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
      */
     protected abstract Children instance();
 
-    /**
-     * Lambda获取列名
-     */
-    public String getColumnName(TypeFunction<T, ?> field) {
-        return LambdaUtils.getLambdaColumnName(field);
-    }
 
     /**
      * 函数化的做事

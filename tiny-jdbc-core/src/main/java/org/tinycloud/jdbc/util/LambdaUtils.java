@@ -24,7 +24,7 @@ public class LambdaUtils {
     public static final Map<String, String> LAMBDA_TO_FIELD_CACHE = new ConcurrentHashMap<>();
 
     // 缓存 字段名 到 Lambda 的映射
-    private static final Map<String, Serializable> FIELD_TO_LAMBDA_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, TypeFunction<?, ?>> FIELD_TO_LAMBDA_CACHE = new ConcurrentHashMap<>();
 
 
     /**
@@ -120,7 +120,8 @@ public class LambdaUtils {
                         LambdaMetafactory.FLAG_SERIALIZABLE
                 );
                 // 生成lambda实例并返回
-                return (Serializable) callSite.getTarget().invokeExact();
+                TypeFunction<T, ?> lambda = (TypeFunction<T, ?>) callSite.getTarget().invokeExact();
+                return lambda;
             } catch (NoSuchMethodException e) {
                 throw new IllegalArgumentException("Class " + clazz.getName() + " does not define a public getter method for field '" + prop + "'", e);
             } catch (NoSuchFieldException e) {

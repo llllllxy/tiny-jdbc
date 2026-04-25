@@ -3,9 +3,6 @@ package org.tinycloud.jdbc.fill;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.util.ReflectUtils;
 
-import java.util.Objects;
-import java.util.function.Supplier;
-
 /**
  * <p>
  * 自动填充上下文对象

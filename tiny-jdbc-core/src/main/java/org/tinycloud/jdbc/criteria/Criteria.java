@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc.criteria;
 
 import org.tinycloud.jdbc.exception.TinyJdbcException;
+import org.tinycloud.jdbc.util.LambdaUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -63,7 +64,6 @@ public abstract class Criteria<T> {
         this.lastSqls = new ArrayList<>();
     }
 
-
     /**
      * 获取条件前缀（根据 isNextOr 决定是 AND 还是 OR）
      * 执行后重置 isNextOr 为 false，避免影响后续条件
@@ -93,9 +93,12 @@ public abstract class Criteria<T> {
 
     /**
      * 根据条件生成对应查询部分的SQL片段
+     * 
      * <pre>
-     *  如： id,create_time
+     * 如： id,create_time
+     * 
      * <pre>
+     * 
      * @return 查询SQL片段
      */
     public String selectSql() {
@@ -108,9 +111,12 @@ public abstract class Criteria<T> {
 
     /**
      * 根据条件生成对应更新部分的SQL片段
+     * 
      * <pre>
-     *  如： id=?,create_time=?
+     * 如： id=?,create_time=?
+     * 
      * <pre>
+     * 
      * @return 更新SQL片段
      */
     public String updateSql() {
@@ -144,12 +150,33 @@ public abstract class Criteria<T> {
         return this.updateValues.containsKey(columnName);
     }
 
+    /**
+     * 判断更新字段是否已存在
+     *
+     * @param columnName 数据库字段名
+     * @return true=已存在，false=不存在
+     */
+    public boolean hasUpdateColumn(TypeFunction<T, ?> field) {
+        String columnName = this.getColumnName(field);
+        return this.updateValues.containsKey(columnName);
+    }
+
+    /**
+     * Lambda获取列名
+     */
+    public String getColumnName(TypeFunction<T, ?> field) {
+        return LambdaUtils.getLambdaColumnName(field);
+    }
 
     /**
      * 根据条件生成对应的条件部分的SQL片段，带WHERE
+     * 
      * <pre>
-     *  如： WHERE age < 28 AND name IN ('Bob', 'John') AND created_at = '2023-08-05 16:08:11' ORDER BY age DESC
+     * 如： WHERE age < 28 AND name IN ('Bob', 'John') AND created_at = '2023-08-05
+     * 16:08:11' ORDER BY age DESC
+     * 
      * <pre>
+     * 
      * @return 条件SQL片段
      */
     public String whereSql() {
@@ -177,7 +204,6 @@ public abstract class Criteria<T> {
         }
         return sql.toString();
     }
-
 
     /**
      * 用于构造子条件SQL片段的生成

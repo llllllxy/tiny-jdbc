@@ -1,10 +1,10 @@
 package org.tinycloud.jdbc.fill;
 
+import org.tinycloud.jdbc.criteria.TypeFunction;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
 import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.util.LambdaUtils;
 import org.tinycloud.jdbc.util.ReflectUtils;
-import org.tinycloud.jdbc.util.StrUtils;
 
 import java.time.LocalDateTime;
 
@@ -71,20 +71,30 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
     @Override
     public <T> void updateCriteriaFill(UpdateCriteria<T> criteria, Class<T> entityClass) {
         if (ReflectUtils.hasField(entityClass, UPDATE_USER_ID_FIELD)) {
-            criteria.set("update_user_id", currentUserId());
+            if (!criteria.hasUpdateColumn("update_user_id")) {
+                criteria.set("update_user_id", currentUserId());
+            }
         }
         if (ReflectUtils.hasField(entityClass, UPDATE_TIME_FIELD)) {
-            criteria.set("update_time", LocalDateTime.now());
+            if (!criteria.hasUpdateColumn("update_time")) {
+                criteria.set("update_time", LocalDateTime.now());
+            }
         }
     }
 
     @Override
     public <T> void updateLambdaCriteriaFill(LambdaUpdateCriteria<T> criteria, Class<T> entityClass) {
         if (ReflectUtils.hasField(entityClass, UPDATE_USER_ID_FIELD)) {
-            criteria.set(LambdaUtils.getLambdaGetter(entityClass, UPDATE_USER_ID_FIELD), currentUserId());
+            TypeFunction<T, ?> field = LambdaUtils.getLambdaGetter(entityClass, UPDATE_USER_ID_FIELD);
+            if (!criteria.hasUpdateColumn(field)) {
+                criteria.set(field, currentUserId());
+            }
         }
         if (ReflectUtils.hasField(entityClass, UPDATE_TIME_FIELD)) {
-            criteria.set(LambdaUtils.getLambdaGetter(entityClass, UPDATE_TIME_FIELD), LocalDateTime.now());
+            TypeFunction<T, ?> field = LambdaUtils.getLambdaGetter(entityClass, UPDATE_TIME_FIELD);
+            if (!criteria.hasUpdateColumn(field)) {
+                criteria.set(field, LocalDateTime.now());
+            }
         }
     }
 
