@@ -1,35 +1,6 @@
-<h1 align="center">TinyJDBC</h1>
-<h1 align="center">一个优雅的 ORM 框架，轻量、灵活、高性能</h1>
+# TinyJDBC
 
-
-<p align="center">
-    <a href="https://github.com/llllllxy/tiny-jdbc/blob/master/LICENSE">
-        <img src="https://img.shields.io/github/license/llllllxy/tiny-jdbc.svg?style=flat-square">
-    </a>
-	<a target="_blank" href="https://www.oracle.com/technetwork/java/javase/downloads/index.html">
-		<img src="https://img.shields.io/badge/JDK-8+-blue.svg" />
-	</a>
-    <a href="https://github.com/llllllxy/tiny-jdbc/stargazers">
-        <img src="https://img.shields.io/github/stars/llllllxy/tiny-jdbc?style=flat-square&logo=GitHub">
-    </a>
-    <a href="https://github.com/llllllxy/tiny-jdbc/network/members">
-        <img src="https://img.shields.io/github/forks/llllllxy/tiny-jdbc?style=flat-square&logo=GitHub">
-    </a>
-    <a href="https://github.com/llllllxy/tiny-jdbc/watchers">
-        <img src="https://img.shields.io/github/watchers/llllllxy/tiny-jdbc?style=flat-square&logo=GitHub">
-    </a>
-    <a href="https://github.com/llllllxy/tiny-jdbc/issues">
-        <img src="https://img.shields.io/github/issues/llllllxy/tiny-jdbc.svg?style=flat-square&logo=GitHub">
-    </a>
-    <a href='https://github.com/llllllxy/tiny-jdbc/releases'>
-        <img src='https://img.shields.io/github/release/llllllxy/tiny-jdbc.svg?style=flat-square&logo=GitHub'>
-    </a>
-    <a href='https://gitee.com/leisureLXY/tiny-jdbc'>
-        <img src='https://gitee.com/leisureLXY/tiny-jdbc/badge/star.svg?theme=dark' alt='star' />
-    </a>
-
-<br/>
-</p>
+# 一个优雅的 ORM 框架，轻量、灵活、高性能
 
 ## 1、简介
 
@@ -41,7 +12,7 @@
 - **轻量级**：除了 Spring JDBC 本身，再无任何第三方依赖，轻量可靠
 - **性能高**：依托高性能的 Spring JDBC，在执行数据库操作时性能基本无损耗，能够满足高并发场景下的应用需求
 - **功能强**：既支持原生 sql 操作，让开发者可以灵活编写复杂的 sql 语句；又支持实体类映射操作，通过简单的配置即可实现对象与数据库表的映射。BaseDao
-  里封装了大量的通用方法，配合强大灵活的条件构造器（Criteria）和SQL构造器（SQL），基本能满足各类使用需求。
+里封装了大量的通用方法，配合强大灵活的条件构造器（Criteria）和SQL构造器（SQL），基本能满足各类使用需求。
 - **支持 Lambda 形式调用**：条件构造器（Criteria）和SQL构造器（SQL）支持Lambda形式调用，编译期语法增强，无需再担心字段写错，提高代码的安全性和可维护性
 - **支持主键自动生成**：内含多种主键生成策略，包括自增主键、UUID、雪花ID 等，同时也支持自定义 ID 生成策略，满足不同业务场景下的主键生成需求。
 - **支持多种数据库分页方言**：包括 MySQL、ORACLE、DB2、PostgreSql 等多种常用数据库，无需额外配置，框架会自动识别数据库类型并采用相应的分页方言，大大简化了分页查询的开发工作。
@@ -210,9 +181,11 @@ public class UploadFile implements Serializable {
 }
 ```
 
+
 | 属性    | 类型     | 必须指定 | 默认值 | 描述      |
-|-------|--------|------|-----|---------|
+| ----- | ------ | ---- | --- | ------- |
 | value | String | 是    | ""  | 对应数据库表名 |
+
 
 #### @Id
 
@@ -231,22 +204,26 @@ public class UploadFile implements Serializable {
 }
 ```
 
+
 | 属性     | 类型     | 必须指定 | 默认值          | 描述                                                         |
-|--------|--------|------|--------------|------------------------------------------------------------|
+| ------ | ------ | ---- | ------------ | ---------------------------------------------------------- |
 | idType | String | 是    | IdType.INPUT | 主键策略                                                       |
 | value  | String | 否    | ""           | 若 idType 类型是 sequence， value 则代表的是sequence 序列的 sql 内容，此时必填 |
 
+
 ##### IdType主键策略说明
 
+
 | 值              | 描述                                                            |
-|----------------|---------------------------------------------------------------|
-| INPUT          | 自行 set 主键值                                                    |  
-| AUTO_INCREMENT | 数据库 ID 自增                                                     |  
-| OBJECT_ID      | 自动设置 MongoDb objectId 作为主键值                                   |  
-| ASSIGN_ID      | 自动设置 雪花ID 作为主键值                                               |  
-| UUID           | 自动设置 UUID 作为主键值                                               |  
-| SEQUENCE       | 自动设置 调用序列SQL结果 作为主键值                                          |  
-| CUSTOM         | 自定义主键ID生成器，需自行实现 IdGeneratorInterface 接口，详见[自定义ID生成器](#idGen) | 
+| -------------- | ------------------------------------------------------------- |
+| INPUT          | 自行 set 主键值                                                    |
+| AUTO_INCREMENT | 数据库 ID 自增                                                     |
+| OBJECT_ID      | 自动设置 MongoDb objectId 作为主键值                                   |
+| ASSIGN_ID      | 自动设置 雪花ID 作为主键值                                               |
+| UUID           | 自动设置 UUID 作为主键值                                               |
+| SEQUENCE       | 自动设置 调用序列SQL结果 作为主键值                                          |
+| CUSTOM         | 自定义主键ID生成器，需自行实现 IdGeneratorInterface 接口，详见[自定义ID生成器](#idGen) |
+
 
 #### @Column
 
@@ -268,58 +245,64 @@ public class UploadFile implements Serializable {
 }
 ```
 
+
 | 属性    | 类型     | 必须指定 | 默认值 | 描述       |
-|-------|--------|------|-----|----------|
+| ----- | ------ | ---- | --- | -------- |
 | value | String | 是    | ""  | 对应数据库字段名 |
+
 
 ## 4、BaseDao CRUD接口说明
 
 ### 查询操作
 
-| 方法                                                                              | 说明                                                       |
-|---------------------------------------------------------------------------------|----------------------------------------------------------|
-| `List<T> selectAll();`                                                          | 查询所有数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型                      |
-| `<F> List<F> select(String sql, Class<F> classz, Object... params);`            | 根据给定的sql语句和实体类型和参数，查询数据并返回实体类对象列表                        |
-| `List<T> select(String sql, Object... params);`                                 | 根据给定的sq语句l和参数，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型          |
-| `<F> F selectOne(String sql, Class<F> classz, Object... params);`               | 根据给定的sql语句和实体类型和参数，查询数据并返回一个实体类对象                        |
-| `T selectOne(String sql, Object... params);`                                    | 根据给定的sql语句和参数，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型          |
-| `List<Map<String, Object>> selectMap(String sql, Object... params);`            | 根据给定的sql语句和参数，查询数据并返回Map<String, Object>列表               |
-| `Map<String, Object> selectOneMap(String sql, Object... params);`               | 根据给定的sql语句和参数，查询数据并返回一个Map<String, Object>对象             |
-| `<T> T selectForObject(String sql, Class<T> clazz, Object... params);`          | 根据给定的sql语句和实体类型和参数，查询数据并返回一个值（常用于查count）                 |
-| `Page<F> paginate(String sql, Class<F> clazz, Page<F> page, Object... params);` | 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的Class<F>传入的自定义类型      |
-| `Page<T> paginate(String sql, Page<T> page, Object... params);`                 | 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型         |
-| `T selectById(ID id);`                                                          | 根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型                |
-| `T selectByIds(List<ID> ids);`                                                  | 根据主键ID值列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型              |
-| `T selectByIds(ID... id);`                                                      | 根据主键ID值可变参数列表，查询数据并返回实体类对象列表，类型使用的是xxxDao<T>的类型          |
-| `List<T> select(T entity);`                                                     | 实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型   |
-| `List<T> select(QueryCriteria<T> criteria);`                                    | 根据查询构造器查询，返回多条，类型使用的是xxxDao<T>的类型                        |
-| `List<T> select(LambdaQueryCriteria<T> lambdaCriteria);`                        | 根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型 |
-| `T selectOne(T entity);`                                                        | 实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型    |
-| `T selectOne(QueryCriteria<T> criteria);`                                       | 根据查询构造器执行查询，返回一条，类型使用的是xxxDao<T>的类型                      |
-| `T selectOne(LambdaQueryCriteria<T> lambdaCriteria);`                           | 根据查询构造器(lambda)执行查询，返回一条，类型使用的是xxxDao<T>的类型              |
-| `Page<T> paginate(T entity, Page<T> page);`                                     | 根据实体类里面非null的属性作为查询条件，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型 |
-| `Page<T> paginate(QueryCriteria<T> criteria, Page<T> page);`                    | 根据查询构造器执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型                |
-| `Page<T> paginate(LambdaQueryCriteria<T> lambdaCriteria, Page<T> page);`        | 根据查询构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型        |
-| `Long selectCount(QueryCriteria<T> criteria);`                                  | 根据查询构造器执行总记录数查询，返回符合条件的总记录数量                             |
-| `Long selectCount(LambdaQueryCriteria<T> lambdaCriteria);`                      | 根据查询构造器(lambda)执行总记录数查询，返回符合条件的总记录数量                     |
-| `boolean exists(QueryCriteria<T> criteria);`                                    | 根据查询构造器执行查询记录是否存在，返回true或者false                          |
-| `boolean exists(LambdaQueryCriteria<T> lambdaCriteria);`                        | 根据查询构造器(lambda)执行查询记录是否存在，返回true或者false                  |
+
+| 方法                                                                              | 说明                                                    |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `List<T> selectAll();`                                                          | 查询所有数据并返回实体类对象列表，类型使用的是xxxDao的类型                      |
+| `<F> List<F> select(String sql, Class<F> classz, Object... params);`            | 根据给定的sql语句和实体类型和参数，查询数据并返回实体类对象列表                     |
+| `List<T> select(String sql, Object... params);`                                 | 根据给定的sq语句l和参数，查询数据并返回实体类对象列表，类型使用的是xxxDao的类型          |
+| `<F> F selectOne(String sql, Class<F> classz, Object... params);`               | 根据给定的sql语句和实体类型和参数，查询数据并返回一个实体类对象                     |
+| `T selectOne(String sql, Object... params);`                                    | 根据给定的sql语句和参数，查询数据并返回一个实体类对象，类型使用的是xxxDao的类型          |
+| `List<Map<String, Object>> selectMap(String sql, Object... params);`            | 根据给定的sql语句和参数，查询数据并返回Map<String, Object>列表            |
+| `Map<String, Object> selectOneMap(String sql, Object... params);`               | 根据给定的sql语句和参数，查询数据并返回一个Map<String, Object>对象          |
+| `<T> T selectForObject(String sql, Class<T> clazz, Object... params);`          | 根据给定的sql语句和实体类型和参数，查询数据并返回一个值（常用于查count）              |
+| `Page<F> paginate(String sql, Class<F> clazz, Page<F> page, Object... params);` | 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的Class传入的自定义类型      |
+| `Page<T> paginate(String sql, Page<T> page, Object... params);`                 | 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的是xxxDao的类型         |
+| `T selectById(ID id);`                                                          | 根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao的类型                |
+| `T selectByIds(List<ID> ids);`                                                  | 根据主键ID值列表，查询数据并返回实体类对象列表，类型使用的是xxxDao的类型              |
+| `T selectByIds(ID... id);`                                                      | 根据主键ID值可变参数列表，查询数据并返回实体类对象列表，类型使用的是xxxDao的类型          |
+| `List<T> select(T entity);`                                                     | 实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao的类型   |
+| `List<T> select(QueryCriteria<T> criteria);`                                    | 根据查询构造器查询，返回多条，类型使用的是xxxDao的类型                        |
+| `List<T> select(LambdaQueryCriteria<T> lambdaCriteria);`                        | 根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao的类型 |
+| `T selectOne(T entity);`                                                        | 实体类里面非null的属性作为查询条件，查询数据并返回一个实体类对象，类型使用的是xxxDao的类型    |
+| `T selectOne(QueryCriteria<T> criteria);`                                       | 根据查询构造器执行查询，返回一条，类型使用的是xxxDao的类型                      |
+| `T selectOne(LambdaQueryCriteria<T> lambdaCriteria);`                           | 根据查询构造器(lambda)执行查询，返回一条，类型使用的是xxxDao的类型              |
+| `Page<T> paginate(T entity, Page<T> page);`                                     | 根据实体类里面非null的属性作为查询条件，执行分页查询，返回Page对象，类型使用的是xxxDao的类型 |
+| `Page<T> paginate(QueryCriteria<T> criteria, Page<T> page);`                    | 根据查询构造器执行分页查询，返回Page对象，类型使用的是xxxDao的类型                |
+| `Page<T> paginate(LambdaQueryCriteria<T> lambdaCriteria, Page<T> page);`        | 根据查询构造器(lambda)执行分页查询，返回Page对象，类型使用的是xxxDao的类型        |
+| `Long selectCount(QueryCriteria<T> criteria);`                                  | 根据查询构造器执行总记录数查询，返回符合条件的总记录数量                          |
+| `Long selectCount(LambdaQueryCriteria<T> lambdaCriteria);`                      | 根据查询构造器(lambda)执行总记录数查询，返回符合条件的总记录数量                  |
+| `boolean exists(QueryCriteria<T> criteria);`                                    | 根据查询构造器执行查询记录是否存在，返回true或者false                       |
+| `boolean exists(LambdaQueryCriteria<T> lambdaCriteria);`                        | 根据查询构造器(lambda)执行查询记录是否存在，返回true或者false               |
+
 
 ### 插入操作
 
-| 方法                                                               | 说明                                                                                             |
-|------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| `int insert(String sql, Object... params);`                      | 根据提供的sql语句和提供的参数，执行插入                                                                          |
-| `int insert(T entity);`                                          | 插入entity里的数据，忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值      |
-| `int insert(T entity, boolean ignoreNulls);`                     | 插入entity里的数据，可选择是否忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值 |
-| `int[] batchInsert(Collection<T> collection);`                     | 批量插入给定的实例集合，默认忽略 null 值，返回数组长度与集合长度相同，每个元素表示对应实例受影响的行数。注意：当忽略 null 值时，所有实例中非 null 的属性列必须一致，否则可能导致插入不正确。 |
+
+| 方法                                                                  | 说明                                                                                                                           |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `int insert(String sql, Object... params);`                         | 根据提供的sql语句和提供的参数，执行插入                                                                                                        |
+| `int insert(T entity);`                                             | 插入entity里的数据，忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值                                    |
+| `int insert(T entity, boolean ignoreNulls);`                        | 插入entity里的数据，可选择是否忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值                               |
+| `int[] batchInsert(Collection<T> collection);`                      | 批量插入给定的实例集合，默认忽略 null 值，返回数组长度与集合长度相同，每个元素表示对应实例受影响的行数。注意：当忽略 null 值时，所有实例中非 null 的属性列必须一致，否则可能导致插入不正确。                      |
 | `int[] batchInsert(Collection<T> collection, boolean ignoreNulls);` | 批量插入给定的实例集合，可选择是否忽略 null 值，返回数组长度与集合长度相同，每个元素表示对应实例受影响的行数。注意：当 ignoreNulls 为 true 时，所有实例中非 null 的属性列必须一致，否则可能导致参数绑定错误或插入不正确。 |
 
 
 ### 更新操作
 
+
 | 方法                                                                             | 说明                                                                  |
-|--------------------------------------------------------------------------------|---------------------------------------------------------------------|
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
 | `int update(String sql, Object... params);`                                    | 根据提供的SQL语句和提供的参数，执行修改                                               |
 | `int updateById(T entity);`                                                    | 根据entity提供SET子句，主键值提供WHERE条件，执行修改，默认忽略entity里值为null的属性              |
 | `int updateById(T entity, boolean ignoreNulls);`                               | 根据entity提供SET子句，主键值提供WHERE条件，执行修改，可选择是否忽略entity里值为null的属性           |
@@ -328,12 +311,14 @@ public class UploadFile implements Serializable {
 | `int update(T entity, boolean ignoreNulls, UpdateCriteria<T> criteria);`       | 根据entity提供SET子句，条件构造器，执行修改提供WHERE条件，执行修改，可选择是否忽略entity里值为null的属性    |
 | `int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria<T> criteria);` | 根据entity提供SET子句，条件构造器（lambda）提供WHERE条件，执行修改，可选择是否忽略entity里值为null的属性 |
 | `int update(UpdateCriteria<T> criteria);`                                      | 只根据条件构造器来构建，需配合.set方法来使用                                            |
-| `int update(LambdaUpdateCriteria<T> criteria);`                                | 只根据条件构造器（lambda）来构建，需配合.set方法来使用                                  |
+| `int update(LambdaUpdateCriteria<T> criteria);`                                | 只根据条件构造器（lambda）来构建，需配合.set方法来使用                                    |
+
 
 ### 删除操作
 
+
 | 方法                                              | 说明                                            |
-|-------------------------------------------------|-----------------------------------------------|
+| ----------------------------------------------- | --------------------------------------------- |
 | `int delete(String sql, Object... params);`     | 根据提供的SQL语句和提供的参数，执行删除                         |
 | `int deleteById(ID id);`                        | 根据主键ID进行删除，类型使用的是xxxDao<T, ID>的类型             |
 | `int deleteByIds(List<ID> ids);`                | 根据主键ID列表进行删除，类型使用的是xxxDao<T, ID>的类型           |
@@ -342,28 +327,32 @@ public class UploadFile implements Serializable {
 | `int delete(UpdateCriteria<T> criteria);`       | 根据条件构造器，将作为where参数                            |
 | `int delete(LambdaUpdateCriteria<T> criteria);` | 根据条件构造器（lambda），将作为where参数                    |
 
+
 ### DDL操作
 
-| 方法                                         | 说明                                                             |
-|--------------------------------------------|----------------------------------------------------------------|
-| `void execute(String sql);`     | 使用提供的SQL语句，执行 DDL 操作（CREATE / ALTER / DROP / TRUNCATE 等） |
-| `void truncate();`                      | 清空表                             |
+
+| 方法                          | 说明                                                       |
+| --------------------------- | -------------------------------------------------------- |
+| `void execute(String sql);` | 使用提供的SQL语句，执行 DDL 操作（CREATE / ALTER / DROP / TRUNCATE 等） |
+| `void truncate();`          | 清空表                                                      |
 
 
 ### 使用SQL构造器进行操作（`1.8.2`版本新增）
 
-| 方法                                                         | 说明                                               |
-|------------------------------------------------------------|--------------------------------------------------|
-| `int delete(SQL sql);`                                     | 根据提供的SQL构造器，执行删除操作                               |
-| `int update(SQL sql);`                                     | 根据提供的SQL构造器，执行更新操作                               |
-| `int insert(SQL sql);`                                     | 根据提供的SQL构造器，执行新增操作                               |
-| `<F> List<F> select(String SQL, Class<F> classz);`         | 根据给定的SQL构造器和实体类型数，查询数据库并返回实体类对象列表                |
-| `List<T> select(SQL sql)`                                  | 根据给定的SQL构造器，查询数据库并返回实体类对象列表，类型使用的是xxxDao<T>的类型   |
-| `Page<T> paginate(SQL sql, Page<T> page);`                 | 根据给定的SQL构造器，执行分页查询，返回Page对象，类型使用的是xxxDao<T>的类型   |
-| `Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page);` | 根据给定的SQL构造器，执行分页查询，返回Page对象，类型使用的Class<F>传入的自定义类型 |
-| `T selectOne(SQL sql);`                                    | 根据给定的SQL构造器，查询数据并返回一个实体类对象，类型使用的是xxxDao<T>的类型    |
-| `<F> F selectOne(SQL sql, Class<F> clazz);`                | 根据给定的SQL构造器，查询数据并返回一个实体类对象，类型使用的Class<F>传入的自定义类型 |
-| `<F> F selectOneObject(SQL sql, Class<F> clazz);`                | 根据给定的SQL构造器，查询数据并返回单个结果对象，类型使用的Class<F>传入的自定义类型  |
+
+| 方法                                                         | 说明                                             |
+| ---------------------------------------------------------- | ---------------------------------------------- |
+| `int delete(SQL sql);`                                     | 根据提供的SQL构造器，执行删除操作                             |
+| `int update(SQL sql);`                                     | 根据提供的SQL构造器，执行更新操作                             |
+| `int insert(SQL sql);`                                     | 根据提供的SQL构造器，执行新增操作                             |
+| `<F> List<F> select(String SQL, Class<F> classz);`         | 根据给定的SQL构造器和实体类型数，查询数据库并返回实体类对象列表              |
+| `List<T> select(SQL sql)`                                  | 根据给定的SQL构造器，查询数据库并返回实体类对象列表，类型使用的是xxxDao的类型    |
+| `Page<T> paginate(SQL sql, Page<T> page);`                 | 根据给定的SQL构造器，执行分页查询，返回Page对象，类型使用的是xxxDao的类型    |
+| `Page<F> paginate(SQL sql, Class<F> clazz, Page<F> page);` | 根据给定的SQL构造器，执行分页查询，返回Page对象，类型使用的Class传入的自定义类型 |
+| `T selectOne(SQL sql);`                                    | 根据给定的SQL构造器，查询数据并返回一个实体类对象，类型使用的是xxxDao的类型     |
+| `<F> F selectOne(SQL sql, Class<F> clazz);`                | 根据给定的SQL构造器，查询数据并返回一个实体类对象，类型使用的Class传入的自定义类型  |
+| `<F> F selectOneObject(SQL sql, Class<F> clazz);`          | 根据给定的SQL构造器，查询数据并返回单个结果对象，类型使用的Class传入的自定义类型   |
+
 
 ## 5、条件构造器（Criteria）
 
@@ -375,46 +364,50 @@ public class UploadFile implements Serializable {
 > 用于生成 sql 的 where 条件
 >
 > 其中带Lambda字样的构造器 是基于 Lambda 表达式的条件构造器，它允许你使用 Lambda 表达式来指定字段，避免了硬编码字段名的问题。
->
+
 以下方法均有重载whether参数（第一个参数）后的方法，当whether=false时，不执行后面的条件，例如：`eq(boolean whether, String field, R value)`
 
-| 方法           | 说明                    | 普通示例                                       | lambda示例                                                 | 等价SQL                            |
-|--------------|-----------------------|--------------------------------------------|----------------------------------------------------------|----------------------------------|
-| eq           | 等于 =                  | eq("name", "张三")                           | eq(User::getName, "张三")                                  | AND name = '张三'                  |
-| notEq        | 不等于 <>                | notEq("name", "张三")                        | notEq(User::getName, "张三")                               | AND name <> '张三'                 |
-| isNull       | 等于null                | isNull("name")                             | isNull(User::getName)                                    | AND name IS NULL                 |
-| isNotNull    | 不等于null               | isNotNull("name")                          | isNotNull(User::getName)                                 | AND name IS NOT NULL             |
-| lt           | 小于 <                  | lt("name", "张三")                           | lt(User::getName, "张三")                                  | AND name < '张三'                  |
-| lte          | 小于等于 <=               | lte("name", "张三")                          | lte(User::getName, "张三")                                 | AND name <= '张三'                 |
-| gt           | 大于 >                  | gt("name", "张三")                           | gt(User::getName, "张三")                                  | AND name > '张三'                  | 
-| gte          | 大于等于 >=               | gte("name", "张三")                          | gte(User::getName, "张三")                                 | AND name >= '张三'                 |
-| in           | SQL里的IN操作             | in("name", {"张三","李四"})                    | in(User::getName, "张三")                                  | AND name IN ('张三','李四')          |
-| notIn        | SQL里的IN操作             | notIn("name", "张三")                        | notIn(User::getName, "张三")                               | AND name NOT IN ('张三','李四')      |
-| between      | NOT BETWEEN 值1 AND 值2 | between("age", 10, 18)                     | between(User::getAge, 10, 18)                            | AND (age BETWEEN 10 AND 18 )     |
-| notBetween   | NOT BETWEEN 值1 AND 值2 | notBetween("age", 10, 18)                  | notBetween(User::getAge, 10, 18)                         | AND (age NOT BETWEEN 10 AND 18 ) |
-| like         | LIKE '%值%'            | like("name", "张三")                         | like(User::getName, "张三")                                | AND name LIKE '%张三%'             |
-| notLike      | NOT LIKE '%值%'        | notLike("name", "张三")                      | notLike(User::getName, "张三")                             | AND name NOT LIKE '%张三%'         |
-| like         | LIKE '%值%'            | like("name", "张三")                         | like(User::getName, "张三")                                | AND name LIKE '%张三%'             |
-| notLike      | NOT LIKE '%值%'        | notLike("name", "张三")                      | notLike(User::getName, "张三")                             | AND name NOT LIKE '%张三%'         |
-| leftLike     | LIKE '%值'             | leftLike("name", "张三")                     | leftLike(User::getName, "张三")                            | AND name LIKE '%张三'              |
-| notLeftLike  | NOT LIKE '%值'         | notLeftLike("name", "张三")                  | notLeftLike(User::getName, "张三")                         | AND name NOT LIKE '%张三'          |
-| rightLike    | LIKE '值%'             | rightLike("name", "张三")                    | rightLike(User::getName, "张三")                           | AND name LIKE '张三%'              |
-| notRightLike | NOT LIKE '值%'         | notRightLike("name", "张三")                 | notRightLike(User::getName, "张三")                        | AND name NOT LIKE '张三%'          |
-| or()         | 改变下一个查询条件的连接方式为 OR    | or().eq("name", "张三")              | or().eq(User::getName, "张三")                        | OR name NOT LIKE '张三%'           |
-| or(Consumer consumer)       | OR 嵌套条件               | or(i -> i.eq("name", "张三").lt("age", 18))  | or(i -> i.eq(User::getName, "张三").lt(User::getAge, 18))  | OR (name = '张三' AND age < 18)    |
-| and(Consumer consumer)      | AND 嵌套条件              | and(i -> i.eq("name", "张三").lt("age", 18)) | and(i -> i.eq(User::getName, "张三").lt(User::getAge, 18)) | AND (name = '张三' AND age < 18)   |
+
+| 方法                     | 说明                    | 普通示例                                       | lambda示例                                                 | 等价SQL                            |
+| ---------------------- | --------------------- | ------------------------------------------ | -------------------------------------------------------- | -------------------------------- |
+| eq                     | 等于 =                  | eq("name", "张三")                           | eq(User::getName, "张三")                                  | AND name = '张三'                  |
+| notEq                  | 不等于 <>                | notEq("name", "张三")                        | notEq(User::getName, "张三")                               | AND name <> '张三'                 |
+| isNull                 | 等于null                | isNull("name")                             | isNull(User::getName)                                    | AND name IS NULL                 |
+| isNotNull              | 不等于null               | isNotNull("name")                          | isNotNull(User::getName)                                 | AND name IS NOT NULL             |
+| lt                     | 小于 <                  | lt("name", "张三")                           | lt(User::getName, "张三")                                  | AND name < '张三'                  |
+| lte                    | 小于等于 <=               | lte("name", "张三")                          | lte(User::getName, "张三")                                 | AND name <= '张三'                 |
+| gt                     | 大于 >                  | gt("name", "张三")                           | gt(User::getName, "张三")                                  | AND name > '张三'                  |
+| gte                    | 大于等于 >=               | gte("name", "张三")                          | gte(User::getName, "张三")                                 | AND name >= '张三'                 |
+| in                     | SQL里的IN操作             | in("name", {"张三","李四"})                    | in(User::getName, "张三")                                  | AND name IN ('张三','李四')          |
+| notIn                  | SQL里的IN操作             | notIn("name", "张三")                        | notIn(User::getName, "张三")                               | AND name NOT IN ('张三','李四')      |
+| between                | NOT BETWEEN 值1 AND 值2 | between("age", 10, 18)                     | between(User::getAge, 10, 18)                            | AND (age BETWEEN 10 AND 18 )     |
+| notBetween             | NOT BETWEEN 值1 AND 值2 | notBetween("age", 10, 18)                  | notBetween(User::getAge, 10, 18)                         | AND (age NOT BETWEEN 10 AND 18 ) |
+| like                   | LIKE '%值%'            | like("name", "张三")                         | like(User::getName, "张三")                                | AND name LIKE '%张三%'             |
+| notLike                | NOT LIKE '%值%'        | notLike("name", "张三")                      | notLike(User::getName, "张三")                             | AND name NOT LIKE '%张三%'         |
+| like                   | LIKE '%值%'            | like("name", "张三")                         | like(User::getName, "张三")                                | AND name LIKE '%张三%'             |
+| notLike                | NOT LIKE '%值%'        | notLike("name", "张三")                      | notLike(User::getName, "张三")                             | AND name NOT LIKE '%张三%'         |
+| leftLike               | LIKE '%值'             | leftLike("name", "张三")                     | leftLike(User::getName, "张三")                            | AND name LIKE '%张三'              |
+| notLeftLike            | NOT LIKE '%值'         | notLeftLike("name", "张三")                  | notLeftLike(User::getName, "张三")                         | AND name NOT LIKE '%张三'          |
+| rightLike              | LIKE '值%'             | rightLike("name", "张三")                    | rightLike(User::getName, "张三")                           | AND name LIKE '张三%'              |
+| notRightLike           | NOT LIKE '值%'         | notRightLike("name", "张三")                 | notRightLike(User::getName, "张三")                        | AND name NOT LIKE '张三%'          |
+| or()                   | 改变下一个查询条件的连接方式为 OR    | or().eq("name", "张三")                      | or().eq(User::getName, "张三")                             | OR name NOT LIKE '张三%'           |
+| or(Consumer consumer)  | OR 嵌套条件               | or(i -> i.eq("name", "张三").lt("age", 18))  | or(i -> i.eq(User::getName, "张三").lt(User::getAge, 18))  | OR (name = '张三' AND age < 18)    |
+| and(Consumer consumer) | AND 嵌套条件              | and(i -> i.eq("name", "张三").lt("age", 18)) | and(i -> i.eq(User::getName, "张三").lt(User::getAge, 18)) | AND (name = '张三' AND age < 18)   |
+
 
 #### 查询构造器(QueryCriteria & LambdaQueryCriteria)
 
 > 继承自条件构造器，可额外自定义查询的排序和字段内容，查询接口适用
 
+
 | 方法          | 说明                     | 普通示例                  | lambda示例                            | 等价SQL              |
-|-------------|------------------------|-----------------------|-------------------------------------|--------------------|
+| ----------- | ---------------------- | --------------------- | ----------------------------------- | ------------------ |
 | orderBy     | 排序，true=desc,false=asc | orderBy("name", true) | orderBy(User::getName, true)        | ORDER BY name DESC |
 | orderBy     | 升序排序                   | orderBy("name")       | orderBy(User::getName)              | ORDER BY name      |
 | orderByDesc | 降序排序                   | orderByDesc("name")   | orderByDesc(User::getName)          | ORDER BY name DESC |
 | select      | 设置查询字段                 | select("name", "age") | select(User::getName, User::getAge) | SELECT name,age    |
 | last        | 直接在查询的最后添加一个 SQL 片段    | last("LIMIT 1")       | last("LIMIT 1")                     | LIMIT 1            |
+
 
 ##### QueryCriteria示例
 
@@ -464,11 +457,13 @@ criteria.lt(UploadFile::getFileId, "1000");
 
 > 继承自条件构造器，可额外自定义更新的字段内容和值，更新接口适用
 
+
 | 方法           | 说明     | 普通示例                   | lambda示例                      | 等价SQL             |
-|--------------|--------|------------------------|-------------------------------|-------------------|
+| ------------ | ------ | ---------------------- | ----------------------------- | ----------------- |
 | set          | 设置更新字段 | set("name", "张三")      | set(User::getName, "张三")      | set name = '张三'   |
 | setIncrement | 设置字段自增 | setIncrement("age", 1) | setIncrement(User::getAge, 1) | set age = age + 1 |
 | setDecrement | 设置字段自减 | setDecrement("age", 1) | setDecrement(User::getAge, 1) | set age = age - 1 |
+
 
 ##### UpdateCriteria示例
 
@@ -521,7 +516,7 @@ LambdaUpdateCriteria 的实例。使用 CriteriaBuilder 可以减少代码量，
 Tiny-Jdbc 提供了 SQL 类，它是一个静态工厂类，用于快速创建 SQL 的实例。使用 SQL 可以减少代码量，提高开发效率。
 [使用文档](SQL.md)
 
-<h2 id="idGen"> 7、自定义ID生成器</h2>
+## 7、自定义ID生成器
 
 需要实现 IdGeneratorInterface 接口，并且声明为 Bean 供 Spring 扫描注入
 
@@ -565,7 +560,6 @@ public IdGeneratorInterface idGenerator() {
     };
 }
 ```
-
 
 ## 8、自定义雪花ID算法数据中心标识和机器标识
 
@@ -617,11 +611,13 @@ public SnowflakeConfigInterface snowflakeConfigInterface() {
 ## 9、无Entity实体类操作
 
 Tiny-Jdbc 提供了 `JdbcTemplateHelper` 工具类，支持无实体类映射场景下的灵活数据操作。适用于：
+
 - 无明确业务实体的统计分析场景（如数据大屏、聚合报表）
 - 多表联合查询且无需实体映射的场景
 - 临时性或灵活性较高的数据操作需求
 
 ### 核心优势
+
 - **无需继承 BaseDao**：直接通过工具类调用，解耦实体依赖
 - **支持复杂 SQL**：可执行任意自定义 SQL 语句
 - **全操作覆盖**：包含查询、分页、插入、更新、删除等完整能力
@@ -671,11 +667,12 @@ public class OtherDao {
 }
 ```
 
-
 ## 10、拦截器机制
+
 提供了拦截器机制，用于在执行 SQL 语句前后进行自定义操作。
 
 使用示例：
+
 ```java
 @Component
 public class StatInterceptor implements SqlInterceptor {
@@ -700,7 +697,253 @@ public class StatInterceptor implements SqlInterceptor {
 }
 ```
 
-## 11、一些使用示例
+## 11、代码生成器
+
+### tiny-jdbc-codegen
+
+`tiny-jdbc-codegen` 可以根据数据库表结构生成 `Entity` 和 `Dao`，减少重复编码工作。
+
+1. 引入依赖
+
+```xml
+<dependency>
+    <groupId>top.lxyccc</groupId>
+    <artifactId>tiny-jdbc-codegen</artifactId>
+    <version>1.9.6</version>
+</dependency>
+```
+
+1. 编写生成器启动类
+
+```java
+import org.tinycloud.jdbc.annotation.IdType;
+import org.tinycloud.jdbc.codegen.CodeGenerator;
+import org.tinycloud.jdbc.codegen.config.CodegenConfig;
+import org.tinycloud.jdbc.codegen.config.DataSourceConfig;
+import org.tinycloud.jdbc.codegen.config.PackageConfig;
+import org.tinycloud.jdbc.codegen.config.StrategyConfig;
+
+public class CodegenApplication {
+    public static void main(String[] args) throws Exception {
+        DataSourceConfig dataSourceConfig = DataSourceConfig.builder()
+                .url("jdbc:mysql://127.0.0.1:3306/demo?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useInformationSchema=true")
+                .username("root")
+                .password("123456")
+                .driverClassName("com.mysql.cj.jdbc.Driver")
+                .build();
+
+        PackageConfig packageConfig = PackageConfig.builder()
+                .parent("com.example")
+                .entity("entity")
+                .dao("dao")
+                .build();
+
+        StrategyConfig strategyConfig = StrategyConfig.builder()
+                .includeTables("t_user", "t_order")
+                .useActualColumnNames(false)
+                .enableLombok(true)
+                .idType(IdType.ASSIGN_ID)
+                .build();
+
+        CodegenConfig config = CodegenConfig.builder()
+                .dataSourceConfig(dataSourceConfig)
+                .packageConfig(packageConfig)
+                .strategyConfig(strategyConfig)
+                .outputDir("generated")
+                .author("tiny-jdbc")
+                .build();
+
+        new CodeGenerator(config).generate();
+    }
+}
+```
+
+1. 关键配置说明
+
+- `includeTables`：必填，指定需要生成的表（支持多个）
+- `useActualColumnNames`：`true` 时字段名与数据库列名保持一致，`false` 时自动转小驼峰
+- `enableLombok`：是否给实体类添加 `@Data`
+- `idType`：统一指定生成实体主键的 `@Id` 策略
+- `outputDir`：生成目录，默认 `generated`
+
+1. 生成结果
+
+执行后会在 `outputDir` 下按包结构生成：
+
+- 实体类：`xxx/entity/*.java`
+- DAO 类：`xxx/dao/*Dao.java`
+
+## 12、字段自动填充（MetaObjectHandler）
+
+字段自动填充用于统一处理审计字段（如创建人、创建时间、更新人、更新时间）。
+
+1. 实现填充处理器（可直接参考下面的示例 `AuditMetaObjectHandler`）
+
+```java
+package org.tinycloud.jdbc.fill;
+
+import org.tinycloud.jdbc.criteria.TypeFunction;
+import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
+import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
+import org.tinycloud.jdbc.util.LambdaUtils;
+import org.tinycloud.jdbc.util.ReflectUtils;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+
+/**
+ * <p>
+ * 审计字段自动填充示例
+ * </p>
+ * <p>
+ * 使用说明：
+ * 1. 将本类复制到你的业务项目中（可保留类名，也可自定义）。
+ * 2. 注册为 Spring Bean（例如加上 @Component 或在 @Configuration 中通过 @Bean 返回）。
+ * 3. 按你的登录上下文实现 {@link #currentUserId()} 方法。
+ * </p>
+ * <p>
+ * 说明：
+ * - 本类演示了实体新增/更新、criteria 更新、lambdaCriteria 更新四种场景。
+ * - 为保证通用性，示例中先判断字段是否存在，再执行填充，避免无审计字段实体报错。
+ * </p>
+ *
+ * @author liuxingyu01
+ * @since 2026-04-18
+ */
+@Component
+public class AuditMetaObjectHandler implements MetaObjectHandler {
+
+    private static final String CREATE_USER_ID_FIELD = "createUserId";
+    private static final String CREATE_TIME_FIELD = "createTime";
+    private static final String UPDATE_USER_ID_FIELD = "updateUserId";
+    private static final String UPDATE_TIME_FIELD = "updateTime";
+
+    @Override
+    public void insertFill(FillMetaObject metaObject) {
+        Object entity = metaObject.getEntity();
+        Long userId = currentUserId();
+        LocalDateTime now = LocalDateTime.now();
+
+        if (ReflectUtils.hasField(entity.getClass(), CREATE_USER_ID_FIELD)) {
+            metaObject.fillIfNull(CREATE_USER_ID_FIELD, userId);
+        }
+        if (ReflectUtils.hasField(entity.getClass(), CREATE_TIME_FIELD)) {
+            metaObject.fillIfNull(CREATE_TIME_FIELD, now);
+        }
+        if (ReflectUtils.hasField(entity.getClass(), UPDATE_USER_ID_FIELD)) {
+            metaObject.fillIfNull(UPDATE_USER_ID_FIELD, userId);
+        }
+        if (ReflectUtils.hasField(entity.getClass(), UPDATE_TIME_FIELD)) {
+            metaObject.fillIfNull(UPDATE_TIME_FIELD, now);
+        }
+    }
+
+    @Override
+    public void updateFill(FillMetaObject metaObject) {
+        Object entity = metaObject.getEntity();
+        Long userId = currentUserId();
+        LocalDateTime now = LocalDateTime.now();
+
+        if (ReflectUtils.hasField(entity.getClass(), UPDATE_USER_ID_FIELD)) {
+            metaObject.strictUpdateFill(UPDATE_USER_ID_FIELD, userId);
+        }
+        if (ReflectUtils.hasField(entity.getClass(), UPDATE_TIME_FIELD)) {
+            metaObject.strictUpdateFill(UPDATE_TIME_FIELD, now);
+        }
+    }
+
+    @Override
+    public <T> void updateCriteriaFill(UpdateCriteria<T> criteria, Class<T> entityClass) {
+        if (ReflectUtils.hasField(entityClass, UPDATE_USER_ID_FIELD)) {
+            if (!criteria.hasUpdateColumn("update_user_id")) {
+                criteria.set("update_user_id", currentUserId());
+            }
+        }
+        if (ReflectUtils.hasField(entityClass, UPDATE_TIME_FIELD)) {
+            if (!criteria.hasUpdateColumn("update_time")) {
+                criteria.set("update_time", LocalDateTime.now());
+            }
+        }
+    }
+
+    @Override
+    public <T> void updateLambdaCriteriaFill(LambdaUpdateCriteria<T> criteria, Class<T> entityClass) {
+        if (ReflectUtils.hasField(entityClass, UPDATE_USER_ID_FIELD)) {
+            TypeFunction<T, ?> field = LambdaUtils.getLambdaGetter(entityClass, UPDATE_USER_ID_FIELD);
+            if (!criteria.hasUpdateColumn(field)) {
+                criteria.set(field, currentUserId());
+            }
+        }
+        if (ReflectUtils.hasField(entityClass, UPDATE_TIME_FIELD)) {
+            TypeFunction<T, ?> field = LambdaUtils.getLambdaGetter(entityClass, UPDATE_TIME_FIELD);
+            if (!criteria.hasUpdateColumn(field)) {
+                criteria.set(field, LocalDateTime.now());
+            }
+        }
+    }
+
+    /**
+     * 获取当前登录用户ID（示例方法）
+     * <p>
+     * 请在业务项目中替换为你自己的上下文取值逻辑。
+     * </p>
+     */
+    protected Long currentUserId() {
+        return 0L;
+    }
+
+}
+
+```
+
+> 只要该 Bean 被 Spring 扫描到，框架启动时会自动注入并生效，无需额外配置。
+
+1. 推荐审计字段命名
+
+`AuditMetaObjectHandler` 默认按以下 Java 属性名填充：
+
+- `createUserId`
+- `createTime`
+- `updateUserId`
+- `updateTime`
+
+示例实体（字段名可通过 `@Column` 映射到下划线风格列名）：
+
+```java
+@Table("t_demo")
+public class DemoEntity {
+    @Id(idType = IdType.INPUT)
+    @Column("id")
+    private Long id;
+
+    @Column("create_user_id")
+    private Long createUserId;
+
+    @Column("create_time")
+    private LocalDateTime createTime;
+
+    @Column("update_user_id")
+    private Long updateUserId;
+
+    @Column("update_time")
+    private LocalDateTime updateTime;
+}
+```
+
+1. 自动填充生效范围
+
+- `insert(entity)`、`insert(entity, ignoreNulls)`、`batchInsert(...)`：触发 `insertFill`
+- `updateById(...)`、`update(entity, criteria)`：触发 `updateFill`
+- `update(UpdateCriteria<T> criteria)`：触发 `updateCriteriaFill`
+- `update(LambdaUpdateCriteria<T> criteria)`：触发 `updateLambdaCriteriaFill`
+
+1. 填充覆盖规则
+
+- 新增填充：默认“字段为 null 才填充”
+- 更新填充：默认“有值就覆盖”
+- 当你在 `UpdateCriteria/LambdaUpdateCriteria` 中已手动设置某个更新字段时，示例实现不会重复覆盖该字段
+
+## 13、一些使用示例
 
 1. 创建 ProjectInfoDao
 
@@ -715,14 +958,14 @@ public class ProjectInfoDao extends BaseDao<TProjectInfo, Long> {
 }
 ```
 
-2. 注入 ProjectInfoDao
+1. 注入 ProjectInfoDao
 
 ```java
 @Autowired
 private ProjectInfoDao projectDao;
 ```
 
-3. 查询操作
+1. 查询操作
 
 ```java
 // 基础查询操作
@@ -826,7 +1069,7 @@ boolean result = projectDao.exists(CriteriaBuilder.<TProjectInfo>lambdaQuery().e
 
 ```
 
-4. 新增操作
+1. 新增操作
 
 ```java
 // 使用sql插入一条数据
@@ -863,7 +1106,7 @@ int result = projectDao.insertReturnAutoIncrement(project);
 
 ```
 
-5. 更新操作
+1. 更新操作
 
 ```java
 // 使用sql插入一条数据
@@ -904,7 +1147,7 @@ LambdaUpdateCriteria<TProjectInfo> criteria = new LambdaUpdateCriteria<>().set(T
 int result = baseDao.update(criteria);
 ```
 
-6. 删除操作
+1. 删除操作
 
 ```java
 // 使用sql删除一条数据
@@ -934,15 +1177,15 @@ int result = baseDao.delete(criteria);
 // 根据条件构造器作为查询条件删除一条数据，等价于 `delete from t_project_info where id = 1`
 UpdateCriteria<TProjectInfo> criteria = new UpdateCriteria<>().eq("id", 1L);
 int result = baseDao.delete(criteria);
-``` 
+```
 
-## 12、安全使用说明
+## 14、安全使用说明
 
 使用`QueryCriteria`和`UpdateCriteria`时应避免前端传入字段名，防止`SQL注入`的风险；
 如若必须使用由前端传入的动态内容，如使用QueryCriteria.orderBy("任意前端传入字段")
 进行动态排序，推荐使用工具类 `SqlInjectionUtils.check(内容)` 先行验证字符串是否存在 `SQL注入`， 存在则拒绝操作。
 
-## 13、SQL日志打印分析
+## 15、SQL日志打印分析
 
 **该功能依赖 p6spy 组件，需进行配置后方可使用**
 
@@ -951,8 +1194,7 @@ int result = baseDao.delete(criteria);
 - driver-class-name 为 p6spy 提供的驱动类 com.p6spy.engine.spy.P6SpyDriver
 - url 前缀为 jdbc:p6spy 跟着冒号为对应数据库连接地址
 - 该插件有性能损耗，不建议在生产环境中使用。
-- 更多参考 p6spy 官方文档： https://p6spy.readthedocs.io/en/latest/index.html
-
+- 更多参考 p6spy 官方文档： [https://p6spy.readthedocs.io/en/latest/index.html](https://p6spy.readthedocs.io/en/latest/index.html)
 
 1. 引入 `p6spy` 依赖
 
@@ -962,9 +1204,9 @@ int result = baseDao.delete(criteria);
     <artifactId>p6spy</artifactId>
     <version>最新版本</version>
 </dependency>
-``` 
+```
 
-2. `application.yml` 配置，注意url的中间多了个p6spy
+1. `application.yml` 配置，注意url的中间多了个p6spy
 
 ```yaml
 spring:
@@ -974,7 +1216,7 @@ spring:
     ...
 ```
 
-3. `spy.properties` 配置
+1. `spy.properties` 配置
 
 请配置 `logMessageFormat=org.tinycloud.jdbc.p6spy.P6SpyLogger`
 
@@ -1205,6 +1447,6 @@ logMessageFormat=org.tinycloud.jdbc.p6spy.P6SpyLogger
 #outagedetectioninterval=30
 ```
 
-## 14、许可证
+## 16、许可证
 
 [Apache License 2.0](https://github.com/llllllxy/tiny-jdbc/blob/master/LICENSE) 免费用于个人和商业，请放心使用
