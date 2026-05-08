@@ -306,10 +306,6 @@ public class UploadFile implements Serializable {
 | `int update(String sql, Object... params);`                                    | 根据提供的SQL语句和提供的参数，执行修改                                               |
 | `int updateById(T entity);`                                                    | 根据entity提供SET子句，主键值提供WHERE条件，执行修改，默认忽略entity里值为null的属性              |
 | `int updateById(T entity, boolean ignoreNulls);`                               | 根据entity提供SET子句，主键值提供WHERE条件，执行修改，可选择是否忽略entity里值为null的属性           |
-| `int update(T entity, UpdateCriteria<T> criteria);`                            | 根据entity提供SET子句，条件构造器提供WHERE条件，执行修改，默认忽略entity里值为null的属性            |
-| `int update(T entity, LambdaUpdateCriteria<T> criteria);`                      | 根据entity提供SET子句，条件构造器（lambda）提供WHERE条件，执行修改，默认忽略entity里值为null的属性    |
-| `int update(T entity, boolean ignoreNulls, UpdateCriteria<T> criteria);`       | 根据entity提供SET子句，条件构造器，执行修改提供WHERE条件，执行修改，可选择是否忽略entity里值为null的属性    |
-| `int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria<T> criteria);` | 根据entity提供SET子句，条件构造器（lambda）提供WHERE条件，执行修改，可选择是否忽略entity里值为null的属性 |
 | `int update(UpdateCriteria<T> criteria);`                                      | 只根据条件构造器来构建，需配合.set方法来使用                                            |
 | `int update(LambdaUpdateCriteria<T> criteria);`                                | 只根据条件构造器（lambda）来构建，需配合.set方法来使用                                    |
 
@@ -933,7 +929,7 @@ public class DemoEntity {
 1. 自动填充生效范围
 
 - `insert(entity)`、`insert(entity, ignoreNulls)`、`batchInsert(...)`：触发 `insertFill`
-- `updateById(...)`、`update(entity, criteria)`：触发 `updateFill`
+- `updateById(...)`：触发 `updateFill`
 - `update(UpdateCriteria<T> criteria)`：触发 `updateCriteriaFill`
 - `update(LambdaUpdateCriteria<T> criteria)`：触发 `updateLambdaCriteriaFill`
 
@@ -1077,18 +1073,10 @@ int result = projectDao.insert("insert t_into project_info(project_name, del_fla
 
 // 使用实体类插入一条数据，默认忽略null
 TProjectInfo project = new TProjectInfo();
-project.
-
-setProjectName("xxxx");
-project.
-
-setDelFlag(1);
-project.
-
-setCreatedBy("admin");
-project.
-
-setRemark("XXXX");
+project.setProjectName("xxxx");
+project.setDelFlag(1);
+project.setCreatedBy("admin");
+project.setRemark("XXXX");
 
 int result = projectDao.insert(project);
 

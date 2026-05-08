@@ -512,48 +512,6 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     }
 
     @Override
-    public int update(T entity, UpdateCriteria<T> criteria) {
-        return update(entity, true, criteria);
-    }
-
-    @Override
-    public int update(T entity, LambdaUpdateCriteria<T> lambdaCriteria) {
-        return update(entity, true, lambdaCriteria);
-    }
-
-    @Override
-    public int update(T entity, boolean ignoreNulls, UpdateCriteria<T> criteria) {
-        if (entity == null) {
-            throw new TinyJdbcException("update entity cannot be null");
-        }
-        if (criteria == null) {
-            throw new TinyJdbcException("criteria cannot be null");
-        }
-        this.doUpdateFill(entity);
-        SqlProvider sqlProvider = SqlGenerator.updateByEntityAndCriteriaSql(entity, ignoreNulls, criteria);
-        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
-            throw new TinyJdbcException("update parameters cannot be null");
-        }
-        return update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
-    }
-
-    @Override
-    public int update(T entity, boolean ignoreNulls, LambdaUpdateCriteria<T> criteria) {
-        if (entity == null) {
-            throw new TinyJdbcException("update entity cannot be null");
-        }
-        if (criteria == null) {
-            throw new TinyJdbcException("criteria cannot be null");
-        }
-        this.doUpdateFill(entity);
-        SqlProvider sqlProvider = SqlGenerator.updateByEntityAndLambdaCriteriaSql(entity, ignoreNulls, criteria);
-        if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
-            throw new TinyJdbcException("update parameters cannot be null");
-        }
-        return update(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
-    }
-
-    @Override
     public int update(UpdateCriteria<T> criteria) {
         if (criteria == null) {
             throw new TinyJdbcException("criteria cannot be null");
