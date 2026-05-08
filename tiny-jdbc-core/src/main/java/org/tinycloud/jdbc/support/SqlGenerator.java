@@ -25,7 +25,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-
 /**
  * sql生成器，通过传入的对象，将对象转为要执行的SQL，要绑定到SQL的参数
  *
@@ -105,7 +104,6 @@ public class SqlGenerator {
         sqlProvider.setParameters(parameters);
         return sqlProvider;
     }
-
 
     /**
      * 抽取的私有方法：处理主键字段的生成、赋值逻辑
@@ -192,7 +190,6 @@ public class SqlGenerator {
         return fieldValue;
     }
 
-
     /**
      * 构建更新SQL
      *
@@ -255,120 +252,6 @@ public class SqlGenerator {
 
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
-        so.setParameters(parameters);
-        return so;
-    }
-
-    /**
-     * 构建更新SQL
-     *
-     * @param object      实体对象
-     * @param ignoreNulls 是否忽略null
-     * @param criteria    条件构造器
-     * @return 组装完毕的SqlProvider
-     */
-    public static <T> SqlProvider updateByEntityAndCriteriaSql(Object object, boolean ignoreNulls, UpdateCriteria<T> criteria) {
-        String criteriaSql = criteria.whereSql();
-        if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
-            throw new TinyJdbcException("SqlGenerator updateByCriteriaSql criteria can not null or empty!");
-        }
-        Field[] fields = TableParserUtils.resolveFields(object);
-        String tableName = TableParserUtils.getTableName(object);
-
-        StringBuilder sql = new StringBuilder();
-        List<Object> parameters = new ArrayList<>();
-        StringBuilder columns = new StringBuilder();
-
-        for (Field field : fields) {
-            ReflectUtils.makeAccessible(field);
-            Column columnAnnotation = field.getAnnotation(Column.class);
-            String column;
-            if (columnAnnotation != null && !columnAnnotation.exist()) {
-                continue;
-            }
-            if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                column = StrUtils.camelToUnderline(field.getName());
-            } else {
-                column = columnAnnotation.value();
-            }
-            Object filedValue = null;
-            try {
-                filedValue = field.get(object);
-            } catch (IllegalArgumentException | IllegalAccessException e) {
-                throw new TinyJdbcException("get field value failed: " + field.getName(), e);
-            }
-            // 是否忽略null
-            if (ignoreNulls && filedValue == null) {
-                continue;
-            }
-            columns.append(column).append("=?,");
-            parameters.add(filedValue);
-        }
-        String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        sql.append("UPDATE ").append(tableName).append(" SET ").append(tableColumn);
-        sql.append(criteriaSql);
-
-        SqlProvider so = new SqlProvider();
-        so.setSql(sql.toString());
-        parameters.addAll(criteria.getParameters());
-        so.setParameters(parameters);
-        return so;
-    }
-
-    /**
-     * 构建更新SQL
-     *
-     * @param object      实体对象
-     * @param ignoreNulls 是否忽略null
-     * @param criteria    条件构造器Lambda
-     * @return 组装完毕的SqlProvider
-     */
-    public static <T> SqlProvider updateByEntityAndLambdaCriteriaSql(Object object, boolean ignoreNulls, LambdaUpdateCriteria<T> criteria) {
-        String criteriaSql = criteria.whereSql();
-        if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
-            throw new TinyJdbcException("SqlGenerator updateByLambdaCriteriaSql criteria can not null or empty!");
-        }
-        Field[] fields = TableParserUtils.resolveFields(object);
-        String tableName = TableParserUtils.getTableName(object);
-
-        StringBuilder sql = new StringBuilder();
-        List<Object> parameters = new ArrayList<>();
-
-        StringBuilder columns = new StringBuilder();
-
-        for (Field field : fields) {
-            ReflectUtils.makeAccessible(field);
-            Column columnAnnotation = field.getAnnotation(Column.class);
-            String column;
-            if (columnAnnotation != null && !columnAnnotation.exist()) {
-                continue;
-            }
-            if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                column = StrUtils.camelToUnderline(field.getName());
-            } else {
-                column = columnAnnotation.value();
-            }
-            Object filedValue = null;
-            try {
-                filedValue = field.get(object);
-            } catch (IllegalArgumentException | IllegalAccessException e) {
-                throw new TinyJdbcException("get field value failed: " + field.getName(), e);
-            }
-            // 是否忽略null
-            if (ignoreNulls && filedValue == null) {
-                continue;
-            }
-            columns.append(column).append("=?,");
-            parameters.add(filedValue);
-        }
-
-        String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
-        sql.append("UPDATE ").append(tableName).append(" SET ").append(tableColumn);
-        sql.append(criteriaSql);
-
-        SqlProvider so = new SqlProvider();
-        so.setSql(sql.toString());
-        parameters.addAll(criteria.getParameters());
         so.setParameters(parameters);
         return so;
     }
@@ -578,7 +461,6 @@ public class SqlGenerator {
         return so;
     }
 
-
     /**
      * 构建查询SQL（根据id查询）
      *
@@ -599,7 +481,6 @@ public class SqlGenerator {
         so.setParameters(parameters);
         return so;
     }
-
 
     /**
      * 构建查询SQL（根据id列表查询）
@@ -626,7 +507,6 @@ public class SqlGenerator {
         so.setParameters(ids);
         return so;
     }
-
 
     /**
      * 构建删除SQL（根据id删除）
@@ -716,7 +596,6 @@ public class SqlGenerator {
         return so;
     }
 
-
     /**
      * 构建查询数量SQL（根据条件构造器）
      *
@@ -730,7 +609,6 @@ public class SqlGenerator {
         so.setParameters(criteria.getParameters());
         return so;
     }
-
 
     /**
      * 构建查询数量SQL（根据条件构造器lambda）
