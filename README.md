@@ -31,7 +31,7 @@
 <dependency>
   <groupId>top.lxyccc</groupId>
   <artifactId>tiny-jdbc-boot-starter</artifactId>
-  <version>1.9.6</version>
+  <version>1.9.7</version>
 </dependency>
 ```
 
