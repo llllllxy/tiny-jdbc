@@ -239,6 +239,9 @@ public class SqlGenerator {
         if (whereValues == null) {
             throw new TinyJdbcException("SqlGenerator updateByIdSql primaryKeyId can not null!");
         }
+        if (columns.length() == 0) {
+            throw new TinyJdbcException("SqlGenerator updateByIdSql updateColumns can not null!");
+        }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
         sql.append("UPDATE ")
                 .append(tableName)
