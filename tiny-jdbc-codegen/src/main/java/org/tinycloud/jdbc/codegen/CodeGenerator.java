@@ -82,6 +82,9 @@ public class CodeGenerator {
      */
     private void validateTable(TableMeta table) {
         List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
+        if (primaryKeys.isEmpty()) {
+            throw new IllegalStateException("暂不支持无主键表，表名: " + table.getTableName());
+        }
         if (primaryKeys.size() > 1) {
             throw new IllegalStateException("暂不支持联合主键，表名: " + table.getTableName());
         }
@@ -130,7 +133,7 @@ public class CodeGenerator {
             columnInfo.setPrimaryKey(column.isPrimaryKey());
             columnInfo.setAutoIncrement(column.isAutoIncrement());
             columnInfo.setNullable(column.isNullable());
-            columnInfo.setComment(table.getRemarks() == null ? "" : table.getRemarks());
+            columnInfo.setComment(column.getRemarks() == null ? "" : column.getRemarks());
             if (column.isPrimaryKey()) {
                 // 优先使用用户配置
                 if (config.getStrategyConfig().getIdType() != null) {
