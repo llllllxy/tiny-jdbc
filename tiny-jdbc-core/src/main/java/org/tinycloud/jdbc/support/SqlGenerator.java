@@ -171,6 +171,9 @@ public class SqlGenerator {
                 }
             } else if (idType == IdType.CUSTOM) {
                 IdGeneratorInterface idGeneratorInterface = GlobalConfig.getConfig().getIdGeneratorInterface();
+                if (idGeneratorInterface == null) {
+                    throw new TinyJdbcException("IdType.CUSTOM requires IdGeneratorInterface, please configure GlobalConfig.idGeneratorInterface first!");
+                }
                 Object id = idGeneratorInterface.nextId(object);
                 try {
                     fieldValue = ConvertUtils.convert(id, fieldType);
@@ -204,7 +207,7 @@ public class SqlGenerator {
         List<Object> parameters = new ArrayList<>();
         StringBuilder columns = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
-        Object whereValues = new Object();
+        Object whereValues = null;
         for (Field field : fields) {
             ReflectUtils.makeAccessible(field);
             Column columnAnnotation = field.getAnnotation(Column.class);
@@ -225,6 +228,10 @@ public class SqlGenerator {
                 throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             if (idAnnotation != null) {
+                if (whereColumns.length() > 0) {
+                    throw new TinyJdbcException("Only one @Id is supported, multiple primary key columns found in class "
+                            + object.getClass().getName() + ": " + whereColumns + ", " + column);
+                }
                 whereColumns.append(column);
                 whereValues = filedValue;
                 continue;
