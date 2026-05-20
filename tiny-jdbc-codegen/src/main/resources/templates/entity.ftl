@@ -25,7 +25,7 @@ import ${importItem};
 <#if enableLombok>
 @Data
 </#if>
-@Table(name = "${tableName}")
+@Table("${tableName}")
 public class ${className} {
 
 <#-- 遍历列 -->

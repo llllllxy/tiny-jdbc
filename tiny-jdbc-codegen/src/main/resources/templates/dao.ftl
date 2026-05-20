@@ -1,18 +1,20 @@
 package ${packageName};
 
 import org.tinycloud.jdbc.BaseDao;
+import org.springframework.stereotype.Repository;
 import ${entityPackageName}.${entityClassName};
 
 /**
 <#if tableComment?has_content>
-* ${tableComment} DAO接口
+* ${tableComment} DAO类
 <#else>
-* ${className} DAO接口
+* ${className} DAO类
 </#if>
 *
 * @author ${author}
 * @date ${createDate}
 */
-public interface ${className} extends BaseDao<${entityClassName}, ${idType}> {
+@Repository
+public class ${className} extends BaseDao<${entityClassName}, ${idType}> {
 
 }
