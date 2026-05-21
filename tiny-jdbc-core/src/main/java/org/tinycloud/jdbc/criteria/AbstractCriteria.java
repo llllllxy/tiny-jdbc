@@ -1,5 +1,7 @@
 package org.tinycloud.jdbc.criteria;
 
+import org.tinycloud.jdbc.exception.TinyJdbcException;
+
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -121,6 +123,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children in(boolean whether, String field, List<R> values) {
         return this.whetherDo(whether, () -> {
+            this.validateInValues(field, values);
             StringBuilder condition = new StringBuilder();
             condition.append(getConditionPrefix())
                     .append(field)
@@ -138,6 +141,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children notIn(boolean whether, String field, List<R> values) {
         return this.whetherDo(whether, () -> {
+            this.validateInValues(field, values);
             StringBuilder condition = new StringBuilder();
             condition.append(getConditionPrefix())
                     .append(field)
