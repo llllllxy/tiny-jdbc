@@ -4,7 +4,12 @@ import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.criteria.TypeFunction;
 
 import java.io.Serializable;
-import java.lang.invoke.*;
+import java.lang.invoke.CallSite;
+import java.lang.invoke.LambdaMetafactory;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -20,47 +25,77 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class LambdaUtils {
 
-    // 缓存 Lambda 到 字段名 的映射
-    public static final Map<String, String> LAMBDA_TO_FIELD_CACHE = new ConcurrentHashMap<>();
-
-    // 缓存 字段名 到 Lambda 的映射
-    private static final Map<String, TypeFunction<?, ?>> FIELD_TO_LAMBDA_CACHE = new ConcurrentHashMap<>();
-
+    /**
+     * 缓存实体类字段到数据库列名的映射。
+     */
+    private static final ClassValue<Map<String, String>> LAMBDA_TO_FIELD_CACHE = new ClassValue<Map<String, String>>() {
+        /**
+         * 为每个实体类创建独立的字段列名缓存。
+         *
+         * @param type 实体类
+         * @return 当前实体类对应的字段列名缓存
+         */
+        @Override
+        protected Map<String, String> computeValue(Class<?> type) {
+            return new ConcurrentHashMap<>();
+        }
+    };
 
     /**
-     * 方法引用获取属性名
+     * 缓存实体类字段到 Lambda Getter 的映射。
+     */
+    private static final ClassValue<Map<String, TypeFunction<?, ?>>> FIELD_TO_LAMBDA_CACHE = new ClassValue<Map<String, TypeFunction<?, ?>>>() {
+        /**
+         * 为每个实体类创建独立的字段 Lambda 缓存。
+         *
+         * @param type 实体类
+         * @return 当前实体类对应的字段 Lambda 缓存
+         */
+        @Override
+        protected Map<String, TypeFunction<?, ?>> computeValue(Class<?> type) {
+            return new ConcurrentHashMap<>();
+        }
+    };
+
+    /**
+     * 方法引用获取属性名。
      *
      * @param getter 函数式接口，如 UploadFile::getFileId
+     * @param <T>    实体类型
      * @return String 列名称
      */
     public static <T> String getLambdaColumnName(TypeFunction<T, ?> getter) {
         SerializedLambda serializedLambda = resolve(getter);
-        String instantiatedMethodType = serializedLambda.getInstantiatedMethodType();
-        final String className = instantiatedMethodType.substring(2, instantiatedMethodType.indexOf(";")).replace("/", ".");
         final String methodName = serializedLambda.getImplMethodName();
         final String fieldName = PropertyNamer.methodToProperty(methodName);
-        final ClassLoader classLoader = getter.getClass().getClassLoader();
-        String lambdaCacheKey = classLoader.hashCode() + ":" + className + "." + fieldName;
-        return ConcurrentHashMapUtils.computeIfAbsent(LAMBDA_TO_FIELD_CACHE, lambdaCacheKey, key -> {
+        String instantiatedMethodType = serializedLambda.getInstantiatedMethodType();
+        int start = instantiatedMethodType.indexOf('L');
+        int end = instantiatedMethodType.indexOf(';', start);
+        if (start < 0 || end < 0 || start >= end) {
+            throw new IllegalArgumentException("Cannot resolve instantiated class from lambda method type: " + instantiatedMethodType);
+        }
+        final String className = instantiatedMethodType.substring(start + 1, end).replace("/", ".");
+        final Class<?> entityClass = ClassUtils.getUserClass(ClassUtils.toClassConfident(className, getter.getClass().getClassLoader()));
+        Map<String, String> columnNameCache = LAMBDA_TO_FIELD_CACHE.get(entityClass);
+        String cachedColumnName = columnNameCache.get(fieldName);
+        if (cachedColumnName != null) {
+            return cachedColumnName;
+        }
+        return ConcurrentHashMapUtils.computeIfAbsent(columnNameCache, fieldName, key -> {
             try {
-                // 通过字段名获取字段
-                Class<?> clazz = ClassUtils.toClassConfident(className, classLoader);
-                Field field = ReflectUtils.getAccessibleField(clazz, fieldName);
-                // 获取字段上的注解
+                Field field = ReflectUtils.getAccessibleField(entityClass, fieldName);
                 Column annotation = field.getAnnotation(Column.class);
-                // 处理 Column 注解的 exist 属性：exist=false 时直接抛出异常
                 if (annotation != null && !annotation.exist()) {
                     throw new IllegalArgumentException("Field '" + fieldName + "' marked with @Column(exist=false), which is not allowed to be used in a lambda expression.");
                 }
                 if (annotation == null || StrUtils.isEmpty(annotation.value())) {
                     return StrUtils.camelToUnderline(fieldName);
-                } else {
-                    return annotation.value();
                 }
+                return annotation.value();
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Failed to infer property name from method '" + methodName + "': " + e.getMessage(), e);
             } catch (NoSuchFieldException e) {
-                throw new IllegalArgumentException("Field '" + fieldName + "' not found in class '" + className + "'", e);
+                throw new IllegalArgumentException("Field '" + fieldName + "' not found in class '" + entityClass.getName() + "'", e);
             } catch (SecurityException e) {
                 throw new RuntimeException("Security manager blocked reflection access: " + e.getMessage(), e);
             } catch (Exception e) {
@@ -70,7 +105,7 @@ public class LambdaUtils {
     }
 
     /**
-     * 解析方法引用，获取SerializedLambda
+     * 解析方法引用，获取 SerializedLambda。
      *
      * @param fn 方法引用，如 UploadFile::getFileId
      * @return SerializedLambda
@@ -79,16 +114,14 @@ public class LambdaUtils {
         try {
             Method method = fn.getClass().getDeclaredMethod("writeReplace");
             method.setAccessible(Boolean.TRUE);
-            SerializedLambda serializedLambda = (SerializedLambda) method.invoke(fn);
-            return serializedLambda;
+            return (SerializedLambda) method.invoke(fn);
         } catch (ReflectiveOperationException e) {
             throw new IllegalArgumentException("An exception occurred while obtaining SerializedLambda!", e);
         }
     }
 
-
     /**
-     * 通过字段名获取对应的 Lambda Getter 方法引用
+     * 通过字段名获取对应的 Lambda Getter 方法引用。
      *
      * @param clazz 类
      * @param prop  字段名
@@ -97,35 +130,43 @@ public class LambdaUtils {
      */
     @SuppressWarnings("unchecked")
     public static <T> TypeFunction<T, ?> getLambdaGetter(Class<T> clazz, String prop) {
-        String cacheKey = clazz.getName() + "." + prop;
-        // 直接通过computeIfAbsent获取或创建，并强制类型转换返回
-        return (TypeFunction<T, ?>) ConcurrentHashMapUtils.computeIfAbsent(FIELD_TO_LAMBDA_CACHE, cacheKey, key -> {
+        final Class<T> userClass = (Class<T>) ClassUtils.getUserClass(clazz);
+        Map<String, TypeFunction<?, ?>> fieldCache = FIELD_TO_LAMBDA_CACHE.get(userClass);
+        TypeFunction<?, ?> cachedLambdaGetter = fieldCache.get(prop);
+        if (cachedLambdaGetter != null) {
+            return (TypeFunction<T, ?>) cachedLambdaGetter;
+        }
+        return (TypeFunction<T, ?>) ConcurrentHashMapUtils.computeIfAbsent(fieldCache, prop, key -> {
             try {
-                // 反射获取Getter方法
                 String methodName = PropertyNamer.propertyToMethod("get", prop);
-                Method readMethod = clazz.getMethod(methodName);
+                Method readMethod;
+                try {
+                    readMethod = userClass.getMethod(methodName);
+                } catch (NoSuchMethodException e) {
+                    Field field = ReflectUtils.getAccessibleField(userClass, prop);
+                    if (ClassUtils.isBoolean(field.getType())) {
+                        readMethod = userClass.getMethod(PropertyNamer.propertyToMethod("is", prop));
+                    } else {
+                        throw e;
+                    }
+                }
 
-                // 拿到方法句柄
                 MethodHandles.Lookup lookup = MethodHandles.lookup();
                 final MethodHandle methodHandle = lookup.unreflect(readMethod);
-
-                // 创建动态调用链
                 CallSite callSite = LambdaMetafactory.altMetafactory(
                         lookup,
                         "apply",
                         MethodType.methodType(TypeFunction.class),
                         MethodType.methodType(Object.class, Object.class),
                         methodHandle,
-                        MethodType.methodType(readMethod.getReturnType(), clazz),
+                        MethodType.methodType(readMethod.getReturnType(), userClass),
                         LambdaMetafactory.FLAG_SERIALIZABLE
                 );
-                // 生成lambda实例并返回
-                TypeFunction<T, ?> lambda = (TypeFunction<T, ?>) callSite.getTarget().invokeExact();
-                return lambda;
+                return (TypeFunction<T, ?>) callSite.getTarget().invokeExact();
             } catch (NoSuchMethodException e) {
-                throw new IllegalArgumentException("Class " + clazz.getName() + " does not define a public getter method for field '" + prop + "'", e);
+                throw new IllegalArgumentException("Class " + userClass.getName() + " does not define a public getter method for field '" + prop + "'", e);
             } catch (NoSuchFieldException e) {
-                throw new IllegalArgumentException("Field '" + prop + "' does not exist in class " + clazz.getName(), e);
+                throw new IllegalArgumentException("Field '" + prop + "' does not exist in class " + userClass.getName(), e);
             } catch (Throwable e) {
                 throw new RuntimeException("Failed to generate lambda expression", e);
             }
