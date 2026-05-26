@@ -22,17 +22,13 @@ public class TinyJdbcProperties {
     private Boolean openRuntimeDbType = false;
 
     /**
-     * 默认值为 true，当使用运行时动态数据源自动获取数据库类型时，会自动获取一个数据库连接， 通过该属性来设置是否关闭获取的这个连接，默认true关闭，设置为 false 后，不会关闭获取的连接，这个参数的设置要根据自己选择的数据源来决定。
+     * 默认值为 true，当使用运行时动态数据源自动获取数据库类型时，会自动获取一个数据库连接。
+     * 通过该属性设置是否关闭获取的这个连接。
      */
     private Boolean closeConn = true;
 
     /**
-     * 数据源连接池类型（配置获取jdbcUrl的方法），允许配置为 hikari,druid,tomcat-jdbc,c3p0,dbcp,beecp,default，默认为 空
-     */
-    private String datasourceType;
-
-    /**
-     * 是否开启sql统计，默认值为 false
+     * 是否开启 sql 统计，默认值为 false
      */
     private Boolean sqlStatEnabled = false;
 
@@ -66,14 +62,6 @@ public class TinyJdbcProperties {
 
     public void setCloseConn(Boolean closeConn) {
         this.closeConn = closeConn;
-    }
-
-    public String getDatasourceType() {
-        return datasourceType;
-    }
-
-    public void setDatasourceType(String datasourceType) {
-        this.datasourceType = datasourceType;
     }
 
     public Boolean getSqlStatEnabled() {

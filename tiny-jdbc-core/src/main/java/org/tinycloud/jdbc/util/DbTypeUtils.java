@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
-import org.tinycloud.jdbc.page.urlparser.JdbcUrlResolver;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Method;
@@ -33,7 +32,7 @@ public class DbTypeUtils {
      * @return DbType
      */
     public static DbType getDbType(DataSource dataSource) {
-        String jdbcUrl = JdbcUrlResolver.getJdbcUrl(dataSource);
+        String jdbcUrl = getJdbcUrl(dataSource);
         if (StrUtils.isNotEmpty(jdbcUrl)) {
             return parseDbType(jdbcUrl);
         }
@@ -41,32 +40,33 @@ public class DbTypeUtils {
     }
 
     /**
-     * Deprecated since 1.8.9，Now use JdbcUrlResolver to get the jdbcUrl
-     * <br/>
-     * 通过数据源中获取 jdbc 的 url 配置
-     * 符合 HikariCP, druid, c3p0, DBCP, BEECP 数据源框架 以及 MyBatis UnpooledDataSource 的获取规则
+     * 根据给定的数据源对象获取 JDBC URL
      *
-     * @return jdbcUrl
+     * @param dataSource 数据源对象，不能为 null
+     * @return 返回该数据源对应的 JDBC URL 字符串
+     * @throws TinyJdbcException 当数据源为 null 或无法从连接元数据获取 JDBC URL 时抛出异常
      */
-    @Deprecated
     public static String getJdbcUrl(DataSource dataSource) {
+        if (dataSource == null) {
+            throw new TinyJdbcException("DataSource cannot be null!");
+        }
         String[] methodNames = new String[]{"getUrl", "getJdbcUrl"};
         for (String methodName : methodNames) {
             try {
                 Method method = dataSource.getClass().getMethod(methodName);
                 return (String) method.invoke(dataSource);
             } catch (Exception e) {
-                //ignore
+                // ignore
             }
         }
         Connection connection = null;
         try {
             connection = dataSource.getConnection();
             return connection.getMetaData().getURL();
-        } catch (Exception e) {
-            throw new TinyJdbcException("Can not get the dataSource jdbcUrl from connection metadata!");
+        } catch (SQLException e) {
+            throw new TinyJdbcException("Can not get jdbcUrl from connection metadata!", e);
         } finally {
-            if (GlobalConfig.getConfig().getCloseConn()) {
+            if (Boolean.TRUE.equals(GlobalConfig.getConfig().getCloseConn())) {
                 if (connection != null) {
                     try {
                         connection.close();

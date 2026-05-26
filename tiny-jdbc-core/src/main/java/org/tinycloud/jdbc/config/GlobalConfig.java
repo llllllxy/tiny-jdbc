@@ -1,8 +1,8 @@
 package org.tinycloud.jdbc.config;
 
+import org.tinycloud.jdbc.fill.MetaObjectHandler;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.SnowflakeConfigInterface;
-import org.tinycloud.jdbc.fill.MetaObjectHandler;
 import org.tinycloud.jdbc.util.DbType;
 
 import java.io.Serializable;
@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>
- *     全局配置文件
+ * 全局配置文件
  * </p>
  *
  * @author liuxingyu01
@@ -29,7 +29,7 @@ public class GlobalConfig implements Serializable {
     private String version;
 
     /**
-     * 默认分页器适配类型（用于兜底）
+     * 默认分页器适配类型
      */
     private DbType dbType;
 
@@ -39,14 +39,10 @@ public class GlobalConfig implements Serializable {
     private Boolean openRuntimeDbType;
 
     /**
-     * 默认值为 true，当使用运行时动态数据源或没有设置 helperDialect 属性自动获取数据库类型时，会自动获取一个数据库连接， 通过该属性来设置是否关闭获取的这个连接，默认true关闭，设置为 false 后，不会关闭获取的连接，这个参数的设置要根据自己选择的数据源来决定。
+     * 默认值为 true，当使用运行时动态数据源或没有设置 dbType 属性自动获取数据库类型时，会自动获取一个数据库连接。
+     * 通过该属性设置是否关闭获取的这个连接。
      */
     private Boolean closeConn;
-
-    /**
-     * 数据源类型，允许配置为 hikari,druid,tomcat-jdbc,c3p0,dbcp,beecp,default，默认为 default
-     */
-    private String datasourceType;
 
     /**
      * 主键生成器
@@ -111,14 +107,6 @@ public class GlobalConfig implements Serializable {
         this.closeConn = closeConn;
     }
 
-    public String getDatasourceType() {
-        return datasourceType;
-    }
-
-    public void setDatasourceType(String datasourceType) {
-        this.datasourceType = datasourceType;
-    }
-
     public SnowflakeConfigInterface getSnowflakeConfigInterface() {
         return snowflakeConfigInterface;
     }
@@ -135,8 +123,6 @@ public class GlobalConfig implements Serializable {
         this.metaObjectHandler = metaObjectHandler;
     }
 
-
-    /* -----------------------静态方法和变量开始-------------------------------------- */
     /**
      * 缓存全局配置信息
      */
@@ -144,14 +130,11 @@ public class GlobalConfig implements Serializable {
     private static final String GLOBAL_CONFIG_KEY = "global_config_key";
 
     /**
-     * <p>
-     *  配置全局设置
-     * <p/>
+     * 配置全局设置
      *
      * @param globalConfig 全局配置
      */
     public static void setConfig(GlobalConfig globalConfig) {
-        // 设置全局设置
         GLOBAL_CONFIG.putIfAbsent(GLOBAL_CONFIG_KEY, globalConfig);
         if (globalConfig.isBanner()) {
             printBanner();
@@ -159,16 +142,14 @@ public class GlobalConfig implements Serializable {
     }
 
     /**
-     * 获取MybatisGlobalConfig (统一所有入口)
+     * 获取全局配置
      */
     public static GlobalConfig getConfig() {
         return GLOBAL_CONFIG.get(GLOBAL_CONFIG_KEY);
     }
 
     /**
-     * <p>
-     *  输出banner
-     * <p/>
+     * 输出 banner
      */
     public static void printBanner() {
         String banner = "  _______ _                    _     _ _          \n" +
