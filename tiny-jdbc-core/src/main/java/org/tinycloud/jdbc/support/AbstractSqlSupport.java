@@ -609,6 +609,9 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             SqlProvider sqlProvider = SqlGenerator.insertSql(t, ignoreNulls, getJdbcTemplate());
             if (sql == null || sql.isEmpty()) {
                 sql = sqlProvider.getSql();
+            } else if (!sql.equals(sqlProvider.getSql())) {
+                throw new TinyJdbcException("batchInsert requires the same SQL for all entities, first sql: "
+                        + sql + ", current sql: " + sqlProvider.getSql());
             }
             batchArgs.add(sqlProvider.getParameters().toArray());
         }

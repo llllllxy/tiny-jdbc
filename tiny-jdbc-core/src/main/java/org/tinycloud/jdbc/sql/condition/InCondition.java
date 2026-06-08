@@ -1,5 +1,6 @@
 package org.tinycloud.jdbc.sql.condition;
 
+import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.sql.enums.JoinType;
 
 import java.util.ArrayList;
@@ -20,6 +21,9 @@ public class InCondition implements ConditionElement {
     private final boolean isNot;
 
     public InCondition(String column, List<?> values, boolean isNot, JoinType joinType) {
+        if (values == null || values.isEmpty()) {
+            throw new TinyJdbcException("The values of IN/NOT IN condition cannot be null or empty, column: " + column);
+        }
         this.column = column;
         this.values = values;
         this.joinType = joinType;

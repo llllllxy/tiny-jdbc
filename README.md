@@ -49,8 +49,6 @@ tiny-jdbc:
   open-runtime-db-type: false
   # 通过metadata获取jdbcurl时是否自动关闭连接，默认为true
   close-conn: true
-  # 数据源连接池类型（配置获取jdbcUrl的方法），允许配置为 hikari,druid,tomcat-jdbc,c3p0,dbcp,beecp,default，默认空
-  datasource-type: druid
   # 是否开启sql统计，默认false
   sql-stat-enabled: false
 ```

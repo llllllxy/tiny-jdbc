@@ -93,12 +93,12 @@ public abstract class Criteria<T> {
 
     /**
      * 根据条件生成对应查询部分的SQL片段
-     * 
+     *
      * <pre>
      * 如： id,create_time
-     * 
+     *
      * <pre>
-     * 
+     *
      * @return 查询SQL片段
      */
     public String selectSql() {
@@ -111,12 +111,12 @@ public abstract class Criteria<T> {
 
     /**
      * 根据条件生成对应更新部分的SQL片段
-     * 
+     *
      * <pre>
      * 如： id=?,create_time=?
-     * 
+     *
      * <pre>
-     * 
+     *
      * @return 更新SQL片段
      */
     public String updateSql() {
@@ -153,7 +153,7 @@ public abstract class Criteria<T> {
     /**
      * 判断更新字段是否已存在
      *
-     * @param columnName 数据库字段名
+     * @param field 字段引用
      * @return true=已存在，false=不存在
      */
     public boolean hasUpdateColumn(TypeFunction<T, ?> field) {
@@ -170,13 +170,13 @@ public abstract class Criteria<T> {
 
     /**
      * 根据条件生成对应的条件部分的SQL片段，带WHERE
-     * 
+     *
      * <pre>
      * 如： WHERE age < 28 AND name IN ('Bob', 'John') AND created_at = '2023-08-05
      * 16:08:11' ORDER BY age DESC
-     * 
+     *
      * <pre>
-     * 
+     *
      * @return 条件SQL片段
      */
     public String whereSql() {
@@ -229,5 +229,18 @@ public abstract class Criteria<T> {
             sql.append(")");
         }
         return sql.toString();
+    }
+
+
+    /**
+     * 校验 IN/NOT IN 条件的参数集合不能为空。
+     *
+     * @param field  字段名
+     * @param values 条件参数集合
+     */
+    protected void validateInValues(String field, List<?> values) {
+        if (values == null || values.isEmpty()) {
+            throw new TinyJdbcException("The values of IN/NOT IN condition cannot be null or empty, field: " + field);
+        }
     }
 }

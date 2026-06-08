@@ -139,6 +139,10 @@ public class TableParserUtils {
 
                 // 4. 记录主键列（仅当字段存在且有 @Id 注解时）
                 if (idAnnotation != null) {
+                    if (StrUtils.isNotEmpty(primaryKeyColumn)) {
+                        throw new TinyJdbcException("Only one @Id is supported, multiple primary key columns found in class "
+                                + key.getName() + ": " + primaryKeyColumn + ", " + column);
+                    }
                     primaryKeyColumn = column;
                 }
             }

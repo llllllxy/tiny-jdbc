@@ -61,7 +61,6 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware, Initi
         globalConfig.setDbType(tinyJdbcProperties.getDbType());
         globalConfig.setOpenRuntimeDbType(Objects.isNull(tinyJdbcProperties.getOpenRuntimeDbType()) ? Boolean.FALSE : tinyJdbcProperties.getOpenRuntimeDbType());
         globalConfig.setCloseConn(Objects.isNull(tinyJdbcProperties.getCloseConn()) ? Boolean.TRUE : tinyJdbcProperties.getCloseConn());
-        globalConfig.setDatasourceType(tinyJdbcProperties.getDatasourceType());
         /* 获取自定义的（ID生成器） */
         this.getBeanThen(IdGeneratorInterface.class, globalConfig::setIdGeneratorInterface);
         /* 获取自定义的（雪花算法 workerId 和 datacenterId 配置） */
