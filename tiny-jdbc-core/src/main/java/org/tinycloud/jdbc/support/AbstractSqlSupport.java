@@ -15,8 +15,10 @@ import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.fill.FillMetaObject;
 import org.tinycloud.jdbc.fill.MetaObjectHandler;
+import org.tinycloud.jdbc.interceptor.SqlExecution;
+import org.tinycloud.jdbc.interceptor.SqlExecutor;
 import org.tinycloud.jdbc.interceptor.SqlInterceptor;
-import org.tinycloud.jdbc.interceptor.SqlInvocation;
+import org.tinycloud.jdbc.interceptor.SqlRequest;
 import org.tinycloud.jdbc.interceptor.SqlType;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
@@ -72,99 +74,76 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     // ======================== 抽离的私有工具方法（加do前缀） ========================
 
     /**
-     * 私有工具方法：在执行sql之前调用拦截器
+     * 私有工具方法：通过统一执行器执行 SQL 请求。
+     *
+     * @param request   SQL 请求
+     * @param execution 最终数据库执行器
+     * @param <R>       执行结果类型
+     * @return SQL 执行结果
      */
-    private void doBefore(SqlInvocation invocation, JdbcTemplate jdbcTemplate) {
-        if (CollectionUtils.isNotEmpty(this.getSqlInterceptors())) {
-            for (SqlInterceptor sqlInterceptor : this.getSqlInterceptors()) {
-                sqlInterceptor.before(invocation, jdbcTemplate);
-            }
-        }
-    }
-
-    /**
-     * 私有工具方法：在执行sql之后调用拦截器
-     */
-    private Object doAfter(Object result, SqlInvocation invocation, JdbcTemplate jdbcTemplate) {
-        if (CollectionUtils.isNotEmpty(this.getSqlInterceptors())) {
-            for (SqlInterceptor sqlInterceptor : this.getSqlInterceptors()) {
-                result = sqlInterceptor.after(result, invocation, jdbcTemplate);
-            }
-        }
-        return result;
+    private <R> R doSqlExecute(SqlRequest<R> request, SqlExecution<R> execution) {
+        return new SqlExecutor(this.getSqlInterceptors()).execute(request, execution);
     }
 
     /**
      * 私有工具方法：执行查询，返回指定类型的列表
      */
-    @SuppressWarnings("unchecked")
     private <F> List<F> doQuery(String sql, RowMapper<F> rowMapper, Object... params) {
-        SqlInvocation invocation = new SqlInvocation(sql, params, SqlType.QUERY);
         JdbcTemplate jdbcTemplate = this.getJdbcTemplate();
-        this.doBefore(invocation, jdbcTemplate);
-        List<F> result = jdbcTemplate.query(sql, rowMapper, params);
-        return (List<F>) this.doAfter(result, invocation, jdbcTemplate);
+        SqlRequest<List<F>> request = new SqlRequest<>(sql, params, SqlType.QUERY);
+        return this.doSqlExecute(request, invocation -> jdbcTemplate.query(invocation.getSql(), rowMapper, invocation.getArgs()));
     }
 
     /**
      * 私有工具方法：执行查询，返回Map列表
      */
-    @SuppressWarnings("unchecked")
     private List<Map<String, Object>> doQueryForList(String sql, Object... params) {
-        SqlInvocation invocation = new SqlInvocation(sql, params, SqlType.QUERY);
         JdbcTemplate jdbcTemplate = this.getJdbcTemplate();
-        this.doBefore(invocation, jdbcTemplate);
-        List<Map<String, Object>> result = jdbcTemplate.queryForList(sql, params);
-        return (List<Map<String, Object>>) this.doAfter(result, invocation, jdbcTemplate);
+        SqlRequest<List<Map<String, Object>>> request = new SqlRequest<>(sql, params, SqlType.QUERY);
+        return this.doSqlExecute(request, invocation -> jdbcTemplate.queryForList(invocation.getSql(), invocation.getArgs()));
     }
 
     /**
      * 私有工具方法：执行查询，返回单个对象
      */
-    @SuppressWarnings("unchecked")
     private <F> F doQueryForObject(String sql, Class<F> clazz, Object... params) {
-        SqlInvocation invocation = new SqlInvocation(sql, params, SqlType.QUERY);
         JdbcTemplate jdbcTemplate = this.getJdbcTemplate();
-        this.doBefore(invocation, jdbcTemplate);
-        F result = jdbcTemplate.queryForObject(sql, clazz, params);
-        return (F) this.doAfter(result, invocation, jdbcTemplate);
+        SqlRequest<F> request = new SqlRequest<>(sql, params, SqlType.QUERY);
+        return this.doSqlExecute(request, invocation -> jdbcTemplate.queryForObject(invocation.getSql(), clazz, invocation.getArgs()));
     }
 
     /**
      * 私有工具方法：执行增删改操作
      */
     private int doUpdate(String sql, Object... params) {
-        SqlInvocation invocation = new SqlInvocation(sql, params, SqlType.UPDATE);
         JdbcTemplate jdbcTemplate = this.getJdbcTemplate();
-        this.doBefore(invocation, jdbcTemplate);
-        int result = jdbcTemplate.update(sql, params);
-        return (int) this.doAfter(result, invocation, jdbcTemplate);
+        SqlRequest<Integer> request = new SqlRequest<>(sql, params, SqlType.UPDATE);
+        return this.doSqlExecute(request, invocation -> jdbcTemplate.update(invocation.getSql(), invocation.getArgs()));
     }
 
     /**
      * 私有工具方法：执行增删改操作，返回自增主键值
      */
     private Pair<Integer, Long> doUpdateReturnAutoIncrement(String sql, Object... params) {
-        SqlInvocation invocation = new SqlInvocation(sql, params, SqlType.UPDATE);
         JdbcTemplate jdbcTemplate = this.getJdbcTemplate();
-        this.doBefore(invocation, jdbcTemplate);
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        int affectedRows = jdbcTemplate.update(con -> {
-            PreparedStatement ps = con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
-            if (ArrayUtils.isNotEmpty(params)) {
-                for (int i = 0; i < params.length; i++) {
-                    ps.setObject(i + 1, params[i]);
+        SqlRequest<Pair<Integer, Long>> request = new SqlRequest<>(sql, params, SqlType.UPDATE);
+        return this.doSqlExecute(request, invocation -> {
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            int affectedRows = jdbcTemplate.update(con -> {
+                PreparedStatement ps = con.prepareStatement(invocation.getSql(), PreparedStatement.RETURN_GENERATED_KEYS);
+                Object[] invocationArgs = invocation.getArgs();
+                if (ArrayUtils.isNotEmpty(invocationArgs)) {
+                    for (int i = 0; i < invocationArgs.length; i++) {
+                        ps.setObject(i + 1, invocationArgs[i]);
+                    }
                 }
+                return ps;
+            }, keyHolder);
+            if (keyHolder.getKey() == null) {
+                throw new TinyJdbcException("please check whether it is an autoincrement primary key");
             }
-            return ps;
-        }, keyHolder);
-        if (keyHolder.getKey() != null) {
-            Long autoIncrementId = keyHolder.getKey().longValue();
-            int result = (int) this.doAfter(affectedRows, invocation, jdbcTemplate);
-            return new Pair<>(result, autoIncrementId);
-        } else {
-            throw new TinyJdbcException("please check whether it is an autoincrement primary key");
-        }
+            return new Pair<>(affectedRows, keyHolder.getKey().longValue());
+        });
     }
 
 
@@ -172,11 +151,12 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
      * 私有工具方法：执行 DDL 语句（CREATE / ALTER / DROP / TRUNCATE 等）
      */
     private void doExecute(String sql) {
-        SqlInvocation invocation = new SqlInvocation(sql, null, SqlType.EXECUTE);
         JdbcTemplate jdbcTemplate = this.getJdbcTemplate();
-        this.doBefore(invocation, jdbcTemplate);
-        jdbcTemplate.execute(sql);
-        this.doAfter(null, invocation, jdbcTemplate);
+        SqlRequest<Void> request = new SqlRequest<>(sql, null, SqlType.EXECUTE);
+        this.doSqlExecute(request, invocation -> {
+            jdbcTemplate.execute(invocation.getSql());
+            return null;
+        });
     }
 
     /**
@@ -615,7 +595,8 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             }
             batchArgs.add(sqlProvider.getParameters().toArray());
         }
-        return getJdbcTemplate().batchUpdate(sql, batchArgs);
+        SqlRequest<int[]> request = SqlRequest.batch(sql, batchArgs);
+        return this.doSqlExecute(request, invocation -> this.getJdbcTemplate().batchUpdate(invocation.getSql(), invocation.getBatchArgs()));
     }
 
     @Override

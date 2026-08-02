@@ -16,6 +16,10 @@ public enum SqlType {
      */
     UPDATE,
     /**
+     * 批量更新 SQL语句
+     */
+    BATCH,
+    /**
      * 查询 SQL语句
      */
     QUERY,

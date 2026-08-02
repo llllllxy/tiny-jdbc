@@ -32,6 +32,11 @@ public class TinyJdbcProperties {
      */
     private Boolean sqlStatEnabled = false;
 
+    /**
+     * 是否打印 SQL 执行结果，默认值为 false。
+     */
+    private Boolean sqlStatResultEnabled = false;
+
     public Boolean getBanner() {
         return banner;
     }
@@ -70,5 +75,23 @@ public class TinyJdbcProperties {
 
     public void setSqlStatEnabled(Boolean sqlStatEnabled) {
         this.sqlStatEnabled = sqlStatEnabled;
+    }
+
+    /**
+     * 获取是否打印 SQL 执行结果。
+     *
+     * @return true 表示打印 SQL 执行结果
+     */
+    public Boolean getSqlStatResultEnabled() {
+        return this.sqlStatResultEnabled;
+    }
+
+    /**
+     * 设置是否打印 SQL 执行结果。
+     *
+     * @param sqlStatResultEnabled true 表示打印 SQL 执行结果
+     */
+    public void setSqlStatResultEnabled(Boolean sqlStatResultEnabled) {
+        this.sqlStatResultEnabled = sqlStatResultEnabled;
     }
 }

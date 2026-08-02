@@ -104,7 +104,7 @@ public class TinyJdbcAutoConfiguration implements ApplicationContextAware, Initi
         if (logger.isInfoEnabled()) {
             logger.info("Tiny-Jdbc create bean StatInterceptor.");
         }
-        return new StatInterceptor();
+        return new StatInterceptor(Boolean.TRUE.equals(this.tinyJdbcProperties.getSqlStatResultEnabled()));
     }
 
     /**

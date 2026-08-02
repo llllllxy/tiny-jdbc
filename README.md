@@ -51,7 +51,16 @@ tiny-jdbc:
   close-conn: true
   # 是否开启sql统计，默认false
   sql-stat-enabled: false
+  # 是否打印sql执行结果，默认false
+  sql-stat-result-enabled: false
 ```
+
+#### SQL 统计配置
+
+- `tiny-jdbc.sql-stat-enabled`：是否注册内置的 `StatInterceptor`，默认 `false`。
+- `tiny-jdbc.sql-stat-result-enabled`：是否打印 SQL 的执行结果，默认 `false`；仅在 `sql-stat-enabled: true` 时生效。
+
+建议生产环境保持 `sql-stat-result-enabled: false`。查询结果可能很大，也可能包含手机号、身份证号等敏感字段；开启后仅建议用于短时间排查问题。
 
 ### 定义Entity实体类
 
@@ -663,7 +672,9 @@ public class OtherDao {
 
 ## 10、拦截器机制
 
-提供了拦截器机制，用于在执行 SQL 语句前后进行自定义操作。
+提供了环绕式拦截器机制，用于在执行 SQL 语句前后进行自定义操作。拦截器可在调用 `chain.proceed(request)` 前通过 `request.setStatement(sql, args)` 同时改写 SQL 和参数，也可在调用后观察执行结果。
+
+多个拦截器按 Spring 的 `@Order` / `Ordered` 规则排序，按进入顺序嵌套执行；即先进入的拦截器最后退出。内置 `StatInterceptor` 由 `tiny-jdbc.sql-stat-enabled` 启用，是否打印执行结果由 `tiny-jdbc.sql-stat-result-enabled` 控制。
 
 使用示例：
 
@@ -673,20 +684,15 @@ public class StatInterceptor implements SqlInterceptor {
   private static final Logger log = LoggerFactory.getLogger(StatInterceptor.class);
 
   @Override
-  public void before(SqlInvocation invocation, JdbcTemplate jdbcTemplate) {
-    log.info("执行SQL开始时间：{}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")));
-    log.info("原始SQL：{}", invocation.getSql());
-    log.info("原始SQL参数：{}", Arrays.toString(invocation.getArgs()));
-    log.info("完整SQL：{}", SqlUtils.replaceSqlParams(invocation.getSql(), invocation.getArgs()));
-    invocation.putMetadata("startTime", LocalDateTime.now());
-  }
-
-  @Override
-  public Object after(Object result, SqlInvocation invocation, JdbcTemplate jdbcTemplate) {
-    log.info("执行SQL结束时间：{}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")));
-    LocalDateTime startTime = (LocalDateTime) invocation.getMetadata("startTime");
-    log.info("执行SQL耗时：{}毫秒", Duration.between(startTime, LocalDateTime.now()).toMillis());
-    return result;
+  public <R> R intercept(SqlRequest<R> request, SqlInterceptorChain<R> chain) {
+    long startTime = System.nanoTime();
+    try {
+      R result = chain.proceed(request);
+      log.info("执行SQL结果：{}", result);
+      return result;
+    } finally {
+      log.info("执行SQL耗时：{}毫秒", (System.nanoTime() - startTime) / 1_000_000);
+    }
   }
 }
 ```
