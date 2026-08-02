@@ -4,6 +4,7 @@ import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.util.LambdaUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -238,7 +239,7 @@ public abstract class Criteria<T> {
      * @param field  字段名
      * @param values 条件参数集合
      */
-    protected void validateInValues(String field, List<?> values) {
+    protected void validateInValues(String field, Collection<?> values) {
         if (values == null || values.isEmpty()) {
             throw new TinyJdbcException("The values of IN/NOT IN condition cannot be null or empty, field: " + field);
         }

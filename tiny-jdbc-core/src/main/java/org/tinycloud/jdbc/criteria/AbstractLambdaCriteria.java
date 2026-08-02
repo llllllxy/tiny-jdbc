@@ -1,9 +1,8 @@
 package org.tinycloud.jdbc.criteria;
 
-import org.tinycloud.jdbc.exception.TinyJdbcException;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -125,11 +124,11 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
         });
     }
 
-    public <R> Children in(TypeFunction<T, ?> field, List<R> values) {
+    public <R> Children in(TypeFunction<T, ?> field, Collection<R> values) {
         return this.in(true, field, values);
     }
 
-    public <R> Children in(boolean whether, TypeFunction<T, ?> field, List<R> values) {
+    public <R> Children in(boolean whether, TypeFunction<T, ?> field, Collection<R> values) {
         return this.whetherDo(whether, () -> {
             String columnName = this.getColumnName(field);
             this.validateInValues(columnName, values);
@@ -144,11 +143,11 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
         });
     }
 
-    public <R> Children notIn(TypeFunction<T, ?> field, List<R> values) {
+    public <R> Children notIn(TypeFunction<T, ?> field, Collection<R> values) {
         return this.notIn(true, field, values);
     }
 
-    public <R> Children notIn(boolean whether, TypeFunction<T, ?> field, List<R> values) {
+    public <R> Children notIn(boolean whether, TypeFunction<T, ?> field, Collection<R> values) {
         return this.whetherDo(whether, () -> {
             String columnName = this.getColumnName(field);
             this.validateInValues(columnName, values);

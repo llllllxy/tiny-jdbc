@@ -6,6 +6,7 @@ import org.tinycloud.jdbc.sql.enums.JoinType;
 import org.tinycloud.jdbc.util.LambdaUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -177,23 +178,23 @@ public class ConditionGroup<T> {
         return this;
     }
 
-    public ConditionGroup<T> in(String column, List<?> values) {
+    public ConditionGroup<T> in(String column, Collection<?> values) {
         this.elements.add(new InCondition(column, values, false, this.defaultJoinType));
         return this;
     }
 
-    public <R> ConditionGroup<T> in(TypeFunction<T, R> field, List<?> values) {
+    public <R> ConditionGroup<T> in(TypeFunction<T, R> field, Collection<?> values) {
         String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new InCondition(column, values, false, this.defaultJoinType));
         return this;
     }
 
-    public ConditionGroup<T> notIn(String column, List<?> values) {
+    public ConditionGroup<T> notIn(String column, Collection<?> values) {
         this.elements.add(new InCondition(column, values, true, this.defaultJoinType));
         return this;
     }
 
-    public <R> ConditionGroup<T> notIn(TypeFunction<T, R> field, List<?> values) {
+    public <R> ConditionGroup<T> notIn(TypeFunction<T, R> field, Collection<?> values) {
         String column = LambdaUtils.getLambdaColumnName(field);
         this.elements.add(new InCondition(column, values, true, this.defaultJoinType));
         return this;
