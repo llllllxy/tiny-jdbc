@@ -1,11 +1,19 @@
 # TinyJDBC
 
-# 一个优雅的 ORM 框架，轻量、灵活、高性能
+一个轻量、灵活、基于 Spring JDBC 的 ORM 框架。
 
 ## 1、简介
 
 `tiny-jdbc` 是一款基于 `Spring JDBC` 精心打造的轻量、灵活且高性能的数据库 `ORM` 框架。它在继承 `Spring JDBC`
 原有强大功能的基础上，进行了大量的增强和优化，为开发者提供了更加便捷、高效的数据库操作体验，让操作数据库这件事变得更加简单！
+
+### 文档导航
+
+- [快速开始](#2快速开始)：引入依赖、基础配置、实体与 DAO 定义。
+- [BaseDao CRUD 接口](#4basedao-crud接口说明)：实体、原生 SQL 与分页操作。
+- [条件构造器](#5条件构造器criteria)：`QueryCriteria` 与 `UpdateCriteria` 的使用方式。
+- [SQL 构建器指南](SQL.md)：参数化 SQL、表达式、分组与分页。
+- [自动填充](#12字段自动填充metaobjecthandler)、[拦截器](#10拦截器机制)、[SQL 日志](#15sql日志打印分析)。
 
 ### 优势
 
@@ -31,7 +39,7 @@
 <dependency>
   <groupId>top.lxyccc</groupId>
   <artifactId>tiny-jdbc-boot-starter</artifactId>
-  <version>1.9.8</version>
+  <version>1.9.9</version>
 </dependency>
 ```
 
@@ -41,7 +49,7 @@
 
 ```yaml
 tiny-jdbc:
-  # 打印banner，默认false
+  # 是否打印 banner，默认 true
   banner: true
   # 分页器适配类型，可不配置，不配置的话会自动获取
   db-type: mysql
@@ -229,7 +237,7 @@ public class UploadFile implements Serializable {
 | ASSIGN_ID      | 自动设置 雪花ID 作为主键值                                               |
 | UUID           | 自动设置 UUID 作为主键值                                               |
 | SEQUENCE       | 自动设置 调用序列SQL结果 作为主键值                                          |
-| CUSTOM         | 自定义主键ID生成器，需自行实现 IdGeneratorInterface 接口，详见[自定义ID生成器](#idGen) |
+| CUSTOM         | 自定义主键 ID 生成器，需自行实现 `IdGeneratorInterface`，详见[自定义 ID 生成器](#7自定义id生成器) |
 
 
 #### @Column
@@ -276,8 +284,8 @@ public class UploadFile implements Serializable {
 | `Page<F> paginate(String sql, Class<F> clazz, Page<F> page, Object... params);` | 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的Class传入的自定义类型      |
 | `Page<T> paginate(String sql, Page<T> page, Object... params);`                 | 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的是xxxDao的类型         |
 | `T selectById(ID id);`                                                          | 根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao的类型                |
-| `T selectByIds(List<ID> ids);`                                                  | 根据主键ID值列表，查询数据并返回实体类对象列表，类型使用的是xxxDao的类型              |
-| `T selectByIds(ID... id);`                                                      | 根据主键ID值可变参数列表，查询数据并返回实体类对象列表，类型使用的是xxxDao的类型          |
+| `List<T> selectByIds(List<ID> ids);`                                            | 根据主键 ID 列表查询实体对象列表                                      |
+| `List<T> selectByIds(ID... ids);`                                               | 根据可变参数主键 ID 查询实体对象列表                                    |
 | `List<T> select(T entity);`                                                     | 实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao的类型   |
 | `List<T> select(QueryCriteria<T> criteria);`                                    | 根据查询构造器查询，返回多条，类型使用的是xxxDao的类型                        |
 | `List<T> select(LambdaQueryCriteria<T> lambdaCriteria);`                        | 根据查询构造器(lambda)查询，返回多条，查询数据并返回一个实体类对象，类型使用的是xxxDao的类型 |
@@ -381,19 +389,17 @@ public class UploadFile implements Serializable {
 | lte                    | 小于等于 <=               | lte("name", "张三")                          | lte(User::getName, "张三")                                 | AND name <= '张三'                 |
 | gt                     | 大于 >                  | gt("name", "张三")                           | gt(User::getName, "张三")                                  | AND name > '张三'                  |
 | gte                    | 大于等于 >=               | gte("name", "张三")                          | gte(User::getName, "张三")                                 | AND name >= '张三'                 |
-| in                     | SQL里的IN操作             | in("name", {"张三","李四"})                    | in(User::getName, "张三")                                  | AND name IN ('张三','李四')          |
-| notIn                  | SQL里的IN操作             | notIn("name", "张三")                        | notIn(User::getName, "张三")                               | AND name NOT IN ('张三','李四')      |
-| between                | NOT BETWEEN 值1 AND 值2 | between("age", 10, 18)                     | between(User::getAge, 10, 18)                            | AND (age BETWEEN 10 AND 18 )     |
+| in                     | SQL 的 IN 操作，接收非空 `Collection` | in("name", names)                           | in(User::getName, names)                                  | AND name IN ('张三','李四')          |
+| notIn                  | SQL 的 NOT IN 操作，接收非空 `Collection` | notIn("name", names)                        | notIn(User::getName, names)                               | AND name NOT IN ('张三','李四')      |
+| between                | BETWEEN 值1 AND 值2     | between("age", 10, 18)                     | between(User::getAge, 10, 18)                            | AND (age BETWEEN 10 AND 18 )     |
 | notBetween             | NOT BETWEEN 值1 AND 值2 | notBetween("age", 10, 18)                  | notBetween(User::getAge, 10, 18)                         | AND (age NOT BETWEEN 10 AND 18 ) |
-| like                   | LIKE '%值%'            | like("name", "张三")                         | like(User::getName, "张三")                                | AND name LIKE '%张三%'             |
-| notLike                | NOT LIKE '%值%'        | notLike("name", "张三")                      | notLike(User::getName, "张三")                             | AND name NOT LIKE '%张三%'         |
 | like                   | LIKE '%值%'            | like("name", "张三")                         | like(User::getName, "张三")                                | AND name LIKE '%张三%'             |
 | notLike                | NOT LIKE '%值%'        | notLike("name", "张三")                      | notLike(User::getName, "张三")                             | AND name NOT LIKE '%张三%'         |
 | leftLike               | LIKE '%值'             | leftLike("name", "张三")                     | leftLike(User::getName, "张三")                            | AND name LIKE '%张三'              |
 | notLeftLike            | NOT LIKE '%值'         | notLeftLike("name", "张三")                  | notLeftLike(User::getName, "张三")                         | AND name NOT LIKE '%张三'          |
 | rightLike              | LIKE '值%'             | rightLike("name", "张三")                    | rightLike(User::getName, "张三")                           | AND name LIKE '张三%'              |
 | notRightLike           | NOT LIKE '值%'         | notRightLike("name", "张三")                 | notRightLike(User::getName, "张三")                        | AND name NOT LIKE '张三%'          |
-| or()                   | 改变下一个查询条件的连接方式为 OR    | or().eq("name", "张三")                      | or().eq(User::getName, "张三")                             | OR name NOT LIKE '张三%'           |
+| or()                   | 改变下一个查询条件的连接方式为 OR    | or().eq("name", "张三")                      | or().eq(User::getName, "张三")                             | OR name = '张三'                   |
 | or(Consumer consumer)  | OR 嵌套条件               | or(i -> i.eq("name", "张三").lt("age", 18))  | or(i -> i.eq(User::getName, "张三").lt(User::getAge, 18))  | OR (name = '张三' AND age < 18)    |
 | and(Consumer consumer) | AND 嵌套条件              | and(i -> i.eq("name", "张三").lt("age", 18)) | and(i -> i.eq(User::getName, "张三").lt(User::getAge, 18)) | AND (name = '张三' AND age < 18)   |
 
@@ -415,11 +421,7 @@ public class UploadFile implements Serializable {
 ##### QueryCriteria示例
 
 ```java
-List<Integer> ids = new ArrayList<Integer>() {{
-    add(1);
-    add(2);
-    add(3);
-}};
+Collection<Integer> ids = Arrays.asList(1, 2, 3);
 
 QueryCriteria<Person> criteria = new QueryCriteria<>();
 criteria.lt("age", 28);
@@ -437,11 +439,7 @@ criteria.lt("age", 28);
 ##### LambdaQueryCriteria示例
 
 ```java
-List<Long> ids = new ArrayList<Long>() {{
-    add(1L);
-    add(2L);
-    add(3L);
-}};
+Collection<Long> ids = Arrays.asList(1L, 2L, 3L);
 
 LambdaQueryCriteria<UploadFile> criteria = new LambdaQueryCriteria<>();
 criteria.lt(UploadFile::getFileId, "1000");
@@ -477,12 +475,6 @@ int num = projectInfoDao.update(new UpdateCriteria<TProjectInfo>()
         .eq("project_name", "批量项目1"));
 // 等价于 UPDATE t_project_info SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 
-TProjectInfo project1 = new TProjectInfo();
-project1.setCreatedAt(new Date());
-project1.setUpdatedBy("admin3");
-
-int num = projectInfoDao.update(project1, new UpdateCriteria<TProjectInfo>().eq("project_name", "批量项目1"));
-// 等价于 UPDATE t_project_info SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 ```
 
 ##### LambdaUpdateCriteria示例
@@ -494,12 +486,6 @@ int num = projectInfoDao.update(new LambdaUpdateCriteria<TProjectInfo>()
         .eq(TProjectInfo::getProjectName, "批量项目1"));
 // 等价于 UPDATE t_project_info SET enable_at = '2023-08-05 17:31:26', updated_by = 'admin2' WHERE project_name = '批量项目1'
 
-TProjectInfo project1 = new TProjectInfo();
-project1.setCreatedAt(new Date());
-project1.setUpdatedBy("admin3");
-
-int num = projectInfoDao.update(project1, new LambdaUpdateCriteria<TProjectInfo>().eq(TProjectInfo::getProjectName, "批量项目1"));
-// 等价于 UPDATE t_project_info SET created_at = '2023-08-05 17:31:26', updated_by = 'admin3' WHERE project_name = '批量项目1'
 ```
 
 #### CriteriaBuilder的使用和示例
@@ -516,8 +502,9 @@ LambdaUpdateCriteria 的实例。使用 CriteriaBuilder 可以减少代码量，
 
 ## 6、SQL构造器（SQL）
 
-Tiny-Jdbc 提供了 SQL 类，它是一个静态工厂类，用于快速创建 SQL 的实例。使用 SQL 可以减少代码量，提高开发效率。
-[使用文档](SQL.md)
+Tiny-Jdbc 提供了 SQL 类，用于以链式方式构建参数化 SQL；构建完成后可直接传入 `BaseDao` 的 `select`、`insert`、`update` 或 `delete` 方法执行。
+
+详细说明见 [SQL 构建器使用指南](SQL.md)。
 
 ## 7、自定义ID生成器
 
@@ -709,7 +696,7 @@ public class StatInterceptor implements SqlInterceptor {
 <dependency>
     <groupId>top.lxyccc</groupId>
     <artifactId>tiny-jdbc-codegen</artifactId>
-    <version>1.9.6</version>
+    <version>1.9.9</version>
 </dependency>
 ```
 
@@ -1173,9 +1160,9 @@ int result = baseDao.delete(criteria);
 
 ## 14、安全使用说明
 
-使用`QueryCriteria`和`UpdateCriteria`时应避免前端传入字段名，防止`SQL注入`的风险；
-如若必须使用由前端传入的动态内容，如使用QueryCriteria.orderBy("任意前端传入字段")
-进行动态排序，推荐使用工具类 `SqlInjectionUtils.check(内容)` 先行验证字符串是否存在 `SQL注入`， 存在则拒绝操作。
+值参数会以预编译参数绑定；表名、列名、排序字段、`last(...)` 片段和 `Expression.of(String)` 等 SQL 结构不会自动参数化。
+
+使用 `QueryCriteria`、`UpdateCriteria` 或 SQL 构建器时，应避免直接使用前端传入的字段名或 SQL 片段，防止`SQL注入`的风险。确有动态排序等需求时，应通过白名单映射外部字段；必要时可使用 `SqlInjectUtils` 做额外校验，但白名单仍是首选方案。
 
 ## 15、SQL日志打印分析
 
