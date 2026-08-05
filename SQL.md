@@ -1,207 +1,204 @@
-# SQL 构建器使用文档
+# SQL 构建器使用指南
 
-## 1. 基本使用
+`SQL` 用于以链式方式构建参数化的 `SELECT`、`INSERT`、`UPDATE` 和 `DELETE` 语句。构建完成后可调用 `toSql()` 获取 SQL，调用 `getParameters()` 获取与 `?` 占位符顺序一致的参数；也可以直接交给 `BaseDao` 执行。
 
-### 1.1 初始化表
+> 值参数会使用 `?` 绑定；表名、列名以及 `Expression.of(String)` 中的字符串属于 SQL 结构，必须来自受信任的代码，不能直接使用前端输入。
+
+## 1. 快速开始
 
 ```java
-// 使用表名初始化
-SQL<?> sql = SQL.table("user");
+SQL<User> query = SQL.table(User.class)
+        .select(User::getId, User::getName)
+        .where(w -> w.eq(User::getStatus, "ACTIVE")
+                .ge(User::getAge, 18))
+        .orderBy(User::getId).desc()
+        .limit(20);
 
-// 使用实体类初始化（需配合@Table注解）
-SQL<User> sql = SQL.table(User.class);
+String sql = query.toSql();
+List<Object> parameters = query.getParameters();
+
+// SQL: SELECT id, name FROM t_user WHERE status = ? AND age >= ? ORDER BY id DESC LIMIT 20
+// parameters: [ACTIVE, 18]
+
+List<User> users = userDao.select(query);
 ```
 
-### 1.2 选择操作类型
+## 2. 创建构建器与选择操作
 
-**SELECT**
+### 2.1 指定表
+
 ```java
-// 使用普通字符串
-sql.select("id", "name", "age");
-
-// 使用实体类方法引用
-sql.select(User::getId, User::getName);
-
-// 使用Expression表达式，Expression支持各种方式混用（在使用聚合函数或者混用时，必须使用表达式形式）
-sql.select(
-    Expression.of("id"),  
-    Expression.of(User::getEmail),
-    Expression.max("age").as("maxAge"),
-    Expression.count("*").as("total")
-);
+SQL<?> byTableName = SQL.table("t_user");
+SQL<User> byEntity = SQL.table(User.class); // User 必须标注 @Table
 ```
 
-**INSERT**
+### 2.2 SELECT
+
+未指定查询列时会生成 `SELECT *`；也可以显式调用 `select()` 表示查询全部列。
+
 ```java
-sql.insert("id", "name", "age").values(1, "张三", 25);
+SQL.table("t_user").select();
+SQL.table("t_user").select("id", "name", "created_at");
+
+SQL<User> query = SQL.table(User.class)
+        .select(User::getId, User::getName);
 ```
 
-**UPDATE**
+### 2.3 INSERT
+
+`insert(...)` 中的列与 `values(...)` 中的值必须一一对应，数量不一致会抛出异常。
+
 ```java
-sql.update()
-   .set("name", "李四")
-   .set("age", 30)
-   .where(i -> i.eq("id", 1));
+SQL<?> insert = SQL.table("t_user")
+        .insert("name", "age", "status")
+        .values("张三", 18, "ACTIVE");
+
+// INSERT INTO t_user (name, age, status) VALUES (?, ?, ?)
+// [张三, 18, ACTIVE]
 ```
 
-**DELETE**
+### 2.4 UPDATE 与 DELETE
+
+为避免误更新或误删除，`UPDATE` 和 `DELETE` 都必须包含 `where(...)` 条件。
+
 ```java
-sql.delete()
-   .where(i -> i.eq("id", 1));
+SQL<?> update = SQL.table("t_user")
+        .update()
+        .set("status", "INACTIVE")
+        .set("updated_by", "system")
+        .where(w -> w.eq("id", 1L));
+
+SQL<?> delete = SQL.table("t_user")
+        .delete()
+        .where(w -> w.eq("id", 1L));
 ```
 
-## 2. 条件构建
+## 3. WHERE 与 HAVING 条件
 
-### 2.1 基本条件
+`where(...)` 和 `having(...)` 的回调参数都是 `ConditionGroup`。未显式指定时，多个条件默认以 `AND` 连接。
+
+| 方法 | 生成的 SQL | 示例 |
+| --- | --- | --- |
+| `eq` / `notEq` | `= ?` / `<> ?` | `w.eq("status", "ACTIVE")` |
+| `gt` / `ge` / `lt` / `le` | 比较条件 | `w.ge("age", 18)` |
+| `like` / `notLike` | `LIKE '%值%'` | `w.like("name", "张")` |
+| `leftLike` / `notLeftLike` | `LIKE '%值'` | `w.leftLike("code", "A")` |
+| `rightLike` / `notRightLike` | `LIKE '值%'` | `w.rightLike("code", "A")` |
+| `in` / `notIn` | `IN (?, ...)` / `NOT IN (?, ...)` | `w.in("id", ids)` |
+| `betweenAnd` / `notBetweenAnd` | `BETWEEN ? AND ?` | `w.betweenAnd("age", 18, 60)` |
+| `isNull` / `isNotNull` | `IS NULL` / `IS NOT NULL` | `w.isNull("deleted_at")` |
+
+`in/notIn` 接收任意非空 `Collection`，包括 `List`、`Set` 和队列。若需稳定的参数输出顺序，使用 `List` 或 `LinkedHashSet`。
+
 ```java
-.where(i -> i
-    .eq("name", "张三")      // =
-    .notEq("status", "deleted") // !=
-    .gt("age", 18)          // >
-    .lt("age", 60)          // <
-    .ge("score", 90)        // >=
-    .le("score", 100)       // <=
-    .like("title", "Java")  // LIKE '%Java%'
-    .notLike("title", "Java")  // NOT LIKE '%Java%'
-    .leftLike("code", "P")  // 左匹配（后缀匹配） LIKE '%P'
-    .notLeftLike("code", "P") // 左匹配（后缀匹配） NOT LIKE '%P'
-    .rightLike("email", "@") // 右匹配（前导匹配）LIKE '@%'
-    .notRightLike("email", "@") // 右匹配（前导匹配）NOT LIKE '@%'
-    .in("category", Arrays.asList("book", "electronics")) // IN ('book', 'electronics')
-    .notIn("category", Arrays.asList("book", "electronics")) // NOT IN ('book', 'electronics')
-    .isNull("deleted_at")   // IS NULL 
-    .isNotNull("created_at") // IS NOT NULL
-    .betweenAnd("create_time", "2023-01-01", "2023-02-01") // BETWEEN '2023-01-01' AND '2023-02-01'
-    .notBetweenAnd("create_time", "2023-01-01", "2023-02-01") // NOT BETWEEN '2023-01-01' AND '2023-02-01'
-)
+Collection<Long> ids = new LinkedHashSet<>(Arrays.asList(1L, 2L, 3L));
+
+SQL<?> query = SQL.table("t_user")
+        .select("id", "name")
+        .where(w -> w.in("id", ids)
+                .notIn("status", Collections.singleton("DELETED"))
+                .betweenAnd("age", 18, 60));
 ```
 
-### 2.2 逻辑组合
+### 3.1 OR 与分组
+
+`or()` 只影响下一个条件；`and(consumer)`、`or(consumer)` 与 `group(consumer)` 用于添加括号分组。
+
 ```java
-// AND条件（默认连接方式）
-.where(i -> i
-    .eq("status", "active")
-    .eq("type", "vip")
-)
+SQL<?> query = SQL.table("t_user")
+        .select()
+        .where(w -> w.group(g -> g.eq("status", "ACTIVE")
+                                .or().eq("status", "PENDING"))
+                .and(g -> g.ge("age", 18)
+                           .lt("age", 60))
+                .or(g -> g.eq("role", "ADMIN")));
 
-// 显式AND连接
-.where(i -> i.and().eq("status", "active")
-             .and().eq("type", "vip")
-)
-
-// OR条件
-.where(i -> i
-    .eq("status", "active")
-    .or().eq("status", "pending")
-)
+// SELECT * FROM t_user
+// WHERE (status = ? OR status = ?) AND (age >= ? AND age < ?) OR (role = ?)
 ```
 
-### 2.3 括号优先级
+### 3.2 Lambda 条件
+
+字符串列名与实体方法引用可以混用；方法引用会按实体字段映射转换为列名。
+
 ```java
-// 简单括号
-.where(i -> i
-    .group(j -> j.eq("age", 25).or().eq("age", 30))
-    .and().like("name", "张")
-)
-
-// 嵌套括号
-.where(i -> i
-    .group(j -> j
-        .eq("status", "ACTIVE")
-        .and().group(k -> k.gt("age", 18).and().lt("age", 60))
-    )
-    .or().eq("role", "ADMIN")
-)
+SQL<User> query = SQL.table(User.class)
+        .select(User::getId, User::getName)
+        .where(w -> w.eq(User::getStatus, "ACTIVE")
+                .in(User::getId, Arrays.asList(1L, 2L)));
 ```
 
-## 3. 高级查询
-### 3.1 聚合函数与 GROUP BY
+## 4. 分组、表达式、排序与分页
+
+### 4.1 GROUP BY 与 HAVING
+
+`Expression` 用于聚合函数、别名和数据库表达式。表达式文本不会被参数化，动态内容必须自行校验。
+
 ```java
-sql.select(
-    Expression.count("*").as("total"),
-    Expression.sum("amount").as("totalAmount"),
-    Expression.avg("score").as("avgScore"),
-    Expression.max("age").as("maxAge"),
-    Expression.min("age").as("minAge")
-)
-.groupBy("name")
-.having(i -> i.gt("totalAmount", 1000));
+SQL<?> report = SQL.table("t_order")
+        .select(
+                Expression.of("user_id"),
+                Expression.count("*").as("total"),
+                Expression.sum("amount").as("total_amount"))
+        .where(w -> w.eq("status", "PAID"))
+        .groupBy("user_id")
+        .having(w -> w.gt("total_amount", 1000));
+
+// SELECT user_id, COUNT(*) AS total, SUM(amount) AS total_amount
+// FROM t_order WHERE status = ? GROUP BY user_id HAVING total_amount > ?
 ```
 
-### 3.2 排序与分页
+常用表达式包括 `Expression.count`、`sum`、`avg`、`min`、`max`、`coalesce`、`ifNull` 和 `caseWhen`。需要控制输出列名时使用 `as("alias")`。
+
+### 4.2 ORDER BY
+
+`orderBy(...)` 默认升序；调用紧随其后的 `desc()` 可将最后一个排序字段设为降序。当前 API 没有 `asc()` 方法。
+
 ```java
-// 排序
-sql.orderBy("created_at").desc()  // 降序
-   .orderBy("id").asc();          // 升序（默认）
-
-// 分页，不常用，请使用BaseDao提供的分页能力
-sql.limit(10)  // 每页10条
-   .offset(20); // 偏移量20（第3页）
+SQL<?> query = SQL.table("t_user")
+        .select()
+        .orderBy("created_at").desc()
+        .orderBy("id"); // ASC
 ```
 
-## 4. 使用实体类方法引用
-### 4.1 实体类定义
+### 4.3 LIMIT 与 OFFSET
+
 ```java
-@Table("user")
-class User {
-    @Column("id")
-    private Long id;
-
-    @Column("username")
-    private String name;
-
-    @Column("age")
-    private Integer age;
-
-    @Column("email")
-    private String email;
-
-    // getters and setters
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public Integer getAge() {
-        return age;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-}
+SQL<?> query = SQL.table("t_user")
+        .select()
+        .limit(20)
+        .offset(40);
 ```
 
-### 4.2 在查询中使用
+该构建器输出 `LIMIT ... OFFSET ...`。涉及不同数据库方言的业务分页，优先使用 `BaseDao.paginate(...)`。
+
+## 5. 执行与参数顺序
+
 ```java
-SQL<User> sql = SQL.table(User.class)
-    .select(User::getId, User::getName)
-    .where(i -> i
-        .eq(User::getAge, 25)
-        .or().like(User::getName, "张三")
-    )
-    .orderBy(User::getId).desc()
-    .limit(10);
+SQL<User> query = SQL.table(User.class)
+        .select(User::getId, User::getName)
+        .where(w -> w.eq(User::getStatus, "ACTIVE"));
+
+String sql = query.toSql();
+List<Object> parameters = query.getParameters();
+List<User> users = userDao.select(query);
 ```
 
-## 5. 生成 SQL 与参数
-```java
-// 生成SQL语句
-String sqlString = sql.toSql();
+`getParameters()` 的顺序始终与 `toSql()` 中的 `?` 占位符一致。不要把参数直接拼接到 SQL 文本中。
 
-// 获取参数列表
-List<Object> parameters = sql.getParameters();
+## 6. 使用约束与建议
 
-// 示例输出
-System.out.println("SQL: " + sqlString);
-System.out.println("Parameters: " + parameters);
-```
+- 一个构建器只能选择一种操作：`select`、`insert`、`update` 或 `delete`。
+- `where(...)` 只能调用一次；需要多个条件时，在同一个回调中组合。
+- `having(...)` 只能调用一次，且仅适用于 `SELECT`。
+- `UPDATE` 至少需要一个 `set(...)`，并且必须有 `where(...)`；`DELETE` 必须有 `where(...)`。
+- `IN/NOT IN` 不接受 `null` 或空集合。
+- 表名、列名、排序字段和原始 `Expression` 文本不属于值参数；不要直接信任外部输入。
+- 聚合函数：使用Expression类的静态方法创建聚合表达式时，默认使用字段名作为结果别名，可使用as()方法进行设置别名；count函数的结果默认别名为total小写；caseWhen函数必须使用as()方法指定别名。
 
-## 6. 完整示例
-### 6.1 SELECT 语句
+
+## 7. 部分完整示例
+### 7.1 SELECT 语句
 
 ```java
 // 示例：简单条件
@@ -416,7 +413,7 @@ SQL<?> sql = SQL.table("user")
 // Parameters: []
 ```
 
-### 6.2 INSERT 语句
+### 7.2 INSERT 语句
 ```java
  SQL<?> insertSql = SQL.table("user")
         .insert("id", "name", "age")
@@ -425,7 +422,7 @@ SQL<?> sql = SQL.table("user")
 // Parameters: [1, 张三, 25]
 ```
 
-### 6.3 UPDATE 语句
+### 7.3 UPDATE 语句
 ```java
  SQL<?> updateSql = SQL.table("user")
         .update()
@@ -436,7 +433,7 @@ SQL<?> sql = SQL.table("user")
 // Parameters: [李四, 30, 1]
 ```
 
-###  6.4 DELETE 语句
+###  7.4 DELETE 语句
 ```java
 // 测试用例 3：DELETE
 SQL<?> deleteSql = SQL.table("user")
@@ -445,11 +442,3 @@ SQL<?> deleteSql = SQL.table("user")
 // DELETE FROM user WHERE id = ? OR (name = ?)
 // Parameters: [1, 测试]
 ```
-
-## 7. 注意事项
-
-- 方法链顺序：操作需按逻辑顺序调用，如select()后接where()，update()后接set()。
-- 参数安全：所有值参数会自动转为占位符?，防止 SQL 注入。
-- Lambda 表达式：使用实体类方法引用时，确保方法存在且符合 Java Bean 规范。
-- NULL 值处理：isNull()和isNotNull()用于判断 NULL 值，无需传入参数。
-- 聚合函数：使用Expression类的静态方法创建聚合表达式时，默认使用字段名作为结果别名，可使用as()方法进行设置别名；count函数的结果默认别名为total小写；caseWhen函数必须使用as()方法指定别名。
