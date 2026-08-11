@@ -3,7 +3,7 @@ package org.tinycloud.jdbc;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.tinycloud.jdbc.config.GlobalConfig;
+import org.tinycloud.jdbc.config.TinyJdbcRuntime;
 import org.tinycloud.jdbc.page.*;
 import org.tinycloud.jdbc.sql.SQL;
 import org.tinycloud.jdbc.util.ArrayUtils;
@@ -26,6 +26,8 @@ public class JdbcTemplateHelper {
     private final JdbcTemplate jdbcTemplate;
 
     private final IPageHandle pageHandle;
+
+    private final TinyJdbcRuntime tinyJdbcRuntime;
 
     /**
      * 获取 JdbcTemplate 实例。
@@ -52,9 +54,9 @@ public class JdbcTemplateHelper {
      * @return 当前类中持有的 IPageHandle 实例
      */
     private IPageHandle getPageHandle() {
-        return Boolean.FALSE.equals(GlobalConfig.getConfig().getOpenRuntimeDbType()) && this.pageHandle != null
+        return !this.tinyJdbcRuntime.isOpenRuntimeDbType() && this.pageHandle != null
                 ? this.pageHandle
-                : PageHandleFactory.getDynamicPageHandle(this.getJdbcTemplate());
+                : PageHandleFactory.getDynamicPageHandle(this.getJdbcTemplate(), this.tinyJdbcRuntime);
     }
 
     /**
@@ -63,9 +65,10 @@ public class JdbcTemplateHelper {
      * @param jdbcTemplate Spring 提供的 JdbcTemplate 实例
      * @param pageHandle   分页处理器实例
      */
-    public JdbcTemplateHelper(JdbcTemplate jdbcTemplate, IPageHandle pageHandle) {
+    public JdbcTemplateHelper(JdbcTemplate jdbcTemplate, IPageHandle pageHandle, TinyJdbcRuntime tinyJdbcRuntime) {
         this.jdbcTemplate = jdbcTemplate;
         this.pageHandle = pageHandle;
+        this.tinyJdbcRuntime = tinyJdbcRuntime;
     }
 
     /**

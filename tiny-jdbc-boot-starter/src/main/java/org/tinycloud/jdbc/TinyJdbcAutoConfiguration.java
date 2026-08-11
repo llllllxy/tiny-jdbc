@@ -2,19 +2,19 @@ package org.tinycloud.jdbc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnSingleCandidate;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.tinycloud.jdbc.config.GlobalConfig;
+import org.tinycloud.jdbc.config.TinyJdbcRuntime;
 import org.tinycloud.jdbc.fill.MetaObjectHandler;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.SnowflakeConfigInterface;
@@ -27,96 +27,109 @@ import org.tinycloud.jdbc.util.DbTypeUtils;
 import org.tinycloud.jdbc.util.TinyJdbcVersion;
 
 import javax.sql.DataSource;
-import java.util.Objects;
-import java.util.function.Consumer;
 
+/**
+ * TinyJDBC 自动配置。
+ *
+ * <p>Starter 仅负责启用配置绑定并通过构造参数装配运行时 Bean，
+ * core 模块不再依赖静态全局配置。</p>
+ *
+ * @author liuxingyu01
+ */
 @ConditionalOnClass({DataSource.class, JdbcTemplate.class})
 @ConditionalOnSingleCandidate(DataSource.class)
 @AutoConfigureAfter({JdbcTemplateAutoConfiguration.class})
 @Configuration
 @EnableConfigurationProperties(TinyJdbcProperties.class)
-public class TinyJdbcAutoConfiguration implements ApplicationContextAware, InitializingBean {
-    final static Logger logger = LoggerFactory.getLogger(TinyJdbcAutoConfiguration.class);
+public class TinyJdbcAutoConfiguration {
 
-    private ApplicationContext applicationContext;
+    /**
+     * 日志记录器。
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(TinyJdbcAutoConfiguration.class);
 
-    @Autowired
-    private TinyJdbcProperties tinyJdbcProperties;
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+    /**
+     * 创建 TinyJDBC 运行时上下文。
+     *
+     * @param properties                       TinyJDBC 配置属性
+     * @param idGeneratorProvider               自定义 ID 生成器提供者
+     * @param snowflakeConfigProvider           雪花 ID 配置提供者
+     * @param metaObjectHandlerProvider         自动填充处理器提供者
+     * @return 当前应用上下文独占的运行时上下文
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public TinyJdbcRuntime tinyJdbcRuntime(TinyJdbcProperties properties,
+                                           ObjectProvider<IdGeneratorInterface> idGeneratorProvider,
+                                           ObjectProvider<SnowflakeConfigInterface> snowflakeConfigProvider,
+                                           ObjectProvider<MetaObjectHandler> metaObjectHandlerProvider) {
+        TinyJdbcRuntime runtime = new TinyJdbcRuntime(Boolean.TRUE.equals(properties.getBanner()),
+                TinyJdbcVersion.getVersion(),
+                properties.getDbType(),
+                Boolean.TRUE.equals(properties.getOpenRuntimeDbType()),
+                idGeneratorProvider.getIfAvailable(),
+                snowflakeConfigProvider.getIfAvailable(),
+                metaObjectHandlerProvider.getIfAvailable());
+        if (runtime.isBanner()) {
+            runtime.printBanner();
+        }
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Tiny-Jdbc started successfully, version: {}.", runtime.getVersion());
+        }
+        return runtime;
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        // 避免重复初始化
-        if (Objects.nonNull(GlobalConfig.getConfig())) {
-            return;
-        }
-        GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.setBanner(tinyJdbcProperties.getBanner());
-        String version = TinyJdbcVersion.getVersion();
-        globalConfig.setVersion(version);
-        globalConfig.setDbType(tinyJdbcProperties.getDbType());
-        globalConfig.setOpenRuntimeDbType(Objects.isNull(tinyJdbcProperties.getOpenRuntimeDbType()) ? Boolean.FALSE : tinyJdbcProperties.getOpenRuntimeDbType());
-        globalConfig.setCloseConn(Objects.isNull(tinyJdbcProperties.getCloseConn()) ? Boolean.TRUE : tinyJdbcProperties.getCloseConn());
-        /* 获取自定义的（ID生成器） */
-        this.getBeanThen(IdGeneratorInterface.class, globalConfig::setIdGeneratorInterface);
-        /* 获取自定义的（雪花算法 workerId 和 datacenterId 配置） */
-        this.getBeanThen(SnowflakeConfigInterface.class, globalConfig::setSnowflakeConfigInterface);
-        /* 获取自定义的（实体字段自动填充处理器） */
-        this.getBeanThen(MetaObjectHandler.class, globalConfig::setMetaObjectHandler);
-        GlobalConfig.setConfig(globalConfig);
-
-        if (logger.isInfoEnabled()) {
-            logger.info("Tiny-Jdbc started successfully, version: {}.", version);
-        }
-    }
-
+    /**
+     * 创建默认分页处理器。
+     *
+     * @param jdbcTemplate Spring JDBC 模板
+     * @param runtime      TinyJDBC 运行时上下文
+     * @return 默认分页处理器
+     */
     @ConditionalOnMissingBean(IPageHandle.class)
     @Bean
-    public IPageHandle pageHandle(@Autowired JdbcTemplate jdbcTemplate) {
-        DbType dbType = tinyJdbcProperties.getDbType();
+    public IPageHandle pageHandle(JdbcTemplate jdbcTemplate, TinyJdbcRuntime runtime) {
+        DbType dbType = runtime.getDbType();
         if (dbType == null) {
             dbType = DbTypeUtils.getDbType(jdbcTemplate.getDataSource());
         }
-        if (logger.isInfoEnabled()) {
-            logger.info("Tiny-Jdbc create bean IPageHandle, dbType: {}.", dbType.getName());
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Tiny-Jdbc create bean IPageHandle, dbType: {}.", dbType.getName());
         }
         return PageHandleFactory.createPageHandleByDbType(dbType);
     }
 
-
-    @ConditionalOnBean({IPageHandle.class, JdbcTemplate.class})
+    /**
+     * 创建 JDBC 模板增强工具。
+     *
+     * @param pageHandle   默认分页处理器
+     * @param jdbcTemplate Spring JDBC 模板
+     * @param runtime      TinyJDBC 运行时上下文
+     * @return JDBC 模板增强工具
+     */
+    @ConditionalOnBean({IPageHandle.class, JdbcTemplate.class, TinyJdbcRuntime.class})
     @Bean
-    public JdbcTemplateHelper jdbcTemplateHelper(@Autowired IPageHandle pageHandle,
-                                                 @Autowired JdbcTemplate jdbcTemplate) {
-        if (logger.isInfoEnabled()) {
-            logger.info("Tiny-Jdbc create bean JdbcTemplateHelper.");
+    public JdbcTemplateHelper jdbcTemplateHelper(IPageHandle pageHandle,
+                                                 JdbcTemplate jdbcTemplate,
+                                                 TinyJdbcRuntime runtime) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Tiny-Jdbc create bean JdbcTemplateHelper.");
         }
-        return new JdbcTemplateHelper(jdbcTemplate, pageHandle);
-    }
-
-    @ConditionalOnProperty(name = "tiny-jdbc.sql-stat-enabled", havingValue = "true", matchIfMissing = false)
-    @Bean
-    public SqlInterceptor statInterceptor() {
-        if (logger.isInfoEnabled()) {
-            logger.info("Tiny-Jdbc create bean StatInterceptor.");
-        }
-        return new StatInterceptor(Boolean.TRUE.equals(this.tinyJdbcProperties.getSqlStatResultEnabled()));
+        return new JdbcTemplateHelper(jdbcTemplate, pageHandle, runtime);
     }
 
     /**
-     * 根据Class<T>获取Bean
+     * 创建 SQL 统计拦截器。
      *
-     * @param clazz    Class
-     * @param <T>      泛型
-     * @param consumer 操作
+     * @param properties TinyJDBC 配置属性
+     * @return SQL 统计拦截器
      */
-    public <T> void getBeanThen(Class<T> clazz, Consumer<T> consumer) {
-        if (this.applicationContext.getBeanNamesForType(clazz, false, false).length > 0) {
-            consumer.accept(this.applicationContext.getBean(clazz));
+    @ConditionalOnProperty(name = "tiny-jdbc.sql-stat-enabled", havingValue = "true", matchIfMissing = false)
+    @Bean
+    public SqlInterceptor statInterceptor(TinyJdbcProperties properties) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Tiny-Jdbc create bean StatInterceptor.");
         }
+        return new StatInterceptor(Boolean.TRUE.equals(properties.getSqlStatResultEnabled()));
     }
 }

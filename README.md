@@ -39,7 +39,7 @@
 <dependency>
   <groupId>top.lxyccc</groupId>
   <artifactId>tiny-jdbc-boot-starter</artifactId>
-  <version>1.9.9</version>
+  <version>2.0.0</version>
 </dependency>
 ```
 
@@ -55,8 +55,6 @@ tiny-jdbc:
   db-type: mysql
   # 是否使用运行时数据库类型，默认值为 false，设置为 true 时，会在运行时根据多数据源自动识别对应的分页处理器
   open-runtime-db-type: false
-  # 通过metadata获取jdbcurl时是否自动关闭连接，默认为true
-  close-conn: true
   # 是否开启sql统计，默认false
   sql-stat-enabled: false
   # 是否打印sql执行结果，默认false

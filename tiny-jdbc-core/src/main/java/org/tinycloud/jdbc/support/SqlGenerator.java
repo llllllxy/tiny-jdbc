@@ -4,7 +4,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Id;
 import org.tinycloud.jdbc.annotation.IdType;
-import org.tinycloud.jdbc.config.GlobalConfig;
+import org.tinycloud.jdbc.config.TinyJdbcRuntime;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
@@ -39,7 +39,7 @@ public class SqlGenerator {
      * @param object 入参
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider insertSql(Object object, boolean ignoreNulls, JdbcTemplate jdbcTemplate) {
+    public static SqlProvider insertSql(Object object, boolean ignoreNulls, JdbcTemplate jdbcTemplate, TinyJdbcRuntime tinyJdbcRuntime) {
         Field[] fields = TableParserUtils.resolveFields(object);
         String tableName = TableParserUtils.getTableName(object);
 
@@ -73,7 +73,7 @@ public class SqlGenerator {
             // 如果是主键列
             if (idAnnotation != null) {
                 // 处理主键生成/赋值，返回最终的主键值（可能是自动生成的）
-                fieldValue = processPrimaryKey(field, fieldValue, fieldName, fieldType, idAnnotation, object, jdbcTemplate);
+                fieldValue = processPrimaryKey(field, fieldValue, fieldName, fieldType, idAnnotation, object, jdbcTemplate, tinyJdbcRuntime);
                 // 为自增主键时，返回 null，此时跳过该字段（无需加入 SQL）
                 if (fieldValue == null) {
                     // 自增主键：跳过列/值，但保存 Field 到 SqlProvider，后续处理时需要使用
@@ -118,7 +118,7 @@ public class SqlGenerator {
      * @return 最终的主键值（自增主键返回 null，需跳过）
      */
     private static Object processPrimaryKey(Field field, Object fieldValue, String fieldName, Class<?> fieldType,
-                                            Id idAnnotation, Object object, JdbcTemplate jdbcTemplate) {
+                                            Id idAnnotation, Object object, JdbcTemplate jdbcTemplate, TinyJdbcRuntime tinyJdbcRuntime) {
         // 只有用户没有自己设置主键值时，才需要走自动生成的策略
         if (Objects.isNull(fieldValue)) {
             IdType idType = idAnnotation.idType();
@@ -141,7 +141,7 @@ public class SqlGenerator {
                 if (fieldType != String.class && fieldType != Long.class) {
                     throw new TinyJdbcException("The type of " + fieldName + ", field  must be String or Long when assignId!");
                 }
-                fieldValue = (fieldType == String.class) ? IdUtils.nextId() : IdUtils.nextLongId();
+                fieldValue = (fieldType == String.class) ? String.valueOf(tinyJdbcRuntime.getSnowflakeId().nextId()) : tinyJdbcRuntime.getSnowflakeId().nextId();
                 try {
                     field.set(object, fieldValue);
                 } catch (IllegalArgumentException | IllegalAccessException e) {
@@ -170,9 +170,9 @@ public class SqlGenerator {
                     throw new TinyJdbcException("inject field value fail : " + fieldName + ", field type must be assignable from Number when sequence!", e);
                 }
             } else if (idType == IdType.CUSTOM) {
-                IdGeneratorInterface idGeneratorInterface = GlobalConfig.getConfig().getIdGeneratorInterface();
+                IdGeneratorInterface idGeneratorInterface = tinyJdbcRuntime.getIdGeneratorInterface();
                 if (idGeneratorInterface == null) {
-                    throw new TinyJdbcException("IdType.CUSTOM requires IdGeneratorInterface, please configure GlobalConfig.idGeneratorInterface first!");
+                    throw new TinyJdbcException("IdType.CUSTOM requires an IdGeneratorInterface bean.");
                 }
                 Object id = idGeneratorInterface.nextId(object);
                 try {

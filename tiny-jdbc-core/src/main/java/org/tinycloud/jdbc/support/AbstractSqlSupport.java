@@ -7,7 +7,7 @@ import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.tinycloud.jdbc.config.GlobalConfig;
+import org.tinycloud.jdbc.config.TinyJdbcRuntime;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
@@ -51,6 +51,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
 
     protected abstract List<SqlInterceptor> getSqlInterceptors();
 
+    protected abstract TinyJdbcRuntime getTinyJdbcRuntime();
 
     protected abstract NamedParameterJdbcTemplate getNamedParameterJdbcTemplate();
 
@@ -166,11 +167,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (entity == null) {
             return;
         }
-        GlobalConfig globalConfig = GlobalConfig.getConfig();
-        if (globalConfig == null) {
-            return;
-        }
-        MetaObjectHandler metaObjectHandler = globalConfig.getMetaObjectHandler();
+        MetaObjectHandler metaObjectHandler = this.getTinyJdbcRuntime().getMetaObjectHandler();
         if (metaObjectHandler == null) {
             return;
         }
@@ -184,11 +181,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (entity == null) {
             return;
         }
-        GlobalConfig globalConfig = GlobalConfig.getConfig();
-        if (globalConfig == null) {
-            return;
-        }
-        MetaObjectHandler metaObjectHandler = globalConfig.getMetaObjectHandler();
+        MetaObjectHandler metaObjectHandler = this.getTinyJdbcRuntime().getMetaObjectHandler();
         if (metaObjectHandler == null) {
             return;
         }
@@ -202,11 +195,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             return;
         }
-        GlobalConfig globalConfig = GlobalConfig.getConfig();
-        if (globalConfig == null) {
-            return;
-        }
-        MetaObjectHandler metaObjectHandler = globalConfig.getMetaObjectHandler();
+        MetaObjectHandler metaObjectHandler = this.getTinyJdbcRuntime().getMetaObjectHandler();
         if (metaObjectHandler == null) {
             return;
         }
@@ -220,11 +209,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             return;
         }
-        GlobalConfig globalConfig = GlobalConfig.getConfig();
-        if (globalConfig == null) {
-            return;
-        }
-        MetaObjectHandler metaObjectHandler = globalConfig.getMetaObjectHandler();
+        MetaObjectHandler metaObjectHandler = this.getTinyJdbcRuntime().getMetaObjectHandler();
         if (metaObjectHandler == null) {
             return;
         }
@@ -456,7 +441,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("insert entity cannot be null");
         }
         this.doInsertFill(entity);
-        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, ignoreNulls, getJdbcTemplate());
+        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, ignoreNulls, this.getJdbcTemplate(), this.getTinyJdbcRuntime());
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("insert parameters cannot be null");
         }
@@ -586,7 +571,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         String sql = null;
         for (T t : collection) {
             this.doInsertFill(t);
-            SqlProvider sqlProvider = SqlGenerator.insertSql(t, ignoreNulls, getJdbcTemplate());
+            SqlProvider sqlProvider = SqlGenerator.insertSql(t, ignoreNulls, this.getJdbcTemplate(), this.getTinyJdbcRuntime());
             if (sql == null || sql.isEmpty()) {
                 sql = sqlProvider.getSql();
             } else if (!sql.equals(sqlProvider.getSql())) {

@@ -3,7 +3,7 @@ package org.tinycloud.jdbc.page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.tinycloud.jdbc.config.GlobalConfig;
+import org.tinycloud.jdbc.config.TinyJdbcRuntime;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.util.DbType;
 import org.tinycloud.jdbc.util.DbTypeUtils;
@@ -23,13 +23,13 @@ public class PageHandleFactory {
     /**
      * 根据数据源动态获取对应的分页处理器
      */
-    public static IPageHandle getDynamicPageHandle(JdbcTemplate jdbcTemplate) {
+    public static IPageHandle getDynamicPageHandle(JdbcTemplate jdbcTemplate, TinyJdbcRuntime tinyJdbcRuntime) {
         DbType dbType = null;
         try {
             dbType = DbTypeUtils.getDbType(jdbcTemplate.getDataSource());
         } catch (Exception e) {
             // 自动识别失败，使用配置的默认dbType兜底
-            dbType = GlobalConfig.getConfig().getDbType();
+            dbType = tinyJdbcRuntime.getDbType();
         }
         // 若自动识别失败且配置未指定，则抛出异常或使用默认实现
         if (dbType == null) {

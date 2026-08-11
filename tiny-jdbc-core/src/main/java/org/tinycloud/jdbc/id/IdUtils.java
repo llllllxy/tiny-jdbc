@@ -2,7 +2,6 @@ package org.tinycloud.jdbc.id;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tinycloud.jdbc.config.GlobalConfig;
 import org.tinycloud.jdbc.util.LocalHostUtils;
 
 import java.util.UUID;
@@ -25,27 +24,14 @@ public class IdUtils {
     }
 
     /**
-     * 静态内部类实现懒汉式单例
-     * 特点：1. 懒加载（仅在首次调用时初始化） 2. 线程安全（JVM保证类加载过程线程安全）
+     * 静态内部类实现懒汉式单例。
+     * 该实例仅服务于直接调用 IdUtils 的非 Spring 场景；框架内部使用 TinyJdbcRuntime 中的应用上下文实例。
      */
     private static class InstanceHolder {
         private static final SnowflakeId INSTANCE;
 
         static {
-            SnowflakeId instance;
-            // 根据配置初始化雪花ID生成器单例，配置必须在首次调用前完成才能生效
-            SnowflakeConfigInterface snowflakeConfigInterface = GlobalConfig.getConfig().getSnowflakeConfigInterface();
-            if (snowflakeConfigInterface != null) {
-                DatacenterAndWorkerProvider provider = snowflakeConfigInterface.getDatacenterIdAndWorkerId();
-                if (provider != null && provider.getDatacenterId() != null && provider.getWorkerId() != null) {
-                    instance = new SnowflakeId(provider.getWorkerId(), provider.getDatacenterId());
-                } else {
-                    instance = createSnowflakeIdByLocalHost();
-                }
-            } else {
-                instance = createSnowflakeIdByLocalHost();
-            }
-            INSTANCE = instance;
+            INSTANCE = createSnowflakeIdByLocalHost();
         }
     }
 

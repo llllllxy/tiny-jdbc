@@ -3,76 +3,110 @@ package org.tinycloud.jdbc;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.tinycloud.jdbc.util.DbType;
 
+/**
+ * TinyJDBC 配置属性，映射 {@code tiny-jdbc.*} 配置项。
+ *
+ * <p>该类仅负责 Starter 模块的 Spring Boot 配置绑定，
+ * 绑定后的值由自动配置转换为 core 模块的 {@code TinyJdbcRuntime}。</p>
+ *
+ * @author liuxingyu01
+ */
 @ConfigurationProperties(prefix = "tiny-jdbc")
 public class TinyJdbcProperties {
 
     /**
-     * 是否打印 banner
+     * 是否打印 Banner。
      */
     private Boolean banner = true;
 
     /**
-     * 默认数据库类型
+     * 默认数据库类型。
      */
     private DbType dbType;
 
     /**
-     * 是否使用运行时数据库类型，默认值为 false，设置为 true 时，会在运行时根据多数据源自动识别对应的分页处理器
+     * 是否按运行时数据源动态识别数据库类型。
      */
     private Boolean openRuntimeDbType = false;
 
     /**
-     * 默认值为 true，当使用运行时动态数据源自动获取数据库类型时，会自动获取一个数据库连接。
-     * 通过该属性设置是否关闭获取的这个连接。
-     */
-    private Boolean closeConn = true;
-
-    /**
-     * 是否开启 sql 统计，默认值为 false
+     * 是否开启 SQL 统计。
      */
     private Boolean sqlStatEnabled = false;
 
     /**
-     * 是否打印 SQL 执行结果，默认值为 false。
+     * 是否打印 SQL 执行结果。
      */
     private Boolean sqlStatResultEnabled = false;
 
+    /**
+     * 获取是否打印 Banner。
+     *
+     * @return true 表示打印 Banner
+     */
     public Boolean getBanner() {
-        return banner;
+        return this.banner;
     }
 
+    /**
+     * 设置是否打印 Banner。
+     *
+     * @param banner true 表示打印 Banner
+     */
     public void setBanner(Boolean banner) {
         this.banner = banner;
     }
 
+    /**
+     * 获取默认数据库类型。
+     *
+     * @return 默认数据库类型，未配置时返回 null
+     */
     public DbType getDbType() {
-        return dbType;
+        return this.dbType;
     }
 
+    /**
+     * 设置默认数据库类型。
+     *
+     * @param dbType 默认数据库类型
+     */
     public void setDbType(DbType dbType) {
         this.dbType = dbType;
     }
 
+    /**
+     * 获取是否按运行时数据源动态识别数据库类型。
+     *
+     * @return true 表示按运行时数据源识别
+     */
     public Boolean getOpenRuntimeDbType() {
-        return openRuntimeDbType;
+        return this.openRuntimeDbType;
     }
 
+    /**
+     * 设置是否按运行时数据源动态识别数据库类型。
+     *
+     * @param openRuntimeDbType true 表示按运行时数据源识别
+     */
     public void setOpenRuntimeDbType(Boolean openRuntimeDbType) {
         this.openRuntimeDbType = openRuntimeDbType;
     }
 
-    public Boolean getCloseConn() {
-        return closeConn;
-    }
-
-    public void setCloseConn(Boolean closeConn) {
-        this.closeConn = closeConn;
-    }
-
+    /**
+     * 获取是否开启 SQL 统计。
+     *
+     * @return true 表示开启 SQL 统计
+     */
     public Boolean getSqlStatEnabled() {
-        return sqlStatEnabled;
+        return this.sqlStatEnabled;
     }
 
+    /**
+     * 设置是否开启 SQL 统计。
+     *
+     * @param sqlStatEnabled true 表示开启 SQL 统计
+     */
     public void setSqlStatEnabled(Boolean sqlStatEnabled) {
         this.sqlStatEnabled = sqlStatEnabled;
     }

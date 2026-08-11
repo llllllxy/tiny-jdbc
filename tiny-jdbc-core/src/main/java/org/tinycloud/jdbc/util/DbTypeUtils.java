@@ -2,13 +2,12 @@ package org.tinycloud.jdbc.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tinycloud.jdbc.config.GlobalConfig;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Method;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.regex.Pattern;
 
 /**
@@ -61,19 +60,12 @@ public class DbTypeUtils {
         }
         Connection connection = null;
         try {
-            connection = dataSource.getConnection();
+            connection = DataSourceUtils.getConnection(dataSource);
             return connection.getMetaData().getURL();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new TinyJdbcException("Can not get jdbcUrl from connection metadata!", e);
         } finally {
-            if (Boolean.TRUE.equals(GlobalConfig.getConfig().getCloseConn())) {
-                if (connection != null) {
-                    try {
-                        connection.close();
-                    } catch (SQLException ignored) {
-                    }
-                }
-            }
+            DataSourceUtils.releaseConnection(connection, dataSource);
         }
     }
 
