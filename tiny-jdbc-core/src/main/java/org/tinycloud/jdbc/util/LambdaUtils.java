@@ -1,15 +1,11 @@
 package org.tinycloud.jdbc.util;
 
+import org.springframework.util.ClassUtils;
 import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.criteria.TypeFunction;
 
 import java.io.Serializable;
-import java.lang.invoke.CallSite;
-import java.lang.invoke.LambdaMetafactory;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.invoke.SerializedLambda;
+import java.lang.invoke.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -43,6 +39,18 @@ public class LambdaUtils {
 
     /**
      * 缓存实体类字段到 Lambda Getter 的映射。
+     *
+     * <p><b>已知隐患（内存泄漏）：</b>{@link ClassValue} 的 key（实体类 Class）虽是弱引用，
+     * 但 value（{@code Map<String, TypeFunction<?, ?>>}）是强引用；value 中的 lambda 实例
+     * 会通过类解析强引用实体类，形成 {@code ClassValue → Map → lambda → 实体类} 的强引用链，
+     * 导致实体类及其 ClassLoader 无法被卸载。在热部署、动态 classloader 等场景下，每次类加载器
+     * 重载都会泄漏一批类，最终可能导致 Metaspace OOM。</p>
+     *
+     * <p>当前保持此实现（单 ClassLoader 长期运行无影响）。如后续需要修复，应改为弱值方案，
+     * 例如用 {@code ConcurrentReferenceHashMap<Class<?>, Map<String, TypeFunction<?, ?>>>}
+     * （key、value 均使用 {@code ReferenceType.WEAK}）替换外层 {@link ClassValue}，
+     * 或使用 {@code WeakReference} 包装 value。如{@code ClassValue<Map<String, WeakReference<TypeFunction<?, ?>>>>}
+     * </p>
      */
     private static final ClassValue<Map<String, TypeFunction<?, ?>>> FIELD_TO_LAMBDA_CACHE = new ClassValue<Map<String, TypeFunction<?, ?>>>() {
         /**
@@ -75,7 +83,7 @@ public class LambdaUtils {
             throw new IllegalArgumentException("Cannot resolve instantiated class from lambda method type: " + instantiatedMethodType);
         }
         final String className = instantiatedMethodType.substring(start + 1, end).replace("/", ".");
-        final Class<?> entityClass = ClassUtils.getUserClass(ClassUtils.toClassConfident(className, getter.getClass().getClassLoader()));
+        final Class<?> entityClass = ClassUtils.getUserClass(ClassUtils.resolveClassName(className, getter.getClass().getClassLoader()));
         Map<String, String> columnNameCache = LAMBDA_TO_FIELD_CACHE.get(entityClass);
         String cachedColumnName = columnNameCache.get(fieldName);
         if (cachedColumnName != null) {
@@ -144,7 +152,7 @@ public class LambdaUtils {
                     readMethod = userClass.getMethod(methodName);
                 } catch (NoSuchMethodException e) {
                     Field field = ReflectUtils.getAccessibleField(userClass, prop);
-                    if (ClassUtils.isBoolean(field.getType())) {
+                    if (field.getType() == boolean.class || Boolean.class == field.getType()) {
                         readMethod = userClass.getMethod(PropertyNamer.propertyToMethod("is", prop));
                     } else {
                         throw e;

@@ -49,10 +49,21 @@ public class ReflectUtils {
      * @return 字段数组
      */
     public static Field[] getFields(Class<?> clazz) {
+        return getFields(clazz, true);
+    }
+
+    /**
+     * 根据类对象获取其属性列表(包括祖宗类)
+     *
+     * @param clazz     类对象
+     * @param defensive 是否返回防御性拷贝（避免外部修改缓存中的数组）
+     * @return 字段数组
+     */
+    public static Field[] getFields(Class<?> clazz, boolean defensive) {
         if (Objects.isNull(clazz)) {
             return EMPTY_FIELD_ARRAY;
         }
-        return ConcurrentHashMapUtils.computeIfAbsent(declaredFieldsCache, clazz, key -> {
+        Field[] result = ConcurrentHashMapUtils.computeIfAbsent(declaredFieldsCache, clazz, key -> {
             /* 先获取本类的所有字段 */
             Field[] fields = key.getDeclaredFields();
             /*  再遍历其父类的所有字段 */
@@ -76,6 +87,8 @@ public class ReflectUtils {
                     .toArray(Field[]::new);
 
         });
+        // 按需返回防御性拷贝（避免外部修改缓存中的数组）
+        return (result.length == 0 || !defensive) ? result : result.clone();
     }
 
     /**
