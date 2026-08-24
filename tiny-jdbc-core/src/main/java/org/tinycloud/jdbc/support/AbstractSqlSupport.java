@@ -1,6 +1,8 @@
 package org.tinycloud.jdbc.support;
 
+import org.springframework.core.GenericTypeResolver;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.util.ClassUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
@@ -30,7 +32,6 @@ import org.tinycloud.jdbc.util.CollectionUtils;
 import org.tinycloud.jdbc.util.tuple.Pair;
 
 import java.io.Serializable;
-import java.lang.reflect.ParameterizedType;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,8 +68,18 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
 
     @SuppressWarnings("unchecked")
     public AbstractSqlSupport() {
-        ParameterizedType type = (ParameterizedType) getClass().getGenericSuperclass();
-        entityClass = (Class<T>) type.getActualTypeArguments()[0];
+        // 先剥离 CGLIB 代理层：若 DAO 被 @Transactional/@Async/切面等代理，
+        // getClass() 会是 XxxDao$$EnhancerBySpringCGLIB 子类，其 getGenericSuperclass()
+        // 不再是 ParameterizedType，直接用旧写法会 ClassCastException。
+        Class<?> userClass = ClassUtils.getUserClass(getClass());
+        // 沿继承链解析 AbstractSqlSupport 的泛型实参（T, ID），取第一个（T）作为实体类型
+        Class<?>[] resolvedArgs = GenericTypeResolver.resolveTypeArguments(userClass, AbstractSqlSupport.class);
+        if (resolvedArgs == null || resolvedArgs.length == 0 || resolvedArgs[0] == null) {
+            throw new TinyJdbcException("Cannot resolve entity class from " + userClass.getName()
+                    + ", please specify the generic type of the DAO explicitly");
+        }
+        Class<?> resolved = resolvedArgs[0];
+        entityClass = (Class<T>) resolved;
         rowMapper = BeanPropertyRowMapper.newInstance(entityClass);
     }
 
