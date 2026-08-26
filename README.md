@@ -1158,7 +1158,7 @@ int result = baseDao.delete(criteria);
 
 ## 14、安全使用说明
 
-值参数会以预编译参数绑定；表名、列名、排序字段、`last(...)` 片段和 `Expression.of(String)` 等 SQL 结构不会自动参数化。
+值参数会以预编译参数绑定；表名、列名、排序字段、`last(...)` 片段和 `FuncExpr.of(String)` 等 SQL 结构不会自动参数化。
 
 使用 `QueryCriteria`、`UpdateCriteria` 或 SQL 构建器时，应避免直接使用前端传入的字段名或 SQL 片段，防止`SQL注入`的风险。确有动态排序等需求时，应通过白名单映射外部字段；必要时可使用 `SqlInjectUtils` 做额外校验，但白名单仍是首选方案。
 

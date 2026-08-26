@@ -5,16 +5,20 @@ import org.tinycloud.jdbc.criteria.TypeFunction;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.sql.enums.ClauseState;
 import org.tinycloud.jdbc.sql.enums.Operation;
+import org.tinycloud.jdbc.sql.enums.SqlJoinType;
 import org.tinycloud.jdbc.util.LambdaUtils;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <p>
  * SQL语句构建器
+ * </p>
+ * <p>
+ * 支持 SELECT / INSERT / UPDATE / DELETE / REPLACE 等操作，以及子查询（from/in/exists）、
+ * 真实 JOIN、SQL 函数（{@link FuncBuilder}）、别名、distinct、行锁等能力。
+ * 最终通过 {@link #toSql()} 与 {@link #getParameters()} 交付给执行层。
  * </p>
  *
  * @author liuxingyu01
@@ -22,9 +26,11 @@ import java.util.stream.Stream;
  */
 public class SQL<T> {
     private final String table;
+    private String tableAlias;
     private Operation operation;
-    private final List<String> selectFields = new ArrayList<>();
-    private final Map<String, Object> insertValues = new LinkedHashMap<>();
+    private final List<SelectItem> selectItems = new ArrayList<>();
+    private final List<String> insertColumns = new ArrayList<>();
+    private final List<List<Object>> insertRows = new ArrayList<>();
     private final Map<String, Object> updateValues = new LinkedHashMap<>();
     private final ConditionGroup<T> whereCondition = new ConditionGroup<>();
     private final List<OrderBy> orderByClauses = new ArrayList<>();
@@ -32,6 +38,28 @@ public class SQL<T> {
     private final ConditionGroup<T> havingCondition = new ConditionGroup<>();
     private Integer limit;
     private Integer offset;
+
+    // 子查询 FROM（派生表）
+    private SQL<?> subQueryFrom;
+    private String fromAsAlias;
+
+    // JOIN
+    private final List<Join> joins = new ArrayList<>();
+
+    // select distinct
+    private boolean distinct;
+
+    // 行锁 / 其它
+    private String lockClause;
+
+    // INSERT 模式与 ON DUPLICATE KEY UPDATE
+    private String insertMode = "INSERT";
+    private final Map<String, Object> onDupUpdate = new LinkedHashMap<>();
+    private final List<String> onDupUpdateValues = new ArrayList<>();
+
+    // UNION / UNION ALL 管道（为 null 表示独立 SQL；共享同一列表则属于同一管道）
+    private List<SQL<?>> unionParts;
+    private String unionType;
 
     // 记录各子句的调用状态
     private volatile ClauseState whereState = ClauseState.NOT_CALLED;
@@ -41,25 +69,19 @@ public class SQL<T> {
         this.table = table;
     }
 
-    /**
-     * 创建一个SQL对象，指定表名
-     *
-     * @param table 表名
-     * @return SQL对象
-     */
+    private SQL(String table, String alias) {
+        this.table = table;
+        this.tableAlias = alias;
+    }
+
     public static <T> SQL<T> table(String table) {
         return new SQL<>(table);
     }
 
-    /**
-     * 根据实体类创建一个 SQL 对象。
-     * 该方法会检查传入的实体类是否包含 @Table 注解，若包含则使用注解中的表名创建 SQL 对象；
-     * 若不包含，则抛出 TinyJdbcException 异常。
-     *
-     * @param entityClass 实体类的 Class 对象，该类应包含 @Table 注解以指定对应的数据库表名
-     * @return 一个基于指定表名创建的 SQL 对象
-     * @throws TinyJdbcException 当传入的实体类缺少 @Table 注解时抛出此异常
-     */
+    public static <T> SQL<T> table(String table, String alias) {
+        return new SQL<>(table, alias);
+    }
+
     public static <T> SQL<T> table(Class<T> entityClass) {
         Table tableAnnotation = entityClass.getAnnotation(Table.class);
         if (tableAnnotation == null) {
@@ -68,72 +90,226 @@ public class SQL<T> {
         return new SQL<>(tableAnnotation.value());
     }
 
+    public static <T> SQL<T> table(Class<T> entityClass, String alias) {
+        Table tableAnnotation = entityClass.getAnnotation(Table.class);
+        if (tableAnnotation == null) {
+            throw new TinyJdbcException("Class " + entityClass.getName() + " is missing the @Table annotation.");
+        }
+        return new SQL<>(tableAnnotation.value(), alias);
+    }
 
     // ------------------------ SELECT ------------------------
 
-    /**
-     * 构建一个 SELECT * 语句
-     *
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     */
     public SQL<T> select() {
         this.validateOperation(Operation.SELECT);
-        this.selectFields.add("*");
+        this.selectItems.add(new SelectItem("*", Collections.emptyList()));
         return this;
     }
 
-    /**
-     * 构建一个 SELECT 语句，指定要查询的列，支持链式调用
-     *
-     * @param columns 要查询的列名，可变参数形式，可传入一个或多个列名
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     */
     public SQL<T> select(String... columns) {
         this.validateOperation(Operation.SELECT);
-        this.selectFields.addAll(Arrays.asList(columns));
+        for (String column : columns) {
+            this.selectItems.add(new SelectItem(column, Collections.emptyList()));
+        }
         return this;
     }
 
-    /**
-     * 构建一个 SELECT 语句，使用 Lambda 表达式指定要查询的列，支持链式调用。
-     * 该方法会将 Lambda 表达式转换为对应的数据库列名，并添加到查询字段列表中。
-     *
-     * @param fields 一个或多个 TypeFunction 类型的 Lambda 表达式，用于引用实体类的属性
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     */
     @SafeVarargs
     public final SQL<T> select(TypeFunction<T, ?>... fields) {
         this.validateOperation(Operation.SELECT);
         for (TypeFunction<T, ?> field : fields) {
-            String columnName = LambdaUtils.getLambdaColumnName(field);
-            this.selectFields.add(columnName);
+            this.selectItems.add(new SelectItem(LambdaUtils.getLambdaColumnName(field), Collections.emptyList()));
         }
         return this;
     }
 
     /**
-     * 构建一个 SELECT 语句，使用 Expression 对象指定要查询的表达式，支持链式调用。
-     * 该方法会将传入的 Expression 对象转换为字符串形式，并添加到查询字段列表中。
-     *
-     * @param expressions 一个或多个 Expression 对象，用于表示 SQL 查询中的表达式
-     * @return 当前 SQL 对象实例，用于支持链式调用。
+     * 使用 SQL 函数表达式作为查询字段（支持嵌套与别名）。
      */
-    public SQL<T> select(Expression... expressions) {
+    public SQL<T> select(FuncExpr... expressions) {
         this.validateOperation(Operation.SELECT);
-        for (Expression expr : expressions) {
-            this.selectFields.add(expr.toString());
+        for (FuncExpr expr : expressions) {
+            this.selectItems.add(new SelectItem(expr.toSql(), expr.getParameters()));
         }
         return this;
     }
 
+    public SQL<T> selectDistinct(Object... columns) {
+        this.validateOperation(Operation.SELECT);
+        this.distinct = true;
+        if (columns == null || columns.length == 0) {
+            this.selectItems.add(new SelectItem("*", Collections.emptyList()));
+        } else {
+            for (Object col : columns) {
+                this.selectItems.add(new SelectItem(String.valueOf(col), Collections.emptyList()));
+            }
+        }
+        return this;
+    }
+
+    @SafeVarargs
+    public final SQL<T> selectDistinct(TypeFunction<T, ?>... fields) {
+        this.validateOperation(Operation.SELECT);
+        this.distinct = true;
+        for (TypeFunction<T, ?> field : fields) {
+            this.selectItems.add(new SelectItem(LambdaUtils.getLambdaColumnName(field), Collections.emptyList()));
+        }
+        return this;
+    }
+
+    public SQL<T> selectDistinct(FuncExpr... expressions) {
+        this.validateOperation(Operation.SELECT);
+        this.distinct = true;
+        for (FuncExpr expr : expressions) {
+            this.selectItems.add(new SelectItem(expr.toSql(), expr.getParameters()));
+        }
+        return this;
+    }
+
+    // ------------------------ 子查询 FROM ------------------------
+
+    public SQL<T> from(SQL<?> subQuery) {
+        return from(subQuery, null);
+    }
+
+    public SQL<T> from(SQL<?> subQuery, String alias) {
+        if (this.operation != null && this.operation != Operation.SELECT) {
+            throw new TinyJdbcException("FROM sub-query can only be used in SELECT statements.");
+        }
+        if (subQuery == null) {
+            throw new TinyJdbcException("Sub-query cannot be null.");
+        }
+        this.operation = Operation.SELECT;
+        this.subQueryFrom = subQuery;
+        this.fromAsAlias = alias;
+        return this;
+    }
+
+    // ------------------------ JOIN ------------------------
+
+    public SQL<T> leftJoin(String table, String alias) {
+        return join(SqlJoinType.LEFT, table, alias);
+    }
+
+    public SQL<T> leftJoin(String table, String alias, Consumer<Join> joinConsumer) {
+        return join(SqlJoinType.LEFT, table, alias, joinConsumer);
+    }
+
+    public SQL<T> rightJoin(String table, String alias) {
+        return join(SqlJoinType.RIGHT, table, alias);
+    }
+
+    public SQL<T> rightJoin(String table, String alias, Consumer<Join> joinConsumer) {
+        return join(SqlJoinType.RIGHT, table, alias, joinConsumer);
+    }
+
+    public SQL<T> innerJoin(String table, String alias) {
+        return join(SqlJoinType.INNER, table, alias);
+    }
+
+    public SQL<T> innerJoin(String table, String alias, Consumer<Join> joinConsumer) {
+        return join(SqlJoinType.INNER, table, alias, joinConsumer);
+    }
+
+    public SQL<T> crossJoin(String table, String alias) {
+        return join(SqlJoinType.CROSS, table, alias);
+    }
+
+    // ------ JOIN 表名支持实体类（通过 @Table 解析），ON 条件可用 Lambda ------
+
+    public SQL<T> leftJoin(Class<?> entityClass, String alias) {
+        return join(SqlJoinType.LEFT, resolveTable(entityClass), alias);
+    }
+
+    public SQL<T> leftJoin(Class<?> entityClass, String alias, Consumer<Join> joinConsumer) {
+        return join(SqlJoinType.LEFT, resolveTable(entityClass), alias, joinConsumer);
+    }
+
+    public SQL<T> rightJoin(Class<?> entityClass, String alias) {
+        return join(SqlJoinType.RIGHT, resolveTable(entityClass), alias);
+    }
+
+    public SQL<T> rightJoin(Class<?> entityClass, String alias, Consumer<Join> joinConsumer) {
+        return join(SqlJoinType.RIGHT, resolveTable(entityClass), alias, joinConsumer);
+    }
+
+    public SQL<T> innerJoin(Class<?> entityClass, String alias) {
+        return join(SqlJoinType.INNER, resolveTable(entityClass), alias);
+    }
+
+    public SQL<T> innerJoin(Class<?> entityClass, String alias, Consumer<Join> joinConsumer) {
+        return join(SqlJoinType.INNER, resolveTable(entityClass), alias, joinConsumer);
+    }
+
+    public SQL<T> crossJoin(Class<?> entityClass, String alias) {
+        return join(SqlJoinType.CROSS, resolveTable(entityClass), alias);
+    }
+
+    private static String resolveTable(Class<?> entityClass) {
+        Table tableAnnotation = entityClass.getAnnotation(Table.class);
+        if (tableAnnotation == null) {
+            throw new TinyJdbcException("Class " + entityClass.getName() + " is missing the @Table annotation.");
+        }
+        return tableAnnotation.value();
+    }
+
+    private SQL<T> join(SqlJoinType type, String table, String alias) {
+        this.ensureSelectOperation();
+        this.joins.add(new Join(table, alias, type));
+        return this;
+    }
+
+    private SQL<T> join(SqlJoinType type, String table, String alias, Consumer<Join> joinConsumer) {
+        this.ensureSelectOperation();
+        Join join = new Join(table, alias, type);
+        joinConsumer.accept(join);
+        this.joins.add(join);
+        return this;
+    }
+
+    private void ensureSelectOperation() {
+        if (this.operation == null) {
+            this.operation = Operation.SELECT;
+        } else if (this.operation != Operation.SELECT && this.operation != Operation.UPDATE) {
+            throw new TinyJdbcException("JOIN can only be used in SELECT or UPDATE statements.");
+        }
+    }
+
     /**
-     * 为 SELECT 语句添加 ORDER BY 子句，使用 Lambda 表达式指定排序字段，支持链式调用。
-     * 该方法会将 Lambda 表达式转换为对应的数据库列名，并将其添加到排序规则列表中，默认按升序排序。
-     *
-     * @param field 一个 TypeFunction 类型的 Lambda 表达式，用于引用实体类的属性
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 如果当前操作不是 SELECT 操作，抛出此异常
+     * 为最后一个 JOIN 添加列到列连接条件。
      */
+    public SQL<T> on(String field1, String field2) {
+        lastJoin().on(field1, field2);
+        return this;
+    }
+
+    /**
+     * 为最后一个 JOIN 添加带操作符的 ON 条件。
+     */
+    public SQL<T> on(String field1, String opt, Object value) {
+        lastJoin().on(field1, opt, value);
+        return this;
+    }
+
+    private Join lastJoin() {
+        if (this.joins.isEmpty()) {
+            throw new TinyJdbcException("No JOIN to add ON condition to.");
+        }
+        return this.joins.get(this.joins.size() - 1);
+    }
+
+    public SQL<T> forUpdate() {
+        this.lockClause = "FOR UPDATE";
+        return this;
+    }
+
+    public SQL<T> lockInShareMode() {
+        this.lockClause = "LOCK IN SHARE MODE";
+        return this;
+    }
+
+    // ------------------------ 排序 / 分组 / 分页 ------------------------
+
     public SQL<T> orderBy(TypeFunction<T, ?> field) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The ORDER BY clause can only be used in SELECT statements.");
@@ -143,32 +319,14 @@ public class SQL<T> {
         return this;
     }
 
-    /**
-     * 为 SELECT 语句添加 ORDER BY 子句，指定排序字段，支持链式调用。
-     * 该方法会将传入的列名添加到排序规则列表中，默认按升序排序。
-     *
-     * @param column 要进行排序的数据库列名
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 如果当前操作不是 SELECT 操作，抛出此异常
-     */
     public SQL<T> orderBy(String column) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The ORDER BY clause can only be used in SELECT statements.");
-
         }
         this.orderByClauses.add(new OrderBy(column, false));
         return this;
     }
 
-    /**
-     * 为 SELECT 语句添加 GROUP BY 子句，指定分组字段，支持链式调用。
-     * 该方法会将传入的列名添加到分组字段列表中。
-     * 若当前操作不是 SELECT 操作，会抛出 TinyJdbcException 异常。
-     *
-     * @param columns 要进行分组的数据库列名，可变参数形式，可传入一个或多个列名
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 如果当前操作不是 SELECT 操作，抛出此异常
-     */
     public SQL<T> groupBy(String... columns) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The GROUP BY clause can only be used in SELECT statements.");
@@ -177,15 +335,6 @@ public class SQL<T> {
         return this;
     }
 
-    /**
-     * 为 SELECT 语句添加 GROUP BY 子句，使用 Lambda 表达式指定分组字段，支持链式调用。
-     * 该方法会将 Lambda 表达式转换为对应的数据库列名，并将这些列名添加到分组字段列表中。
-     * 若当前操作不是 SELECT 操作，会抛出 TinyJdbcException 异常。
-     *
-     * @param fields 一个或多个 TypeFunction 类型的 Lambda 表达式，用于引用实体类的属性
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 如果当前操作不是 SELECT 操作，抛出此异常
-     */
     @SafeVarargs
     public final SQL<T> groupBy(TypeFunction<T, ?>... fields) {
         if (this.operation != Operation.SELECT) {
@@ -198,16 +347,6 @@ public class SQL<T> {
         return this;
     }
 
-    /**
-     * 为 SELECT 语句添加 HAVING 子句，支持链式调用。
-     * HAVING 子句通常与 GROUP BY 子句一起使用，用于过滤分组后的结果。
-     * 该方法会验证当前操作是否为 SELECT 操作，并且 HAVING 子句是否已经被调用过。
-     *
-     * @param conditions 一个 Consumer 函数式接口，用于配置 HAVING 子句的条件，接收 ConditionGroup 对象作为参数
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 当当前操作不是 SELECT 操作时，抛出此异常，提示 HAVING 子句仅能用于 SELECT 语句；
-     *                           当 HAVING 子句已经被调用过时，抛出此异常，提示不能重复调用 HAVING 子句。
-     */
     public SQL<T> having(Consumer<ConditionGroup<T>> conditions) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The HAVING clause can only be used in SELECT statements.");
@@ -220,12 +359,6 @@ public class SQL<T> {
         return this;
     }
 
-    /**
-     * 将最后一个添加的 ORDER BY 子句设置为降序排序，支持链式调用。
-     * 该方法会检查排序规则列表是否为空，如果不为空，则将列表中最后一个排序规则设置为降序。
-     *
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     */
     public SQL<T> desc() {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The DESC clause can only be used in SELECT statements.");
@@ -237,15 +370,6 @@ public class SQL<T> {
         return this;
     }
 
-    /**
-     * 为 SELECT 语句添加 LIMIT 子句，用于限制查询结果的行数，支持链式调用。
-     * 该方法会验证当前操作是否为 SELECT 操作，若不是则抛出异常；
-     * 若为 SELECT 操作，则设置 LIMIT 子句的限制行数。
-     *
-     * @param limit 要限制的查询结果的最大行数
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 当当前操作不是 SELECT 操作时，抛出此异常，提示 LIMIT 子句仅能用于 SELECT 语句。
-     */
     public SQL<T> limit(int limit) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The LIMIT clause can only be used in SELECT statements.");
@@ -254,16 +378,6 @@ public class SQL<T> {
         return this;
     }
 
-    /**
-     * 为 SELECT 语句添加 OFFSET 子句，用于指定查询结果的起始偏移量，支持链式调用。
-     * OFFSET 子句通常与 LIMIT 子句配合使用，用于实现分页查询。
-     * 该方法会验证当前操作是否为 SELECT 操作，若不是则抛出异常；
-     * 若为 SELECT 操作，则设置 OFFSET 子句的起始偏移量。
-     *
-     * @param offset 要跳过的查询结果的行数，即查询结果的起始偏移量
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 当当前操作不是 SELECT 操作时，抛出此异常，提示 OFFSET 子句仅能用于 SELECT 语句。
-     */
     public SQL<T> offset(int offset) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The OFFSET clause can only be used in SELECT statements.");
@@ -274,96 +388,135 @@ public class SQL<T> {
 
     // ------------------------ INSERT ------------------------
 
-    /**
-     * 开始构建一个 INSERT SQL 语句，指定要插入的列，支持链式调用。
-     * 该方法会将传入的列名添加到待插入的列集合中，
-     * 同时为每个列名对应的值设置为 null 作为占位。
-     * 调用此方法后，可继续链式调用 values 方法设置要插入的值。
-     *
-     * @param columns 要插入的数据库列名，可变参数形式，可传入一个或多个列名
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 当已经设置了其他操作类型，却尝试同时使用 INSERT 操作类型时抛出此异常
-     */
     public SQL<T> insert(String... columns) {
         this.validateOperation(Operation.INSERT);
-        for (String column : columns) {
-            this.insertValues.put(column, null);
-        }
+        insertMode = "INSERT";
+        Collections.addAll(this.insertColumns, columns);
         return this;
     }
 
-    /**
-     * 开始构建一个 INSERT SQL 语句，使用 Lambda 表达式指定要插入的列，支持链式调用。
-     * 该方法会将 Lambda 表达式转换为对应的数据库列名，并将这些列名添加到待插入的列集合中，
-     * 同时为每个列名对应的值设置为 null 作为占位。
-     * 调用此方法后，可继续链式调用 values 方法设置要插入的值。
-     *
-     * @param fields 一个或多个 TypeFunction 类型的 Lambda 表达式，用于引用实体类的属性
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 当已经设置了其他操作类型，却尝试同时使用 INSERT 操作类型时抛出此异常
-     */
+    public SQL<T> insertInto(String... columns) {
+        return this.insert(columns);
+    }
+
+    public SQL<T> insertIgnoreInto(String... columns) {
+        this.validateOperation(Operation.INSERT);
+        insertMode = "INSERT IGNORE";
+        Collections.addAll(this.insertColumns, columns);
+        return this;
+    }
+
+    public SQL<T> replaceInto(String... columns) {
+        this.validateOperation(Operation.INSERT);
+        insertMode = "REPLACE";
+        Collections.addAll(this.insertColumns, columns);
+        return this;
+    }
+
     @SafeVarargs
     public final SQL<T> insert(TypeFunction<T, ?>... fields) {
         this.validateOperation(Operation.INSERT);
         for (TypeFunction<T, ?> field : fields) {
             String columnName = LambdaUtils.getLambdaColumnName(field);
-            this.insertValues.put(columnName, null);// 占位
+            this.insertColumns.add(columnName);
+        }
+        return this;
+    }
+
+    @SafeVarargs
+    public final SQL<T> insertInto(TypeFunction<T, ?>... fields) {
+        return this.insert(fields);
+    }
+
+    @SafeVarargs
+    public final SQL<T> insertIgnoreInto(TypeFunction<T, ?>... fields) {
+        this.validateOperation(Operation.INSERT);
+        insertMode = "INSERT IGNORE";
+        for (TypeFunction<T, ?> field : fields) {
+            this.insertColumns.add(LambdaUtils.getLambdaColumnName(field));
+        }
+        return this;
+    }
+
+    @SafeVarargs
+    public final SQL<T> replaceInto(TypeFunction<T, ?>... fields) {
+        this.validateOperation(Operation.INSERT);
+        insertMode = "REPLACE";
+        for (TypeFunction<T, ?> field : fields) {
+            this.insertColumns.add(LambdaUtils.getLambdaColumnName(field));
         }
         return this;
     }
 
     /**
-     * 为 INSERT 语句设置要插入的值，支持链式调用。
-     * 该方法会将传入的值按顺序与之前通过 insert() 方法指定的列一一对应。
-     * 调用此方法前，必须先调用 insert() 方法指定要插入的列，且传入值的数量必须与列的数量一致。
-     *
-     * @param values 要插入的值，可变参数形式，可传入一个或多个值
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 当当前操作不是 INSERT 操作，或者未调用 insert() 方法指定列时抛出此异常。当传入值的数量与指定列的数量不匹配时抛出此异常。
+     * MySQL 专有：INSERT ... ON DUPLICATE KEY UPDATE col = ?（右侧为值，参数化）。
      */
-    public SQL<T> values(Object... values) {
+    public SQL<T> onDuplicateKeyUpdate(String column, Object value) {
+        this.requireInsertOperation("onDuplicateKeyUpdate");
+        this.onDupUpdate.put(column, value);
+        return this;
+    }
+
+    /**
+     * MySQL 专有：INSERT ... ON DUPLICATE KEY UPDATE col = ?（Lambda 列，右侧为值，参数化）。
+     */
+    public SQL<T> onDuplicateKeyUpdate(TypeFunction<T, ?> field, Object value) {
+        this.requireInsertOperation("onDuplicateKeyUpdate");
+        this.onDupUpdate.put(LambdaUtils.getLambdaColumnName(field), value);
+        return this;
+    }
+
+    /**
+     * MySQL 专有：INSERT ... ON DUPLICATE KEY UPDATE col = VALUES(col)（无参数）。
+     */
+    public SQL<T> onDuplicateKeyUpdateValues(String... columns) {
+        this.requireInsertOperation("onDuplicateKeyUpdateValues");
+        Collections.addAll(this.onDupUpdateValues, columns);
+        return this;
+    }
+
+    /**
+     * MySQL 专有：INSERT ... ON DUPLICATE KEY UPDATE col = VALUES(col)（Lambda 列，无参数）。
+     */
+    @SafeVarargs
+    public final SQL<T> onDuplicateKeyUpdateValues(TypeFunction<T, ?>... fields) {
+        this.requireInsertOperation("onDuplicateKeyUpdateValues");
+        for (TypeFunction<T, ?> field : fields) {
+            this.onDupUpdateValues.add(LambdaUtils.getLambdaColumnName(field));
+        }
+        return this;
+    }
+
+    private void requireInsertOperation(String method) {
+        if (this.operation != Operation.INSERT) {
+            throw new TinyJdbcException("The " + method + "() method can only be called after insert().");
+        }
+    }
+
+    /**
+     * 添加一行值。可多次调用以实现多行插入；每次调用值的数量必须与列的数量一致。
+     */
+    public SQL<T> values(Object... rowValues) {
         if (this.operation != Operation.INSERT) {
             throw new TinyJdbcException("The values() method can only be called after insert().");
         }
-        if (this.insertValues.isEmpty()) {
+        if (this.insertColumns.isEmpty()) {
             throw new TinyJdbcException("Please call the insert() method first to specify the columns.");
-
         }
-        if (values.length != this.insertValues.size()) {
+        if (rowValues.length != this.insertColumns.size()) {
             throw new TinyJdbcException("The number of values does not match the number of columns.");
         }
-        int i = 0;
-        for (String column : this.insertValues.keySet()) {
-            this.insertValues.put(column, values[i++]);
-        }
+        this.insertRows.add(Arrays.asList(rowValues));
         return this;
     }
 
     // ------------------------ UPDATE ------------------------
 
-    /**
-     * 开始构建一个 UPDATE SQL 语句，支持链式调用。
-     * 该方法会调用 validateOperation 方法验证并设置当前的 SQL 操作类型为 UPDATE，
-     * 确保不会同时使用多种不同类型的 SQL 操作（如 SELECT、INSERT、UPDATE、DELETE）。
-     * 调用此方法后，可继续链式调用 set 方法设置要更新的列和值，以及 where 方法添加更新条件。
-     *
-     * @return 当前 SQL 对象实例，用于支持链式调用后续的方法，如添加 SET 子句、WHERE 子句等。
-     * @throws TinyJdbcException 当已经设置了其他操作类型，却尝试同时使用 UPDATE 操作类型时抛出此异常
-     */
     public SQL<T> update() {
         this.validateOperation(Operation.UPDATE);
         return this;
     }
 
-    /**
-     * 为 UPDATE 语句设置要更新的列及其对应的值，支持链式调用。
-     * 该方法直接指定要更新的列名，将列名和对应的值添加到待更新的值映射中。
-     *
-     * @param column 要更新的数据库列名
-     * @param value  要更新到数据库中的值
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 当当前操作不是 UPDATE 操作时，抛出此异常，提示只能在调用 update() 方法后调用此方法。
-     */
     public SQL<T> set(String column, Object value) {
         if (this.operation != Operation.UPDATE) {
             throw new TinyJdbcException("The set() method can only be called after update().");
@@ -372,16 +525,6 @@ public class SQL<T> {
         return this;
     }
 
-    /**
-     * 为 UPDATE 语句设置要更新的列及其对应的值，支持链式调用。
-     * 该方法使用 Lambda 表达式指定要更新的列，会将 Lambda 表达式转换为对应的数据库列名，
-     * 并将列名和对应的值添加到待更新的值映射中。
-     *
-     * @param field 一个 TypeFunction 类型的 Lambda 表达式，用于引用实体类的属性
-     * @param value 要更新到数据库中的值
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 当当前操作不是 UPDATE 操作时，抛出此异常，提示只能在调用 update() 方法后调用此方法。
-     */
     public SQL<T> set(TypeFunction<T, ?> field, Object value) {
         if (this.operation != Operation.UPDATE) {
             throw new TinyJdbcException("The set() method can only be called after update().");
@@ -391,34 +534,38 @@ public class SQL<T> {
         return this;
     }
 
-    // ------------------------ DELETE ------------------------
+    /**
+     * 子查询赋值：UPDATE ... SET col = (SELECT ...)。
+     */
+    public SQL<T> set(String column, SQL<?> subQuery) {
+        if (this.operation != Operation.UPDATE) {
+            throw new TinyJdbcException("The set() method can only be called after update().");
+        }
+        this.updateValues.put(column, subQuery);
+        return this;
+    }
 
     /**
-     * 开始构建一个 DELETE SQL 语句，支持链式调用。
-     * 该方法会调用 validateOperation 方法验证并设置当前的 SQL 操作类型为 DELETE，
-     * 确保不会同时使用多种不同类型的 SQL 操作（如 SELECT、INSERT、UPDATE、DELETE）。
-     *
-     * @return 当前 SQL 对象实例，用于支持链式调用后续的方法，如添加 WHERE 子句等。
-     * @throws TinyJdbcException 当已经设置了其他操作类型，却尝试同时使用 DELETE 操作类型时抛出此异常
+     * 子查询赋值：UPDATE ... SET col = (SELECT ...)。
      */
+    public SQL<T> set(TypeFunction<T, ?> field, SQL<?> subQuery) {
+        if (this.operation != Operation.UPDATE) {
+            throw new TinyJdbcException("The set() method can only be called after update().");
+        }
+        String column = LambdaUtils.getLambdaColumnName(field);
+        this.updateValues.put(column, subQuery);
+        return this;
+    }
+
+    // ------------------------ DELETE ------------------------
+
     public SQL<T> delete() {
         this.validateOperation(Operation.DELETE);
         return this;
     }
 
-    // ------------------------ 通用方法 ------------------------
+    // ------------------------ 条件（子查询等） ------------------------
 
-    /**
-     * 为 SQL 语句添加 WHERE 子句，支持链式调用。
-     * 该方法接收一个 Consumer 函数式接口，用于配置 WHERE 子句的条件。
-     * 在添加 WHERE 子句前，会进行一系列验证，确保操作类型支持 WHERE 子句且 WHERE 子句未被重复调用。
-     *
-     * @param conditions 一个 Consumer 函数式接口，用于配置 WHERE 子句的条件，接收 ConditionGroup 对象作为参数
-     * @return 当前 SQL 对象实例，用于支持链式调用。
-     * @throws TinyJdbcException 当未调用 select(), update(), 或 delete() 方法指定操作类型时抛出此异常；
-     *                           当操作类型为 INSERT 时，抛出此异常，因为 INSERT 语句不支持 WHERE 子句；
-     *                           当 WHERE 子句已经被调用过时，抛出此异常。
-     */
     public SQL<T> where(Consumer<ConditionGroup<T>> conditions) {
         if (this.operation == null) {
             throw new TinyJdbcException("Please call the select(), update(), or delete() method first.");
@@ -434,63 +581,323 @@ public class SQL<T> {
         return this;
     }
 
+    public SQL<T> in(String column, SQL<?> subQuery) {
+        this.ensureWhereAvailable();
+        this.whereCondition.in(column, subQuery);
+        return this;
+    }
+
+    public SQL<T> notIn(String column, SQL<?> subQuery) {
+        this.ensureWhereAvailable();
+        this.whereCondition.notIn(column, subQuery);
+        return this;
+    }
+
+    public SQL<T> exists(SQL<?> subQuery) {
+        this.ensureWhereAvailable();
+        this.whereCondition.exists(subQuery);
+        return this;
+    }
+
+    public SQL<T> notExists(SQL<?> subQuery) {
+        this.ensureWhereAvailable();
+        this.whereCondition.notExists(subQuery);
+        return this;
+    }
+
+    private void ensureWhereAvailable() {
+        if (this.operation == null) {
+            this.operation = Operation.SELECT;
+        }
+        if (this.operation == Operation.INSERT) {
+            throw new TinyJdbcException("Sub-query condition cannot be used in an INSERT statement.");
+        }
+    }
+
+    // ------------------------ UNION ------------------------
+
     /**
-     * 根据当前设置的操作类型构建并返回对应的 SQL 语句。
-     * 该方法会检查是否已经调用了 select(), insert(), update(), 或 delete() 方法来指定操作类型，
-     * 若未指定则抛出异常。根据不同的操作类型，调用相应的私有构建方法生成 SQL 语句。
-     *
-     * @return 生成的 SQL 语句字符串
-     * @throws TinyJdbcException 当未调用 select(), insert(), update(), 或 delete() 方法指定操作类型时抛出此异常
+     * UNION 拼接一个后续 SELECT 片段。同管道所有片段共享 unionParts，渲染时按序拼接。
+     * 返回 this，便于继续链式调用。
      */
+    public SQL<T> union(SQL<?> next) {
+        return mergeUnion("UNION", next);
+    }
+
+    /**
+     * UNION ALL 拼接一个后续 SELECT 片段。
+     */
+    public SQL<T> unionAll(SQL<?> next) {
+        return mergeUnion("UNION ALL", next);
+    }
+
+    private SQL<T> mergeUnion(String type, SQL<?> next) {
+        if (next == null) {
+            throw new TinyJdbcException("union()/unionAll() requires a non-null SQL segment.");
+        }
+        List<SQL<?>> pipeline;
+        if (this.unionParts == null) {
+            pipeline = new ArrayList<>();
+            pipeline.add(this);
+            this.unionParts = pipeline;
+        } else {
+            pipeline = this.unionParts;
+        }
+        next.unionType = type;
+        next.unionParts = pipeline;
+        pipeline.add(next);
+        return this;
+    }
+
+    // ------------------------ 渲染 ------------------------
+
     public String toSql() {
+        return render().sql();
+    }
+
+    public List<Object> getParameters() {
+        return render().parameters();
+    }
+
+    private RenderedSql render() {
+        // UNION 管道：遍历所有片段，按序拼接；普通（无 union）SQL 仅渲染自身
+        List<SQL<?>> pipeline = (this.unionParts == null) ? Collections.<SQL<?>>singletonList(this) : this.unionParts;
+        boolean isUnion = pipeline.size() > 1;
+        RenderedSql r = new RenderedSql();
+        for (int i = 0; i < pipeline.size(); i++) {
+            SQL<?> segment = pipeline.get(i);
+            if (i > 0) {
+                r.appendRaw(" ").appendRaw(segment.unionType).appendRaw(" ");
+            }
+            // union 时各片段不输出整体子句（ORDER BY / LIMIT / OFFSET / 行锁），由主查询统一追加
+            RenderedSql single = segment.renderSingle(!isUnion);
+            r.appendRaw(single.sql());
+            r.params.addAll(single.parameters());
+        }
+        if (isUnion) {
+            // 排序 / 分页 / 行锁作用于整个 UNION 结果
+            appendTailClause(r);
+        }
+        return r;
+    }
+
+    private RenderedSql renderSingle() {
+        return renderSingle(true);
+    }
+
+    private RenderedSql renderSingle(boolean includeTail) {
         if (this.operation == null) {
             throw new TinyJdbcException("Please call the select(), insert(), update(), or delete() method first.");
         }
         switch (this.operation) {
             case SELECT:
-                return this.buildSelectSql();
+                return renderSelect(includeTail);
             case INSERT:
-                return this.buildInsertSql();
+                return renderInsert();
             case UPDATE:
-                return this.buildUpdateSql();
+                return renderUpdate();
             case DELETE:
-                return this.buildDeleteSql();
+                return renderDelete();
             default:
                 throw new TinyJdbcException("Unsupported operation type: " + this.operation);
         }
     }
 
-    /**
-     * 获取当前 SQL 操作对应的参数列表。
-     * 根据不同的 SQL 操作类型（SELECT、INSERT、UPDATE、DELETE），从不同的数据源收集参数。
-     *
-     * @return 包含当前 SQL 操作所需参数的列表
-     * @throws TinyJdbcException 当操作类型不支持时抛出此异常
-     */
-    public List<Object> getParameters() {
-        switch (this.operation) {
-            case SELECT:
-            case DELETE:
-                return Stream.concat(this.whereCondition.getParameters().stream(), this.havingCondition.getParameters().stream()).collect(Collectors.toList());
-            case INSERT:
-                return new ArrayList<>(this.insertValues.values());
-            case UPDATE:
-                return Stream.concat(this.updateValues.values().stream(), this.whereCondition.getParameters().stream()).collect(Collectors.toList());
-            default:
-                throw new TinyJdbcException("Unsupported operation type: " + this.operation);
+    private RenderedSql renderSelect(boolean includeTail) {
+        RenderedSql r = new RenderedSql();
+        r.appendRaw("SELECT ");
+        if (this.distinct) {
+            r.appendRaw("DISTINCT ");
         }
+        if (this.selectItems.isEmpty()) {
+            r.appendRaw("*");
+        } else {
+            for (int i = 0; i < this.selectItems.size(); i++) {
+                if (i > 0) {
+                    r.appendRaw(", ");
+                }
+                SelectItem item = this.selectItems.get(i);
+                r.appendRaw(item.sql);
+                r.params.addAll(item.params);
+            }
+        }
+        // FROM
+        r.appendRaw(" FROM ");
+        if (this.subQueryFrom != null) {
+            r.appendRaw("(");
+            r.appendRaw(this.subQueryFrom.toSql());
+            r.appendRaw(")");
+            if (this.fromAsAlias != null && !this.fromAsAlias.trim().isEmpty()) {
+                r.appendRaw(" ").appendRaw(this.fromAsAlias);
+            } else {
+                r.appendRaw(" ").appendRaw(this.subQueryFromTableAlias());
+            }
+            r.params.addAll(this.subQueryFrom.getParameters());
+        } else {
+            r.appendRaw(this.table);
+            if (this.tableAlias != null && !this.tableAlias.trim().isEmpty()) {
+                r.appendRaw(" ").appendRaw(this.tableAlias);
+            }
+        }
+        // JOIN
+        for (Join join : this.joins) {
+            r.appendRaw(join.toSql());
+            r.params.addAll(join.getParameters());
+        }
+        // WHERE
+        if (!this.whereCondition.isEmpty()) {
+            r.appendRaw(" WHERE ");
+            r.appendRaw(this.whereCondition.toSql());
+            r.params.addAll(this.whereCondition.getParameters());
+        }
+        // GROUP BY
+        if (!this.groupByColumns.isEmpty()) {
+            r.appendRaw(" GROUP BY ").appendRaw(String.join(", ", this.groupByColumns));
+        }
+        // HAVING
+        if (!this.havingCondition.isEmpty()) {
+            r.appendRaw(" HAVING ");
+            r.appendRaw(this.havingCondition.toSql());
+            r.params.addAll(this.havingCondition.getParameters());
+        }
+        if (includeTail) {
+            appendTailClause(r);
+        }
+        return r;
+    }
+
+    /**
+     * 追加"整体子句"（ORDER BY / LIMIT / OFFSET / 行锁）。普通 SELECT 在末尾输出；
+     * UNION 时由主查询在所有片段拼接完成后统一调用，作用于整个 UNION 结果。
+     */
+    private void appendTailClause(RenderedSql r) {
+        // ORDER BY
+        if (!this.orderByClauses.isEmpty()) {
+            r.appendRaw(" ORDER BY ");
+            StringJoiner orderJoiner = new StringJoiner(", ");
+            for (OrderBy order : this.orderByClauses) {
+                orderJoiner.add(order.getColumn() + (order.isDesc() ? " DESC" : " ASC"));
+            }
+            r.appendRaw(orderJoiner.toString());
+        }
+        // LIMIT / OFFSET
+        if (this.limit != null) {
+            r.appendRaw(" LIMIT ").appendRaw(String.valueOf(this.limit));
+        }
+        if (this.offset != null) {
+            r.appendRaw(" OFFSET ").appendRaw(String.valueOf(this.offset));
+        }
+        // 行锁
+        if (this.lockClause != null) {
+            r.appendRaw(" ").appendRaw(this.lockClause);
+        }
+    }
+
+    private String subQueryFromTableAlias() {
+        return fromAsAlias != null ? fromAsAlias : "t";
+    }
+
+    private RenderedSql renderInsert() {
+        if (this.insertColumns.isEmpty() || this.insertRows.isEmpty()) {
+            throw new TinyJdbcException("The INSERT statement requires columns and values to be specified.");
+        }
+        RenderedSql r = new RenderedSql();
+        r.appendRaw(this.insertMode + " INTO " + this.table + " (");
+        r.appendRaw(String.join(", ", this.insertColumns));
+        r.appendRaw(") VALUES ");
+        for (int i = 0; i < this.insertRows.size(); i++) {
+            if (i > 0) {
+                r.appendRaw(", ");
+            }
+            List<Object> row = this.insertRows.get(i);
+            r.appendRaw("(");
+            for (int j = 0; j < row.size(); j++) {
+                if (j > 0) {
+                    r.appendRaw(", ");
+                }
+                r.appendRaw("?");
+            }
+            r.appendRaw(")");
+            r.params.addAll(row);
+        }
+        // ON DUPLICATE KEY UPDATE
+        renderOnDuplicateKey(r);
+        return r;
+    }
+
+    private void renderOnDuplicateKey(RenderedSql r) {
+        if (this.onDupUpdate.isEmpty() && this.onDupUpdateValues.isEmpty()) {
+            return;
+        }
+        r.appendRaw(" ON DUPLICATE KEY UPDATE ");
+        StringJoiner joiner = new StringJoiner(", ");
+        for (Map.Entry<String, Object> entry : this.onDupUpdate.entrySet()) {
+            joiner.add(entry.getKey() + " = ?");
+            r.params.add(entry.getValue());
+        }
+        for (String column : this.onDupUpdateValues) {
+            joiner.add(column + " = VALUES(" + column + ")");
+        }
+        r.appendRaw(joiner.toString());
+    }
+
+    @SuppressWarnings("unchecked")
+    private RenderedSql renderUpdate() {
+        if (this.updateValues.isEmpty()) {
+            throw new TinyJdbcException("The UPDATE statement requires at least one SET clause.");
+        }
+        RenderedSql r = new RenderedSql();
+        r.appendRaw("UPDATE " + this.table);
+        if (this.tableAlias != null && !this.tableAlias.trim().isEmpty()) {
+            r.appendRaw(" ").appendRaw(this.tableAlias);
+        }
+        // JOIN（连接更新）
+        for (Join join : this.joins) {
+            r.appendRaw(join.toSql());
+            r.params.addAll(join.getParameters());
+        }
+        r.appendRaw(" SET ");
+        StringJoiner joiner = new StringJoiner(", ");
+        for (Map.Entry<String, Object> entry : this.updateValues.entrySet()) {
+            String col = entry.getKey();
+            Object val = entry.getValue();
+            if (val instanceof FieldReference) {
+                joiner.add(col + " = " + ((FieldReference) val).getColumn());
+            } else if (val instanceof SQL<?>) {
+                SQL<?> sub = (SQL<?>) val;
+                joiner.add(col + " = (" + sub.toSql() + ")");
+                r.params.addAll(sub.getParameters());
+            } else {
+                joiner.add(col + " = ?");
+                r.params.add(val);
+            }
+        }
+        r.appendRaw(joiner.toString());
+        if (this.whereCondition.isEmpty()) {
+            throw new TinyJdbcException("The UPDATE statement requires a WHERE clause.");
+        }
+        r.appendRaw(" WHERE ").appendRaw(this.whereCondition.toSql());
+        r.params.addAll(this.whereCondition.getParameters());
+        return r;
+    }
+
+    private RenderedSql renderDelete() {
+        RenderedSql r = new RenderedSql();
+        r.appendRaw("DELETE FROM " + this.table);
+        if (this.tableAlias != null && !this.tableAlias.trim().isEmpty()) {
+            r.appendRaw(" ").appendRaw(this.tableAlias);
+        }
+        if (!this.whereCondition.isEmpty()) {
+            r.appendRaw(" WHERE ").appendRaw(this.whereCondition.toSql());
+            r.params.addAll(this.whereCondition.getParameters());
+        } else {
+            throw new TinyJdbcException("The DELETE statement requires a WHERE clause.");
+        }
+        return r;
     }
 
     // ------------------------ 私有方法 ------------------------
 
-    /**
-     * 验证并设置当前的 SQL 操作类型。
-     * 该方法用于确保在构建 SQL 语句时，不会同时使用多种不同类型的操作（如 SELECT、INSERT、UPDATE、DELETE）。
-     * 如果已经设置了操作类型，再次调用此方法传入不同的操作类型时，会抛出 TinyJdbcException 异常。
-     *
-     * @param newOperation 新的 SQL 操作类型，由 Operation 枚举定义
-     * @throws TinyJdbcException 当已经设置了操作类型，却尝试同时使用另一种操作类型时抛出此异常
-     */
     private void validateOperation(Operation newOperation) {
         if (this.operation != null) {
             throw new TinyJdbcException("Cannot use " + this.operation + " and " + newOperation + " operations simultaneously.");
@@ -498,112 +905,47 @@ public class SQL<T> {
         this.operation = newOperation;
     }
 
+    // ------------------------ 内部结构 ------------------------
+
     /**
-     * 构建 SELECT SQL 语句。
-     * 该方法会根据已设置的查询字段、条件、分组、排序、分页等信息，
-     * 构建一个完整的 SELECT SQL 语句。
-     *
-     * @return 生成的 SELECT SQL 语句字符串
+     * SELECT 字段：承载字段 SQL 及其携带的参数（函数表达式值参数）。
      */
-    private String buildSelectSql() {
-        StringBuilder sql = new StringBuilder();
-        if (this.selectFields.isEmpty()) {
-            sql.append("SELECT *");
-        } else {
-            sql.append("SELECT ").append(String.join(", ", this.selectFields));
+    private static class SelectItem {
+        final String sql;
+        final List<Object> params;
+
+        SelectItem(String sql, List<Object> params) {
+            this.sql = sql;
+            this.params = params;
         }
-        sql.append(" FROM ").append(this.table);
-        if (!this.whereCondition.isEmpty()) {
-            sql.append(" WHERE ").append(this.whereCondition.toSql());
+    }
+
+    /**
+     * 渲染产物：SQL 字符串 + 按 ? 顺序收集的参数。
+     */
+    private static class RenderedSql {
+        final StringBuilder sb = new StringBuilder();
+        final List<Object> params = new ArrayList<>();
+
+        RenderedSql appendRaw(String sql) {
+            sb.append(sql);
+            return this;
         }
-        // 添加 GROUP BY 子句
-        if (!this.groupByColumns.isEmpty()) {
-            sql.append(" GROUP BY ").append(String.join(", ", this.groupByColumns));
-        }
-        // 添加 HAVING 子句
-        if (!this.havingCondition.isEmpty()) {
-            sql.append(" HAVING ").append(this.havingCondition.toSql());
-        }
-        // 添加 ORDER BY 子句
-        if (!this.orderByClauses.isEmpty()) {
-            sql.append(" ORDER BY ");
-            StringJoiner orderJoiner = new StringJoiner(", ");
-            for (OrderBy order : this.orderByClauses) {
-                orderJoiner.add(order.getColumn() + (order.isDesc() ? " DESC" : " ASC"));
+
+        RenderedSql append(String sql, List<Object> sqlParams) {
+            sb.append(sql);
+            if (sqlParams != null) {
+                params.addAll(sqlParams);
             }
-            sql.append(orderJoiner);
+            return this;
         }
-        // 添加 LIMIT 和 OFFSET 子句
-        if (this.limit != null) {
-            sql.append(" LIMIT ").append(this.limit);
-        }
-        if (this.offset != null) {
-            sql.append(" OFFSET ").append(this.offset);
-        }
-        return sql.toString();
-    }
 
-    /**
-     * 构建 INSERT SQL 语句。
-     * 该方法会验证是否指定了插入的列和对应的值，若未指定则抛出异常。
-     * 随后会构建包含列名和占位符的 INSERT SQL 语句。
-     *
-     * @return 生成的 INSERT SQL 语句字符串
-     * @throws TinyJdbcException 当没有指定插入的列和值时抛出此异常
-     */
-    private String buildInsertSql() {
-        if (this.insertValues.isEmpty()) {
-            throw new TinyJdbcException("The INSERT statement requires columns and values to be specified.");
+        String sql() {
+            return sb.toString();
         }
-        // 1. 构建列名：(col1, col2, col3)
-        String columns = this.insertValues.keySet().stream().collect(Collectors.joining(", ", " (", ")"));
-        // 2. 构建占位符：VALUES (?, ?, ?)
-        String placeholders = this.insertValues.keySet().stream().map(col -> "?") // 每个列名对应一个 "?"
-                .collect(Collectors.joining(", ", " VALUES (", ")"));
-        // 3. 拼接完整 SQL
-        return "INSERT INTO " + this.table + columns + placeholders;
-    }
 
-    /**
-     * 构建 UPDATE SQL 语句。
-     * 该方法会验证是否设置了至少一个 SET 子句，以及是否包含 WHERE 子句，
-     * 确保不会执行无限制的更新操作。
-     *
-     * @return 生成的 UPDATE SQL 语句字符串
-     * @throws TinyJdbcException 当没有设置 SET 子句或 WHERE 子句时抛出此异常
-     */
-    private String buildUpdateSql() {
-        if (this.updateValues.isEmpty()) {
-            throw new TinyJdbcException("The UPDATE statement requires at least one SET clause.");
+        List<Object> parameters() {
+            return params;
         }
-        // 1. 构建 SET 子句：col1 = ?, col2 = ?, ...
-        String setClause = this.updateValues.keySet().stream()
-                .map(col -> col + " = ?")
-                .collect(Collectors.joining(", "));
-        // 2. 构建 WHERE 子句
-        if (this.whereCondition.isEmpty()) {
-            throw new TinyJdbcException("The UPDATE statement requires a WHERE clause.");
-        }
-        String whereClause = " WHERE " + this.whereCondition.toSql();
-        // 3. 拼接完整 SQL
-        return "UPDATE " + this.table + " SET " + setClause + whereClause;
-    }
-
-    /**
-     * 构建 DELETE SQL 语句。
-     * 该方法会生成一条用于从指定表中删除数据的 SQL 语句，
-     * 为避免误删全量数据，要求必须包含 WHERE 子句。
-     *
-     * @return 生成的 DELETE SQL 语句字符串
-     * @throws TinyJdbcException 当没有设置 WHERE 子句时抛出此异常
-     */
-    private String buildDeleteSql() {
-        StringBuilder sql = new StringBuilder("DELETE FROM ").append(this.table);
-        if (!this.whereCondition.isEmpty()) {
-            sql.append(" WHERE ").append(this.whereCondition.toSql());
-        } else {
-            throw new TinyJdbcException("The DELETE statement requires a WHERE clause.");
-        }
-        return sql.toString();
     }
 }
