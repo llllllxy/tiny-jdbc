@@ -2,6 +2,56 @@
 
 本文件依据 Git 标签、版本发布提交及对应代码差异整理。每个版本均给出可回溯的发布锚点；标记为“升级必读”的版本包含已确认的 API 或包路径迁移。
 
+## 2.0.1
+
+> 发布日期：2026-08-27 ｜ 发布提交：`720b68f` ｜ 升级路径：2.0.0 → 2.0.1
+
+### 类型概览
+
+| 维度 | 内容 |
+|------|------|
+| 重大重构 | SQL 构造器重构，支持像写 SQL 一样组合复杂语句 |
+| 破坏性变更 | `Expression` 移除，函数能力并入 `FuncBuilder` / `FuncExpr` |
+| 稳定性优化 | 泛型解析支持 CGLIB 代理、反射工具精简 |
+| 测试 | SQL 构造器测试集中维护，95 项全绿 |
+
+### ⚠️ 破坏性变更（升级必读）
+
+- **`Expression` 类移除（`d2f7f03`）**：旧 SQL 函数表达式类已删除，`count` / `sum` / `avg` / `max` / `min` / `coalesce` / `ifNull` / `caseWhen` 等能力合并到 `FuncBuilder` / `FuncExpr`。直接使用 `Expression.of(String)` 的代码需迁移为 `FuncExpr.of(String)`。
+
+### SQL 构造器重构
+
+- **组合式复杂语句（`d2f7f03`）**：`SQL` 构造器全面升级，支持像写 SQL 一样组合复杂语句；新增主表别名、多行插入、函数嵌套、`caseWhen` 三参数等能力，并补齐 Lambda 重载（`insert` / `join` / `onDuplicateKeyUpdate` / 自定义操作符）。
+- **JOIN 增强（`d2f7f03`）**：`JOIN` 表名支持直接传入实体类；`ConditionGroup` 新增 `xxxIfAbsent` 判空跳过与块级开关。
+- **UNION 修复（`d2f7f03`）**：修复 UNION 的 `ORDER BY` / `LIMIT` / 行锁应用到整体的问题。
+- **文档重写（`d2f7f03`）**：重写 `SQL.md` 并补充用法速查。
+
+### 泛型与反射优化
+
+- **泛型类型解析支持 CGLIB 代理（`b3656a8`）**：移除过时的 `ParameterizedType` 反射方式，集成 Spring `GenericTypeResolver`；`@Transactional` / `@Async` 等切面代理场景下不再出现 `ClassCastException`。
+- **反射工具精简（`eb37e99`）**：移除自定义 `ClassUtils`，改用 Spring 框架实现；`ReflectUtils.getFields` 增加防御性拷贝选项，避免缓存污染。
+
+### 测试整理
+
+- **SQL 构造器测试用例合并（`480ecff`）**：分散的验证类合并为 `SQLBuilderVerifyMain`，按能力模块分区维护，全量 95 项测试通过。
+
+### 升级检查清单
+
+- [ ] 全局搜索 `Expression`，迁移至 `FuncBuilder` / `FuncExpr`。
+- [ ] 在 `@Transactional` / `@Async` 等切面代理场景回归验证泛型 DAO 的类型解析。
+- [ ] 回归验证 `SQL` 构造器的既有用法（JOIN、UNION、子查询等）。
+
+### 兼容性说明
+
+| 用户侧能力 | 兼容性 |
+|------------|--------|
+| 基于 `BaseDao` 的常规 CRUD 调用 | ✅ 完全兼容 |
+| `SQL` 构造器既有用法 | ✅ 兼容，并新增多项能力 |
+| 泛型 DAO（含切面代理场景） | ✅ 修复 `ClassCastException` |
+| `Expression.of(String)` | ❌ 已移除，改用 `FuncExpr.of(String)` |
+
+---
+
 ## 2.0.0
 
 > 发布日期：2026-08-11 ｜ 发布提交：待发布 ｜ 升级路径：1.9.9 → 2.0.0
