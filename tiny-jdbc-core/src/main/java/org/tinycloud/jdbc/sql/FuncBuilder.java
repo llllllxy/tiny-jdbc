@@ -517,6 +517,199 @@ public final class FuncBuilder {
     public static FuncExpr dateFormat(FuncExpr expr, String format) { return func("DATE_FORMAT", expr, FuncExpr.value(format)); }
     public static FuncExpr substring(FuncExpr expr, int start) { return func("SUBSTRING", expr, FuncExpr.raw(String.valueOf(start))); }
 
+    // ------ TypeFunction（Lambda）重载：列名自动取自实体 @Column，编译期防错 ------
+
+    // 字符串
+    public static <T, R> FuncExpr ltrim(TypeFunction<T, R> field) {
+        return ltrim(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr rtrim(TypeFunction<T, R> field) {
+        return rtrim(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr charLength(TypeFunction<T, R> field) {
+        return charLength(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr substring(TypeFunction<T, R> field, int start) {
+        return substring(LambdaUtils.getLambdaColumnName(field), start);
+    }
+
+    public static <T, R> FuncExpr substring(TypeFunction<T, R> field, int start, int length) {
+        return substring(LambdaUtils.getLambdaColumnName(field), start, length);
+    }
+
+    public static <T, R> FuncExpr left(TypeFunction<T, R> field, int index) {
+        return left(LambdaUtils.getLambdaColumnName(field), index);
+    }
+
+    public static <T, R> FuncExpr right(TypeFunction<T, R> field, int index) {
+        return right(LambdaUtils.getLambdaColumnName(field), index);
+    }
+
+    public static <T, R> FuncExpr locate(TypeFunction<T, R> field, String find) {
+        return locate(LambdaUtils.getLambdaColumnName(field), find);
+    }
+
+    public static <T, R> FuncExpr instr(TypeFunction<T, R> field, String find) {
+        return instr(LambdaUtils.getLambdaColumnName(field), find);
+    }
+
+    public static <T, R> FuncExpr replace(TypeFunction<T, R> field, String from, String to) {
+        return replace(LambdaUtils.getLambdaColumnName(field), from, to);
+    }
+
+    // 数值
+    public static <T, R> FuncExpr abs(TypeFunction<T, R> field) {
+        return abs(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr ceil(TypeFunction<T, R> field) {
+        return ceil(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr floor(TypeFunction<T, R> field) {
+        return floor(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr round(TypeFunction<T, R> field, int digits) {
+        return round(LambdaUtils.getLambdaColumnName(field), digits);
+    }
+
+    public static <T, R> FuncExpr mod(TypeFunction<T, R> field, int divisor) {
+        return mod(LambdaUtils.getLambdaColumnName(field), divisor);
+    }
+
+    // 日期
+    public static <T, R> FuncExpr dateFormat(TypeFunction<T, R> field, String format) {
+        return dateFormat(LambdaUtils.getLambdaColumnName(field), format);
+    }
+
+    public static <T, R> FuncExpr year(TypeFunction<T, R> field) {
+        return year(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr month(TypeFunction<T, R> field) {
+        return month(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr day(TypeFunction<T, R> field) {
+        return day(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr dateAdd(TypeFunction<T, R> field, int days) {
+        return dateAdd(LambdaUtils.getLambdaColumnName(field), days);
+    }
+
+    public static <T, R> FuncExpr dateSub(TypeFunction<T, R> field, int days) {
+        return dateSub(LambdaUtils.getLambdaColumnName(field), days);
+    }
+
+    // 条件
+    public static <T, R> FuncExpr ifNull(TypeFunction<T, R> field, Object value) {
+        return ifNull(LambdaUtils.getLambdaColumnName(field), value);
+    }
+
+    public static <T, R> FuncExpr nullIf(TypeFunction<T, R> field, Object value) {
+        return nullIf(LambdaUtils.getLambdaColumnName(field), value);
+    }
+
+    @SafeVarargs
+    public static <T, R> FuncExpr coalesce(TypeFunction<T, R>... fields) {
+        return coalesce(toColumnArray(fields));
+    }
+
+    // 其它补齐
+    public static <T, R> FuncExpr findInSet(String find, TypeFunction<T, R> str) {
+        return findInSet(find, LambdaUtils.getLambdaColumnName(str));
+    }
+
+    public static <T, R> FuncExpr position(String sub, TypeFunction<T, R> str) {
+        return position(sub, LambdaUtils.getLambdaColumnName(str));
+    }
+
+    @SafeVarargs
+    public static <T, R> FuncExpr elt(int index, TypeFunction<T, R>... fields) {
+        return elt(index, toColumnArray(fields));
+    }
+
+    public static <T, R> FuncExpr insert(TypeFunction<T, R> str, int pos, int len, String replacement) {
+        return insert(LambdaUtils.getLambdaColumnName(str), pos, len, replacement);
+    }
+
+    public static <T, R> FuncExpr truncate(TypeFunction<T, R> field, int decimals) {
+        return truncate(LambdaUtils.getLambdaColumnName(field), decimals);
+    }
+
+    public static <T, R> FuncExpr format(TypeFunction<T, R> field, int decimals) {
+        return format(LambdaUtils.getLambdaColumnName(field), decimals);
+    }
+
+    public static <T, R> FuncExpr strToDate(TypeFunction<T, R> field, String format) {
+        return strToDate(LambdaUtils.getLambdaColumnName(field), format);
+    }
+
+    public static <T, R> FuncExpr monthname(TypeFunction<T, R> field) {
+        return monthname(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr week(TypeFunction<T, R> field) {
+        return week(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr hour(TypeFunction<T, R> field) {
+        return hour(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr minute(TypeFunction<T, R> field) {
+        return minute(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr second(TypeFunction<T, R> field) {
+        return second(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr weekday(TypeFunction<T, R> field) {
+        return weekday(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr dayname(TypeFunction<T, R> field) {
+        return dayname(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr date(TypeFunction<T, R> field) {
+        return date(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr jsonExtract(TypeFunction<T, R> field, String path) {
+        return jsonExtract(LambdaUtils.getLambdaColumnName(field), path);
+    }
+
+    public static <T, R> FuncExpr jsonUnquote(TypeFunction<T, R> field) {
+        return jsonUnquote(LambdaUtils.getLambdaColumnName(field));
+    }
+
+    public static <T, R> FuncExpr jsonContains(TypeFunction<T, R> field, String value) {
+        return jsonContains(LambdaUtils.getLambdaColumnName(field), value);
+    }
+
+    public static <T, R> FuncExpr jsonSet(TypeFunction<T, R> field, String path, Object value) {
+        return jsonSet(LambdaUtils.getLambdaColumnName(field), path, value);
+    }
+
+    public static <T, R> FuncExpr jsonRemove(TypeFunction<T, R> field, String... paths) {
+        return jsonRemove(LambdaUtils.getLambdaColumnName(field), paths);
+    }
+
+    public static <T, R> FuncExpr fromUnixTime(TypeFunction<T, R> field, String format) {
+        return fromUnixTime(LambdaUtils.getLambdaColumnName(field), format);
+    }
+
+    public static <T, R> FuncExpr concat_ws(String separator, TypeFunction<T, R>... functions) {
+        return concat_ws(separator, toColumnArray(functions));
+    }
+
     // ------ 辅助 ------
 
     private static FuncExpr toExpr(Object value) {
@@ -545,6 +738,15 @@ public final class FuncBuilder {
         FuncExpr[] arr = new FuncExpr[functions.length];
         for (int i = 0; i < functions.length; i++) {
             arr[i] = FuncExpr.raw(LambdaUtils.getLambdaColumnName(functions[i]));
+        }
+        return arr;
+    }
+
+    @SafeVarargs
+    private static <T, R> String[] toColumnArray(TypeFunction<T, R>... functions) {
+        String[] arr = new String[functions.length];
+        for (int i = 0; i < functions.length; i++) {
+            arr[i] = LambdaUtils.getLambdaColumnName(functions[i]);
         }
         return arr;
     }

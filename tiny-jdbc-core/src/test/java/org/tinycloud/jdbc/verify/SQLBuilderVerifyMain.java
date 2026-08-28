@@ -30,6 +30,7 @@ public class SQLBuilderVerifyMain {
 
     // ---------- SQLAdvancedVerifyMain ----------
 
+    // 验证：聚合函数 COUNT/MAX 带别名的查询构建
     @Test
     public void testAggregateWithAlias() {
         SQL<?> agg = SQL.table("tb_user").select(
@@ -39,6 +40,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(0, agg.getParameters().size());
     }
 
+    // 验证：CONCAT 函数混合列引用与字面量参数的查询构建
     @Test
     public void testFunctionWithLiteralParam() {
         SQL<?> fn = SQL.table("tb_order").select(
@@ -51,6 +53,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(", ", fn.getParameters().get(0));
     }
 
+    // 验证：LEFT JOIN/ON 条件及参数绑定的查询构建
     @Test
     public void testJoin() {
         SQL<?> join = SQL.table("tb_user")
@@ -63,6 +66,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(1, join.getParameters().get(0));
     }
 
+    // 验证：IN 子查询作为筛选条件的查询构建
     @Test
     public void testInSubQuery() {
         SQL<?> in = SQL.table("tb_user").select()
@@ -73,6 +77,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("PAID", in.getParameters().get(0));
     }
 
+    // 验证：子查询作为 FROM 来源（派生表）的查询构建
     @Test
     public void testSubQueryFrom() {
         SQL<?> subFrom = SQL.table("d")
@@ -83,18 +88,21 @@ public class SQLBuilderVerifyMain {
         assertEquals(18, subFrom.getParameters().get(0));
     }
 
+    // 验证：SELECT DISTINCT 去重的查询构建
     @Test
     public void testDistinct() {
         SQL<?> dist = SQL.table("tb_user").selectDistinct("age");
         assertEquals("SELECT DISTINCT age FROM tb_user", dist.toSql());
     }
 
+    // 验证：SELECT ... FOR UPDATE 行锁查询构建
     @Test
     public void testForUpdateLock() {
         SQL<?> lock = SQL.table("tb_user").select("id").where(c -> c.eq("id", 99)).forUpdate();
         assertEquals("SELECT id FROM tb_user WHERE id = ? FOR UPDATE", lock.toSql());
     }
 
+    // 验证：UPDATE SET 使用列引用赋值的查询构建
     @Test
     public void testColumnReferenceUpdate() {
         SQL<?> ref = SQL.table("tb_score").update()
@@ -105,6 +113,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(7, ref.getParameters().get(0));
     }
 
+    // 验证：RIGHT JOIN/ON 条件及参数绑定的查询构建
     @Test
     public void testRightJoin() {
         SQL<?> sq = SQL.table("tb_user").select("u.name", "r.role_name")
@@ -115,12 +124,14 @@ public class SQLBuilderVerifyMain {
         assertEquals(1, sq.getParameters().get(0));
     }
 
+    // 验证：CROSS JOIN 交叉连接的查询构建
     @Test
     public void testCrossJoin() {
         SQL<?> sq = SQL.table("a").select("*").crossJoin("b", "bb");
         assertEquals("SELECT * FROM a CROSS JOIN b bb", sq.toSql());
     }
 
+    // 验证：INNER JOIN 回调中追加多条 ON 条件的查询构建
     @Test
     public void testJoinCallbackOn() {
         SQL<?> sq = SQL.table("tb_user", "u").select("u.name")
@@ -129,12 +140,14 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT u.name FROM tb_user u INNER JOIN tb_role r ON u.role_id = r.id AND r.status = ? WHERE u.is_active = ?", sq.toSql());
     }
 
+    // 验证：ORDER BY DESC 配合 LIMIT/OFFSET 分页的查询构建
     @Test
     public void testLimitOffset() {
         SQL<?> sq = SQL.table("tb_user").select("id").orderBy("id").desc().limit(10).offset(20);
         assertEquals("SELECT id FROM tb_user ORDER BY id DESC LIMIT 10 OFFSET 20", sq.toSql());
     }
 
+    // 验证：IN 集合参数展开为多个占位符的查询构建
     @Test
     public void testInCollection() {
         SQL<?> sq = SQL.table("tb_user").select("id").where(c -> c.in("status", Arrays.asList(1, 2, 3)));
@@ -142,6 +155,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(3, sq.getParameters().size());
     }
 
+    // 验证：BETWEEN ... AND 范围条件的查询构建
     @Test
     public void testBetweenAnd() {
         SQL<?> sq = SQL.table("tb_user").select("id").where(c -> c.betweenAnd("age", 18, 60));
@@ -150,6 +164,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(60, sq.getParameters().get(1));
     }
 
+    // 验证：IS NULL / IS NOT NULL 空值条件的查询构建
     @Test
     public void testIsNullIsNotNull() {
         SQL<?> sq = SQL.table("tb_user").select("id")
@@ -157,6 +172,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT id FROM tb_user WHERE deleted_at IS NULL AND mobile IS NOT NULL", sq.toSql());
     }
 
+    // 验证：OR/AND 分组括号嵌套条件的查询构建
     @Test
     public void testOrGroup() {
         SQL<?> sq = SQL.table("tb_user").select("id")
@@ -165,6 +181,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT id FROM tb_user WHERE (status = ? OR status = ?) AND (age >= ? AND age < ?)", sq.toSql());
     }
 
+    // 验证：DELETE 中 NOT IN 子查询的查询构建
     @Test
     public void testNotInSubQuery() {
         SQL<?> sq = SQL.table("tb_user").delete()
@@ -172,24 +189,28 @@ public class SQLBuilderVerifyMain {
         assertEquals("DELETE FROM tb_user WHERE id NOT IN (SELECT user_id FROM tb_order WHERE status = ?)", sq.toSql());
     }
 
+    // 验证：COUNT(*) 统计全行的查询构建
     @Test
     public void testCountStar() {
         SQL<?> sq = SQL.table("tb_user").select(FuncBuilder.count().as("cnt"));
         assertEquals("SELECT COUNT(*) AS cnt FROM tb_user", sq.toSql());
     }
 
+    // 验证：GROUP_CONCAT 聚合拼接带别名的查询构建
     @Test
     public void testGroupConcat() {
         SQL<?> sq = SQL.table("tb_user").select(FuncBuilder.groupConcat("name").as("names"));
         assertEquals("SELECT GROUP_CONCAT(name) AS names FROM tb_user", sq.toSql());
     }
 
+    // 验证：MIN/SUM 聚合函数带别名的查询构建
     @Test
     public void testAggregateMinSum() {
         SQL<?> sq = SQL.table("tb_user").select(FuncBuilder.min("age").as("minAge"), FuncBuilder.sum("score").as("sumScore"));
         assertEquals("SELECT MIN(age) AS minAge, SUM(score) AS sumScore FROM tb_user", sq.toSql());
     }
 
+    // 验证：SUBSTRING/LEFT/RIGHT/UPPER/LENGTH 字符串函数的查询构建
     @Test
     public void testStringFunctions() {
         SQL<?> sq = SQL.table("t_user").select(
@@ -204,6 +225,7 @@ public class SQLBuilderVerifyMain {
 
     // ---------- SQLStage2VerifyMain ----------
 
+    // 验证：UNION ALL 合并两查询及参数顺序的构建
     @Test
     public void testUnionAll() {
         SQL<?> u1 = SQL.table("a").select("id").where(c -> c.eq("x", 1))
@@ -214,6 +236,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(2, u1.getParameters().get(1));
     }
 
+    // 验证：UNION 去重合并两查询的构建
     @Test
     public void testUnionDistinct() {
         SQL<?> u2 = SQL.table("a").select("id").where(c -> c.lt("age", 18))
@@ -224,6 +247,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(60, u2.getParameters().get(1));
     }
 
+    // 验证：三段 UNION ALL 合并查询的构建
     @Test
     public void testUnionAllThreeSegments() {
         SQL<?> u3 = SQL.table("a").select("id").where(c -> c.eq("x", 1))
@@ -236,6 +260,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(3, u3.getParameters().get(2));
     }
 
+    // 验证：INSERT IGNORE 与 ON DUPLICATE KEY UPDATE 的构建
     @Test
     public void testInsertIgnoreWithOnDuplicateKeyUpdate() {
         SQL<?> ins = SQL.table("tb_user").insertIgnoreInto("id", "name").values(5, "x")
@@ -247,6 +272,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("y", ins.getParameters().get(2));
     }
 
+    // 验证：REPLACE INTO 与 ON DUPLICATE KEY UPDATE VALUES() 的构建
     @Test
     public void testReplaceWithOnDuplicateKeyUpdateValues() {
         SQL<?> rep = SQL.table("tb_user").replaceInto("id", "name").values(5, "x")
@@ -255,6 +281,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(2, rep.getParameters().size());
     }
 
+    // 验证：UPDATE 带 JOIN 与列引用的构建
     @Test
     public void testUpdateJoinWithColumnReference() {
         SQL<?> upd = SQL.table("tb_user")
@@ -267,6 +294,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(3, upd.getParameters().get(0));
     }
 
+    // 验证：UPDATE SET 使用子查询赋值的构建
     @Test
     public void testUpdateSubQueryAssignment() {
         SQL<?> upd2 = SQL.table("tb_user")
@@ -279,6 +307,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(9, upd2.getParameters().get(1));
     }
 
+    // 验证：CASE WHEN/ELSE 分支表达式及参数的构建
     @Test
     public void testCaseWhen() {
         SQL<?> cs = SQL.table("tb_order").select(
@@ -294,6 +323,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("unknown", cs.getParameters().get(2));
     }
 
+    // 验证：UNION ALL 后接 ORDER BY 的构建
     @Test
     public void testUnionWithOrderBy() {
         SQL<?> u = SQL.table("a").select("id").where(c -> c.eq("x", 1))
@@ -302,6 +332,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT id FROM a WHERE x = ? UNION ALL SELECT id FROM b WHERE y = ? ORDER BY id DESC", u.toSql());
     }
 
+    // 验证：多行 INSERT 与 ON DUPLICATE KEY UPDATE 的构建
     @Test
     public void testInsertMultiRowWithOnDuplicateKeyUpdate() {
         SQL<?> ins = SQL.table("tb_user").insert("id", "name").values(1, "a").values(2, "b")
@@ -310,12 +341,14 @@ public class SQLBuilderVerifyMain {
         assertEquals(5, ins.getParameters().size());
     }
 
+    // 验证：多行 REPLACE INTO 的构建
     @Test
     public void testReplaceMultiRow() {
         SQL<?> rep = SQL.table("tb_user").replaceInto("id", "name").values(1, "a").values(2, "b");
         assertEquals("REPLACE INTO tb_user (id, name) VALUES (?, ?), (?, ?)", rep.toSql());
     }
 
+    // 验证：UPDATE SET 使用 Lambda 方法引用列的构建
     @Test
     public void testUpdateSetTypeFunction() {
         SQL<VerifyChildEntity> upd = SQL.table(VerifyChildEntity.class)
@@ -328,6 +361,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("y", upd.getParameters().get(1));
     }
 
+    // 验证：带别名表 UPDATE 中子查询赋值的构建
     @Test
     public void testUpdateSetSubQueryWithAlias() {
         SQL<?> upd = SQL.table("tb_user", "u").update()
@@ -338,6 +372,7 @@ public class SQLBuilderVerifyMain {
 
     // ---------- SQLDocumentVerifyMain ----------
 
+    // 验证：INNER JOIN 回调多 ON 条件的构建
     @Test
     public void testJoinCallback() {
         SQL<?> joinCb = SQL.table("tb_user").select("u.name", "r.role_name")
@@ -347,6 +382,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(2, joinCb.getParameters().size());
     }
 
+    // 验证：EXISTS 子查询条件及参数的构建
     @Test
     public void testExists() {
         SQL<?> exists = SQL.table("tb_user").select()
@@ -358,6 +394,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("ENABLED", exists.getParameters().get(1));
     }
 
+    // 验证：多层嵌套 FROM 子查询的构建
     @Test
     public void testNestedSubQuery() {
         SQL<?> nested = SQL.table("t").select("a.*")
@@ -369,12 +406,14 @@ public class SQLBuilderVerifyMain {
         assertEquals(3, nested.getParameters().size());
     }
 
+    // 验证：SELECT ... LOCK IN SHARE MODE 的构建
     @Test
     public void testLockInShareMode() {
         SQL<?> share = SQL.table("tb_user").select("id").lockInShareMode();
         assertEquals("SELECT id FROM tb_user LOCK IN SHARE MODE", share.toSql());
     }
 
+    // 验证：CONCAT 结合字面量参数的构建
     @Test
     public void testConcatWithLiteral() {
         SQL<?> fn = SQL.table("t_user")
@@ -383,6 +422,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(", ", fn.getParameters().get(0));
     }
 
+    // 验证：DATE_FORMAT/YEAR 日期函数的构建
     @Test
     public void testDateFunctions() {
         SQL<?> fn2 = SQL.table("t_user")
@@ -392,6 +432,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("%Y-%m-%d", fn2.getParameters().get(0));
     }
 
+    // 验证：聚合查询 GROUP BY + ORDER BY 的构建
     @Test
     public void testAggregateWithOrderBy() {
         SQL<?> report = SQL.table("user")
@@ -403,6 +444,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("active", report.getParameters().get(0));
     }
 
+    // 验证：GROUP BY + HAVING 过滤的构建
     @Test
     public void testHaving() {
         SQL<?> having = SQL.table("t_order")
@@ -414,6 +456,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(2, having.getParameters().size());
     }
 
+    // 验证：WHERE 中使用列引用比较的构建
     @Test
     public void testFieldReferenceWhere() {
         SQL<?> sq = SQL.table("t_score").select("id")
@@ -422,6 +465,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT id FROM t_score WHERE student_id = student_code AND avg_score > max_score", sq.toSql());
     }
 
+    // 验证：OR/AND 分组括号条件（文档版）的构建
     @Test
     public void testOrGroupDocument() {
         SQL<?> sq = SQL.table("t_user").select()
@@ -430,12 +474,14 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT * FROM t_user WHERE (status = ? OR status = ?) AND (age >= ? AND age < ?)", sq.toSql());
     }
 
+    // 验证：LIMIT/OFFSET 分页（文档版）的构建
     @Test
     public void testLimitOffsetDocument() {
         SQL<?> sq = SQL.table("t_user").select("id").orderBy("id").desc().limit(10).offset(20);
         assertEquals("SELECT id FROM t_user ORDER BY id DESC LIMIT 10 OFFSET 20", sq.toSql());
     }
 
+    // 验证：IFNULL/COALESCE 函数及参数的构建
     @Test
     public void testIfNullCoalesce() {
         SQL<?> sq = SQL.table("t_user")
@@ -444,6 +490,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("no remark", sq.getParameters().get(0));
     }
 
+    // 验证：SELECT DISTINCT 多列去重的构建
     @Test
     public void testSelectDistinctColumns() {
         SQL<?> sq = SQL.table("t_order").selectDistinct("user_id", "status");
@@ -452,6 +499,7 @@ public class SQLBuilderVerifyMain {
 
     // ---------- SQLFeatureVerifyMain ----------
 
+    // 验证：SELECT 带表别名的查询构建
     @Test
     public void testSelectTableAlias() {
         SQL<?> sq = SQL.table("tb_user", "u").select("u.name").where(w -> w.eq("u.is_active", 1));
@@ -460,6 +508,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(1, sq.getParameters().get(0));
     }
 
+    // 验证：UPDATE 带表别名及参数的构建
     @Test
     public void testUpdateTableAlias() {
         SQL<?> sq = SQL.table("tb_user", "u").update().set("u.email", "x@y.com").where(w -> w.eq("u.id", 1));
@@ -469,12 +518,14 @@ public class SQLBuilderVerifyMain {
         assertEquals(1, sq.getParameters().get(1));
     }
 
+    // 验证：DELETE 带表别名查询的构建
     @Test
     public void testDeleteTableAlias() {
         SQL<?> sq = SQL.table("tb_user", "u").delete().where(w -> w.eq("u.id", 1));
         assertEquals("DELETE FROM tb_user u WHERE u.id = ?", sq.toSql());
     }
 
+    // 验证：多行 INSERT 构建
     @Test
     public void testMultiRowInsert() {
         SQL<?> sq = SQL.table("tb_user").insert("id", "name").values(1, "a").values(2, "b");
@@ -486,12 +537,14 @@ public class SQLBuilderVerifyMain {
         assertEquals("b", sq.getParameters().get(3));
     }
 
+    // 验证：多行 INSERT IGNORE 构建
     @Test
     public void testMultiRowInsertIgnore() {
         SQL<?> sq = SQL.table("tb_user").insertIgnoreInto("id", "name").values(1, "a").values(2, "b");
         assertEquals("INSERT IGNORE INTO tb_user (id, name) VALUES (?, ?), (?, ?)", sq.toSql());
     }
 
+    // 验证：YEAR(NOW()) 嵌套函数的构建
     @Test
     public void testYearNowNesting() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.year(FuncBuilder.now()).as("y"));
@@ -499,12 +552,14 @@ public class SQLBuilderVerifyMain {
         assertEquals(0, sq.getParameters().size());
     }
 
+    // 验证：TRIM(LOWER()) 嵌套函数的构建
     @Test
     public void testNestedTrimLower() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.trim(FuncBuilder.lower(FuncBuilder.col("name"))).as("n"));
         assertEquals("SELECT TRIM(LOWER(name)) AS n FROM t", sq.toSql());
     }
 
+    // 验证：通用函数 func(COALESCE, ...) 的构建
     @Test
     public void testGenericFunc() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.func("COALESCE", FuncBuilder.col("a"), FuncBuilder.lit("x")).as("c"));
@@ -512,12 +567,14 @@ public class SQLBuilderVerifyMain {
         assertEquals("x", sq.getParameters().get(0));
     }
 
+    // 验证：DATE_SUB 日期减法的构建
     @Test
     public void testDateSub() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.dateSub("create_time", 7).as("d"));
         assertEquals("SELECT DATE_SUB(create_time, INTERVAL 7 DAY) AS d FROM t", sq.toSql());
     }
 
+    // 验证：JSON_EXTRACT 函数及路径参数的构建
     @Test
     public void testJsonExtract() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.jsonExtract("data", "$.name").as("n"));
@@ -525,6 +582,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("$.name", sq.getParameters().get(0));
     }
 
+    // 验证：IF(条件, 真值, 假值) 三参函数的构建
     @Test
     public void testIfThreeArg() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder._if("1=1", FuncBuilder.lit("a"), FuncBuilder.lit("b")).as("x"));
@@ -533,6 +591,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("b", sq.getParameters().get(1));
     }
 
+    // 验证：CASE WHEN 简化重载的构建
     @Test
     public void testCaseWhenShortcut() {
         SQL<?> sq = SQL.table("t").select(
@@ -542,6 +601,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("normal", sq.getParameters().get(1));
     }
 
+    // 验证：JOIN 中 andIfAbsent 空值跳过条件的构建
     @Test
     public void testJoinAndIfAbsentSkipWhenNull() {
         SQL<?> sq = SQL.table("tb_user", "u").select("u.name")
@@ -550,6 +610,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT u.name FROM tb_user u INNER JOIN tb_role r ON u.role_id = r.id WHERE u.is_active = ?", sq.toSql());
     }
 
+    // 验证：JOIN 中 andIfAbsent 非空附加条件的构建
     @Test
     public void testJoinAndIfAbsentWhenPresent() {
         SQL<?> sq = SQL.table("tb_user", "u").select("u.name")
@@ -560,6 +621,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(1, sq.getParameters().get(1));
     }
 
+    // 验证：INSERT INTO 使用 Lambda 方法引用列的构建
     @Test
     public void testInsertIntoWithLambda() {
         SQL<VerifyChildEntity> sq = SQL.table(VerifyChildEntity.class)
@@ -569,6 +631,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("张三", sq.getParameters().get(0));
     }
 
+    // 验证：INSERT IGNORE 使用 Lambda 方法引用列的构建
     @Test
     public void testInsertIgnoreIntoWithLambda() {
         SQL<VerifyChildEntity> sq = SQL.table(VerifyChildEntity.class)
@@ -577,6 +640,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("INSERT IGNORE INTO t_verify_child (child_name_col) VALUES (?)", sq.toSql());
     }
 
+    // 验证：REPLACE INTO 使用 Lambda 方法引用列的构建
     @Test
     public void testReplaceIntoWithLambda() {
         SQL<VerifyChildEntity> sq = SQL.table(VerifyChildEntity.class)
@@ -585,6 +649,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("REPLACE INTO t_verify_child (child_name_col, active_flag) VALUES (?, ?)", sq.toSql());
     }
 
+    // 验证：JOIN ON 使用 Lambda 列引用比较的构建
     @Test
     public void testJoinOnWithLambda() {
         SQL<?> sq = SQL.table("tb_user", "u")
@@ -594,6 +659,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT u.name FROM tb_user u INNER JOIN tb_role r ON child_name_col = active_flag WHERE u.is_active = ?", sq.toSql());
     }
 
+    // 验证：JOIN 回调中 Lambda 列与常量比较的构建
     @Test
     public void testJoinAndWithLambdaValue() {
         SQL<?> sq = SQL.table("tb_user", "u")
@@ -604,6 +670,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT u.name FROM tb_user u INNER JOIN tb_role r ON child_name_col = ? AND active_flag = ? WHERE u.is_active = ?", sq.toSql());
     }
 
+    // 验证：JOIN 中 andIfAbsent 空值跳过 Lambda 条件的构建
     @Test
     public void testJoinAndIfAbsentWithLambdaSkip() {
         SQL<?> sq = SQL.table("tb_user", "u")
@@ -614,6 +681,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT u.name FROM tb_user u INNER JOIN tb_role r ON child_name_col = active_flag WHERE u.is_active = ?", sq.toSql());
     }
 
+    // 验证：ON DUPLICATE KEY UPDATE 使用 Lambda 列的构建
     @Test
     public void testOnDuplicateKeyUpdateWithLambda() {
         SQL<VerifyChildEntity> sq = SQL.table(VerifyChildEntity.class)
@@ -623,6 +691,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("INSERT INTO t_verify_child (child_name_col) VALUES (?) ON DUPLICATE KEY UPDATE child_name_col = ?", sq.toSql());
     }
 
+    // 验证：ON DUPLICATE KEY UPDATE VALUES() 使用 Lambda 列的构建
     @Test
     public void testOnDuplicateKeyUpdateValuesWithLambda() {
         SQL<VerifyChildEntity> sq = SQL.table(VerifyChildEntity.class)
@@ -632,6 +701,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("INSERT INTO t_verify_child (child_name_col) VALUES (?) ON DUPLICATE KEY UPDATE child_name_col = VALUES(child_name_col)", sq.toSql());
     }
 
+    // 验证：WHERE 中 Lambda 列自定义操作符的构建
     @Test
     public void testConditionAndCustomOperatorWithLambda() {
         SQL<VerifyChildEntity> sq = SQL.table(VerifyChildEntity.class)
@@ -640,18 +710,21 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT * FROM t_verify_child WHERE child_name_col = ?", sq.toSql());
     }
 
+    // 验证：COUNT(DISTINCT) 函数的构建
     @Test
     public void testCountDistinct() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.countDistinct("status").as("c"));
         assertEquals("SELECT COUNT(DISTINCT status) AS c FROM t", sq.toSql());
     }
 
+    // 验证：GROUP_CONCAT 带分隔符的构建
     @Test
     public void testGroupConcatWithSeparator() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.groupConcat("name", ",").as("n"));
         assertEquals("SELECT GROUP_CONCAT(name, SEPARATOR ,) AS n FROM t", sq.toSql());
     }
 
+    // 验证：CONCAT_WS 分隔符拼串函数的构建
     @Test
     public void testConcatWs() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.concat_ws("-", "a", "b").as("x"));
@@ -659,12 +732,14 @@ public class SQLBuilderVerifyMain {
         assertEquals("-", sq.getParameters().get(0));
     }
 
+    // 验证：COALESCE 函数的构建
     @Test
     public void testCoalesce() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.coalesce("a", "b").as("c"));
         assertEquals("SELECT COALESCE(a, b) AS c FROM t", sq.toSql());
     }
 
+    // 验证：IFNULL 函数的构建
     @Test
     public void testIfNull() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.ifNull("remark", "no remark").as("r"));
@@ -672,12 +747,14 @@ public class SQLBuilderVerifyMain {
         assertEquals("no remark", sq.getParameters().get(0));
     }
 
+    // 验证：ABS 函数对列表达式的构建
     @Test
     public void testAbsFuncExpr() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.abs(FuncBuilder.col("x")).as("a"));
         assertEquals("SELECT ABS(x) AS a FROM t", sq.toSql());
     }
 
+    // 验证：INNER JOIN 使用实体类与 Lambda 条件的构建
     @Test
     public void testInnerJoinWithClassAndLambda() {
         SQL<VerifyChildEntity> sq = SQL.table(VerifyChildEntity.class)
@@ -689,6 +766,7 @@ public class SQLBuilderVerifyMain {
         assertEquals(true, sq.getParameters().get(0));
     }
 
+    // 验证：LEFT JOIN 使用实体类与父字段 Lambda 的构建
     @Test
     public void testLeftJoinWithClassParentField() {
         SQL<VerifyChildEntity> sq = SQL.table(VerifyChildEntity.class)
@@ -697,6 +775,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT * FROM t_verify_child LEFT JOIN t_verify_child p ON parent_code_col = child_name_col", sq.toSql());
     }
 
+    // 验证：likeIfAbsent 空值跳过 LIKE 条件的构建
     @Test
     public void testLikeIfAbsentSkipWhenNull() {
         SQL<?> sq = SQL.table("tb_user").select("id")
@@ -704,6 +783,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT id FROM tb_user WHERE status = ?", sq.toSql());
     }
 
+    // 验证：likeIfAbsent 非空时匹配 % 通配 LIKE 的构建
     @Test
     public void testLikeIfAbsentIncludeWhenPresent() {
         SQL<?> sq = SQL.table("tb_user").select("id")
@@ -712,6 +792,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("%张%", sq.getParameters().get(1));
     }
 
+    // 验证：eqIfAbsent Lambda 空值跳过条件的构建
     @Test
     public void testEqIfAbsentLambda() {
         SQL<VerifyChildEntity> sq = SQL.table(VerifyChildEntity.class).select()
@@ -721,6 +802,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("x", sq.getParameters().get(0));
     }
 
+    // 验证：inIfAbsent 空集合跳过 IN 条件的构建
     @Test
     public void testInIfAbsentSkipWhenEmpty() {
         SQL<?> sq = SQL.table("tb_user").select("id")
@@ -728,6 +810,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT id FROM tb_user WHERE status = ?", sq.toSql());
     }
 
+    // 验证：inIfAbsent 非空集合展开 IN 的构建
     @Test
     public void testInIfAbsentIncludeWhenNotEmpty() {
         SQL<?> sq = SQL.table("tb_user").select("id")
@@ -735,6 +818,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT id FROM tb_user WHERE role_id IN (?, ?, ?)", sq.toSql());
     }
 
+    // 验证：betweenAndIfAbsent 左值空时跳过条件的构建
     @Test
     public void testBetweenAndIfAbsentSkipWhenLeftNull() {
         SQL<?> sq = SQL.table("tb_user").select("id")
@@ -742,6 +826,7 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT id FROM tb_user WHERE status = ?", sq.toSql());
     }
 
+    // 验证：andIfAbsent 自定义操作符空值跳过条件的构建
     @Test
     public void testAndIfAbsentCustomOperator() {
         SQL<?> sq = SQL.table("tb_user").select("id")
@@ -749,10 +834,67 @@ public class SQLBuilderVerifyMain {
         assertEquals("SELECT id FROM tb_user WHERE age > ?", sq.toSql());
     }
 
+    // 验证：AND/OR 布尔标志控制拼接条件的构建
     @Test
     public void testAndBooleanBlockFlag() {
         SQL<?> sq = SQL.table("tb_user").select("id")
                 .where(w -> w.eq("status", 1).and(false, g -> g.like("name", "张")).or(true, g -> g.gt("age", 18)));
         assertEquals("SELECT id FROM tb_user WHERE status = ? OR (age > ?)", sq.toSql());
+    }
+
+    // ---------- FuncBuilder TypeFunction（Lambda）重载 ----------
+
+    // 验证：substring 的 Lambda 版，列名取自 @Column，start/length 参数化
+    @Test
+    public void testFuncBuilderLambdaSubstring() {
+        SQL<?> sq = SQL.table(VerifyChildEntity.class).select(
+                FuncBuilder.substring(VerifyChildEntity::getChildName, 1, 3).as("s"));
+        assertEquals("SELECT SUBSTRING(child_name_col, ?, ?) AS s FROM t_verify_child", sq.toSql());
+        assertEquals(2, sq.getParameters().size());
+    }
+
+    // 验证：dateSub 的 Lambda 版，INTERVAL 片段作为裸 SQL（不参数化）
+    @Test
+    public void testFuncBuilderLambdaDateSub() {
+        SQL<?> sq = SQL.table(VerifyChildEntity.class).select(
+                FuncBuilder.dateSub(VerifyChildEntity::getChildName, 7).as("d"));
+        assertEquals("SELECT DATE_SUB(child_name_col, INTERVAL 7 DAY) AS d FROM t_verify_child", sq.toSql());
+        assertEquals(0, sq.getParameters().size());
+    }
+
+    // 验证：replace 的 Lambda 版，from/to 参数化
+    @Test
+    public void testFuncBuilderLambdaReplace() {
+        SQL<?> sq = SQL.table(VerifyChildEntity.class).select(
+                FuncBuilder.replace(VerifyChildEntity::getChildName, "a", "b").as("r"));
+        assertEquals("SELECT REPLACE(child_name_col, ?, ?) AS r FROM t_verify_child", sq.toSql());
+        assertEquals(2, sq.getParameters().size());
+    }
+
+    // 验证：coalesce 的 Lambda 版（多列，含父类字段），列名来自 @Column
+    @Test
+    public void testFuncBuilderLambdaCoalesce() {
+        SQL<?> sq = SQL.table(VerifyChildEntity.class).select(
+                FuncBuilder.coalesce(VerifyChildEntity::getChildName, VerifyChildEntity::getParentCode).as("n"));
+        assertEquals("SELECT COALESCE(child_name_col, parent_code_col) AS n FROM t_verify_child", sq.toSql());
+        assertEquals(0, sq.getParameters().size());
+    }
+
+    // 验证：concat_ws 的 Lambda 版，分隔符参数化、列名来自 @Column
+    @Test
+    public void testFuncBuilderLambdaConcatWs() {
+        SQL<?> sq = SQL.table(VerifyChildEntity.class).select(
+                FuncBuilder.concat_ws(",", VerifyChildEntity::getChildName, VerifyChildEntity::getParentCode).as("c"));
+        assertEquals("SELECT CONCAT_WS(?, child_name_col, parent_code_col) AS c FROM t_verify_child", sq.toSql());
+        assertEquals(1, sq.getParameters().size());
+    }
+
+    // 验证：jsonSet 的 Lambda 版，path/value 参数化、列名来自 @Column
+    @Test
+    public void testFuncBuilderLambdaJsonSet() {
+        SQL<?> sq = SQL.table(VerifyChildEntity.class).select(
+                FuncBuilder.jsonSet(VerifyChildEntity::getChildName, "$.a", 1).as("j"));
+        assertEquals("SELECT JSON_SET(child_name_col, ?, ?) AS j FROM t_verify_child", sq.toSql());
+        assertEquals(2, sq.getParameters().size());
     }
 }
