@@ -130,8 +130,7 @@ public class IdGeneratorRouter {
         try {
             context.getField().set(context.getObj(), converted);
         } catch (IllegalArgumentException | IllegalAccessException e) {
-            throw new TinyJdbcException("inject field value fail : " + context.getFieldName()
-                    + ", please verify if the ID type matches the primary key type!", e);
+            throw new TinyJdbcException("inject field value fail : " + context.getFieldName() + ", please verify if the ID type matches the primary key type!", e);
         }
     }
 }

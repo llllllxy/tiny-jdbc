@@ -10,9 +10,8 @@ import org.tinycloud.jdbc.criteria.query.QueryCriteria;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
 import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
-import org.tinycloud.jdbc.id.IdGeneratorInterface;
-import org.tinycloud.jdbc.id.IdUtils;
-import org.tinycloud.jdbc.util.ConvertUtils;
+import org.tinycloud.jdbc.id.IdContext;
+import org.tinycloud.jdbc.id.IdGeneratorRouter;
 import org.tinycloud.jdbc.util.ReflectUtils;
 import org.tinycloud.jdbc.util.StrUtils;
 import org.tinycloud.jdbc.util.TableParserUtils;
@@ -126,70 +125,19 @@ public class SqlGenerator {
                 // 自增主键：返回 null，外层逻辑会跳过该字段
                 return null;
             }
-            // 如果是其他主键策略，设置完主键后，塞回到实体类里，这样可以方便插入后获取主键值
-            else if (idType == IdType.OBJECT_ID) {
-                if (fieldType != String.class) {
-                    throw new TinyJdbcException("The type of " + fieldName + " field  must be String when objectId!");
-                }
-                fieldValue = IdUtils.objectId();
-                try {
-                    field.set(object, fieldValue);
-                } catch (IllegalArgumentException | IllegalAccessException e) {
-                    throw new TinyJdbcException("inject field value fail : " + fieldName + " field type must be String when objectId!", e);
-                }
-            } else if (idType == IdType.ASSIGN_ID) {
-                if (fieldType != String.class && fieldType != Long.class) {
-                    throw new TinyJdbcException("The type of " + fieldName + ", field  must be String or Long when assignId!");
-                }
-                fieldValue = (fieldType == String.class) ? String.valueOf(tinyJdbcRuntime.getSnowflakeId().nextId()) : tinyJdbcRuntime.getSnowflakeId().nextId();
-                try {
-                    field.set(object, fieldValue);
-                } catch (IllegalArgumentException | IllegalAccessException e) {
-                    throw new TinyJdbcException("inject field value fail : " + fieldName + ", field type must be String or Long when assignId!", e);
-                }
-            } else if (idType == IdType.UUID) {
-                if (fieldType != String.class) {
-                    throw new TinyJdbcException("The type of " + fieldName + " field must be String when uuid!");
-                }
-                fieldValue = IdUtils.simpleUUID();
-                try {
-                    field.set(object, fieldValue);
-                } catch (IllegalArgumentException | IllegalAccessException e) {
-                    throw new TinyJdbcException("inject field value fail : " + fieldName + ", field type must be String when uuid!", e);
-                }
-            } else if (idType == IdType.SEQUENCE) {
-                if (!Number.class.isAssignableFrom(fieldType)) {
-                    throw new TinyJdbcException("The type of " + fieldName + " field must be assignable from Number when sequence!");
-                }
-                String sequenceSql = idAnnotation.value();
-                // 执行查询操作，并获取序列的下一个值
-                fieldValue = jdbcTemplate.queryForObject(sequenceSql, fieldType);
-                try {
-                    field.set(object, fieldValue);
-                } catch (IllegalArgumentException | IllegalAccessException e) {
-                    throw new TinyJdbcException("inject field value fail : " + fieldName + ", field type must be assignable from Number when sequence!", e);
-                }
-            } else if (idType == IdType.CUSTOM) {
-                IdGeneratorInterface idGeneratorInterface = tinyJdbcRuntime.getIdGeneratorInterface();
-                if (idGeneratorInterface == null) {
-                    throw new TinyJdbcException("IdType.CUSTOM requires an IdGeneratorInterface bean.");
-                }
-                Object id = idGeneratorInterface.nextId(object);
-                try {
-                    fieldValue = ConvertUtils.convert(id, fieldType);
-                } catch (Exception e) {
-                    throw new TinyJdbcException("The fieldType of " + fieldName + " is not supported! Please check if the ID type matches the primary key type.", e);
-                }
-                try {
-                    field.set(object, fieldValue);
-                } catch (IllegalArgumentException | IllegalAccessException e) {
-                    throw new TinyJdbcException("inject field value fail : " + field.getName() + ", please verify if the return data type of idGeneratorInterface.nextId() method matches the data type of the primary key!", e);
-                }
-            } else {
-                throw new TinyJdbcException("Unknown idType: " + idType + "!");
-            }
+            // 其它策略统一交给 IdGeneratorRouter 按 IdType 分发到对应生成器实现，并回写实体字段
+            IdContext context = IdContext.builder()
+                    .obj(object)
+                    .field(field)
+                    .fieldType(fieldType)
+                    .fieldName(fieldName)
+                    .idType(idType)
+                    .sequenceSql(idAnnotation.value())
+                    .jdbcTemplate(jdbcTemplate)
+                    .build();
+            return new IdGeneratorRouter(tinyJdbcRuntime).generate(context);
         }
-        // 返回最终的主键值（非自增场景）
+        // 用户已设置主键值：原样返回
         return fieldValue;
     }
 
