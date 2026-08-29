@@ -3,6 +3,10 @@ package org.tinycloud.jdbc.id;
 import org.tinycloud.jdbc.annotation.IdType;
 import org.tinycloud.jdbc.config.TinyJdbcRuntime;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
+import org.tinycloud.jdbc.id.generator.ObjectIdGenerator;
+import org.tinycloud.jdbc.id.generator.SequenceGenerator;
+import org.tinycloud.jdbc.id.generator.SnowflakeIdGenerator;
+import org.tinycloud.jdbc.id.generator.UuidGenerator;
 import org.tinycloud.jdbc.util.ConvertUtils;
 
 import java.util.EnumMap;

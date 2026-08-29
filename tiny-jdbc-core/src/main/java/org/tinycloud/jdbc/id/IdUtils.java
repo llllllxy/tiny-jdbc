@@ -2,6 +2,9 @@ package org.tinycloud.jdbc.id;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tinycloud.jdbc.id.generator.ObjectIdGenerator;
+import org.tinycloud.jdbc.id.generator.SnowflakeIdGenerator;
+import org.tinycloud.jdbc.id.generator.UuidGenerator;
 import org.tinycloud.jdbc.util.LocalHostUtils;
 
 import java.util.UUID;

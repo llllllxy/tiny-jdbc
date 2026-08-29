@@ -1,6 +1,8 @@
-package org.tinycloud.jdbc.id;
+package org.tinycloud.jdbc.id.generator;
 
 import org.tinycloud.jdbc.exception.TinyJdbcException;
+import org.tinycloud.jdbc.id.IdContext;
+import org.tinycloud.jdbc.id.IdGeneratorInterface;
 
 /**
  * <p>
