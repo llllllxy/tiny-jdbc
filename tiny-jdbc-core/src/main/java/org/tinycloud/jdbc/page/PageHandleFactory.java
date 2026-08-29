@@ -69,10 +69,11 @@ public class PageHandleFactory {
         } else if (dbType == DbType.GAUSS_DB) {
             pageHandle = new GaussDBPageHandleImpl();
         } else {
-            if (logger.isWarnEnabled()) {
-                logger.warn("{} database not supported, default to PostgreSQL Implements", dbType.getName());
-            }
-            pageHandle = new PostgreSqlPageHandleImpl();
+            // 明确不支持分页的数据库类型，不再静默套用 PostgreSQL LIMIT/OFFSET，
+            // 避免生成非法 SQL（如 SQLServer 2005 / Sybase / Hive2 / 其它未知类型）。
+            throw new TinyJdbcException(
+                    "Database type [" + dbType.getName() + "] is not supported for pagination. "
+                            + "Please configure a supported tiny-jdbc.db-type or provide a dedicated IPageHandle.");
         }
         return pageHandle;
     }
