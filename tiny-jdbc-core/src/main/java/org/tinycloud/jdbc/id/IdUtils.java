@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.tinycloud.jdbc.util.LocalHostUtils;
 
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * <p>
@@ -36,6 +37,13 @@ public class IdUtils {
     }
 
     /**
+     * 内置生成器（仅供 IdUtils 内部委托），与框架内置策略共用同一套实现，保证生成逻辑单一来源。
+     */
+    private static final SnowflakeIdGenerator SNOWFLAKE_ID_GENERATOR = new SnowflakeIdGenerator(InstanceHolder.INSTANCE);
+    private static final ObjectIdGenerator OBJECT_ID_GENERATOR = new ObjectIdGenerator();
+    private static final UuidGenerator UUID_GENERATOR = new UuidGenerator();
+
+    /**
      * 创建雪花ID生成器实例（根据本地主机IP地址）
      *
      * @return SnowflakeId实例
@@ -44,8 +52,11 @@ public class IdUtils {
         try {
             return new SnowflakeId(LocalHostUtils.getInetAddress());
         } catch (Exception e) {
-            logger.warn("Unable to obtain correct IP address information, the machine ID and serial number of the fixed machine will be used to generate the primary key.");
-            return new SnowflakeId(1L, 1L);
+            logger.warn("Unable to obtain correct IP address information, fall back to random workerId/datacenterId to generate the primary key.");
+            // 在合法范围内随机取节点 ID，避免所有实例回退到相同的 (1,1) 而碰撞
+            long workerId = ThreadLocalRandom.current().nextLong(0, 32);
+            long datacenterId = ThreadLocalRandom.current().nextLong(0, 32);
+            return new SnowflakeId(workerId, datacenterId);
         }
     }
 
@@ -65,7 +76,7 @@ public class IdUtils {
      * @return String
      */
     public static String nextId() {
-        return String.valueOf(getInstance().nextId());
+        return String.valueOf(SNOWFLAKE_ID_GENERATOR.nextId(null));
     }
 
     /**
@@ -74,7 +85,7 @@ public class IdUtils {
      * @return long
      */
     public static long nextLongId() {
-        return getInstance().nextId();
+        return ((Number) SNOWFLAKE_ID_GENERATOR.nextId(null)).longValue();
     }
 
     /**
@@ -92,7 +103,7 @@ public class IdUtils {
      * @return String
      */
     public static String simpleUUID() {
-        return UUID.randomUUID().toString().replaceAll("-", "");
+        return String.valueOf(UUID_GENERATOR.nextId(null));
     }
 
     /**
@@ -101,6 +112,6 @@ public class IdUtils {
      * @return String
      */
     public static String objectId() {
-        return ObjectId.nextId();
+        return String.valueOf(OBJECT_ID_GENERATOR.nextId(null));
     }
 }

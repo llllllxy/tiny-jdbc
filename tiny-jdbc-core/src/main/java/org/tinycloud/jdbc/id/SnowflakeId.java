@@ -187,6 +187,10 @@ public class SnowflakeId {
                     if (timestamp < lastTimestamp) {
                         throw new RuntimeException(String.format("Clock moved backwards. Refusing to generate id for %d milliseconds", offset));
                     }
+                } catch (InterruptedException e) {
+                    // 恢复线程中断标志后继续抛出，避免吞掉中断
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -232,7 +236,7 @@ public class SnowflakeId {
      * 反解id的时间戳部分
      */
     public static long parseIdTimestamp(long id) {
-        return (id >> 22) + TWEPOCH;
+        return (id >>> 22) + TWEPOCH;
     }
 
     private void printLog() {
