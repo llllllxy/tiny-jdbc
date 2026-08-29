@@ -11,6 +11,7 @@ import org.tinycloud.jdbc.util.DbType;
 import org.tinycloud.jdbc.util.LocalHostUtils;
 
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * TinyJDBC 不可变运行时上下文。
@@ -185,8 +186,11 @@ public final class TinyJdbcRuntime {
         try {
             return new SnowflakeId(LocalHostUtils.getInetAddress());
         } catch (Exception e) {
-            LOGGER.warn("Unable to obtain correct IP address information, the fixed workerId and datacenterId will be used to generate Snowflake IDs.");
-            return new SnowflakeId(1L, 1L);
+            LOGGER.warn("Unable to obtain correct IP address information, fall back to random workerId/datacenterId to generate Snowflake IDs.");
+            // 在合法范围内随机取节点 ID，避免所有实例回退到相同的 (1,1) 而碰撞
+            long workerId = ThreadLocalRandom.current().nextLong(0, 32);
+            long datacenterId = ThreadLocalRandom.current().nextLong(0, 32);
+            return new SnowflakeId(workerId, datacenterId);
         }
     }
 }
