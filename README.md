@@ -22,7 +22,7 @@
 - **功能强**：既支持原生 sql 操作，让开发者可以灵活编写复杂的 sql 语句；又支持实体类映射操作，通过简单的配置即可实现对象与数据库表的映射。BaseDao
 里封装了大量的通用方法，配合强大灵活的条件构造器（Criteria）和SQL构造器（SQL），基本能满足各类使用需求。
 - **支持 Lambda 形式调用**：条件构造器（Criteria）和SQL构造器（SQL）支持Lambda形式调用，编译期语法增强，无需再担心字段写错，提高代码的安全性和可维护性
-- **支持主键自动生成**：内含多种主键生成策略，包括自增主键、UUID、雪花ID 等，同时也支持自定义 ID 生成策略，满足不同业务场景下的主键生成需求。
+- **支持主键自动生成**：内含多种主键生成策略，包括自增主键、UUID、雪花ID、NanoId、ULID 等，同时也支持自定义 ID 生成策略，满足不同业务场景下的主键生成需求。
 - **支持多种数据库分页方言**：包括 MySQL、ORACLE、DB2、PostgreSql 等多种常用数据库，无需额外配置，框架会自动识别数据库类型并采用相应的分页方言，大大简化了分页查询的开发工作。
 - **同时支持 SpringBoot2 和 SpringBoot3**
 
@@ -82,7 +82,7 @@ public class UploadFile implements Serializable {
     /**
      * @Id 注解用于标记表的主键，目前只支持单主键，请不要在多个属性上设置此注解，会导致程序出错
      *
-     * idType: 主键ID策略，目前支持以下7种 AUTO_INCREMENT、INPUT、OBJECT_ID、ASSIGN_ID、UUID、SEQUENCE、CUSTOM
+     * idType: 主键ID策略，目前支持以下9种 AUTO_INCREMENT、INPUT、OBJECT_ID、ASSIGN_ID、UUID、SEQUENCE、CUSTOM、NANO_ID、ULID
      * value: 则代表的是sequence 序列的 sql 内容，idType=SEQUENCE时，必须设置此内容
      * <br/>
      * 注意！
@@ -92,6 +92,8 @@ public class UploadFile implements Serializable {
      * 如果设置为 ASSIGN_ID 的话，则此属性类型必须为String或者Long
      * 如果设置为 SEQUENCE 的话，则此属性类型必须为Integer或者Long，且必须设置value属性为查询序列值的SQL
      * 如果设置为 CUSTOM 的话，则需要自己实现 IdGeneratorInterface 接口并注册为bean
+     * 如果设置为 NANO_ID 的话，则此属性类型必须为String
+     * 如果设置为 ULID 的话，则此属性类型必须为String
      *
      *
      * @Column 注解用于标记属性和表字段的对应关系
@@ -235,6 +237,8 @@ public class UploadFile implements Serializable {
 | ASSIGN_ID      | 自动设置 雪花ID 作为主键值                                               |
 | UUID           | 自动设置 UUID 作为主键值                                               |
 | SEQUENCE       | 自动设置 调用序列SQL结果 作为主键值                                          |
+| NANO_ID        | 自动设置 NanoId 作为主键值（21 位 url-safe 字符串）                             |
+| ULID           | 自动设置 ULID 作为主键值（26 位、字典序可排序字符串，同一毫秒内单调递增）            |
 | CUSTOM         | 自定义主键 ID 生成器，需自行实现 `IdGeneratorInterface`，详见[自定义 ID 生成器](#7自定义id生成器) |
 
 
