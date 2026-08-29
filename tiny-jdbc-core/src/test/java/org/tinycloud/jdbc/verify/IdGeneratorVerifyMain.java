@@ -62,6 +62,19 @@ public class IdGeneratorVerifyMain {
     }
 
     @Test
+    public void testUlidViaRouter() {
+        Demo demo = new Demo();
+        IdContext ctx = ctx(demo, field(Demo.class, "id"), String.class, IdType.ULID);
+        Object id = router(null).generate(ctx);
+        assertTrue(id instanceof String);
+        String s = (String) id;
+        assertEquals(26, s.length());
+        // Crockford's Base32 大写字符集（0-9、A-H、J、K、M、N、P-T、V-Z，不含 I/L/O/U），首字符必须 0-7
+        assertTrue(s.matches("^[0-7][0-9A-HJKMNP-TV-Z]{25}$"));
+        assertEquals(id, demo.getId());
+    }
+
+    @Test
     public void testAssignIdLongViaRouter() {
         LongDemo demo = new LongDemo();
         IdContext ctx = ctx(demo, field(LongDemo.class, "id"), Long.class, IdType.ASSIGN_ID);
