@@ -51,6 +51,17 @@ public class IdGeneratorVerifyMain {
     }
 
     @Test
+    public void testNanoIdViaRouter() {
+        Demo demo = new Demo();
+        IdContext ctx = ctx(demo, field(Demo.class, "id"), String.class, IdType.NANO_ID);
+        Object id = router(null).generate(ctx);
+        assertTrue(id instanceof String);
+        assertEquals(21, ((String) id).length());
+        assertTrue(((String) id).matches("^[0-9A-Za-z_-]{21}$"));
+        assertEquals(id, demo.getId());
+    }
+
+    @Test
     public void testAssignIdLongViaRouter() {
         LongDemo demo = new LongDemo();
         IdContext ctx = ctx(demo, field(LongDemo.class, "id"), Long.class, IdType.ASSIGN_ID);

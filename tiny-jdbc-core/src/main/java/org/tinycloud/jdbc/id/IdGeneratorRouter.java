@@ -6,6 +6,7 @@ import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.id.generator.ObjectIdGenerator;
 import org.tinycloud.jdbc.id.generator.SequenceGenerator;
 import org.tinycloud.jdbc.id.generator.SnowflakeIdGenerator;
+import org.tinycloud.jdbc.id.generator.NanoIdGenerator;
 import org.tinycloud.jdbc.id.generator.UuidGenerator;
 import org.tinycloud.jdbc.util.ConvertUtils;
 
@@ -19,7 +20,7 @@ import java.util.Map;
  * </p>
  * <p>
  *     <ul>
- *         <li>内置策略（OBJECT_ID / UUID / ASSIGN_ID / SEQUENCE）由框架提供实现类；</li>
+ *         <li>内置策略（OBJECT_ID / UUID / ASSIGN_ID / SEQUENCE / NANO_ID）由框架提供实现类；</li>
  *         <li>{@link IdType#CUSTOM} 复用用户通过 {@link TinyJdbcRuntime} 注册的 {@link IdGeneratorInterface}；</li>
  *         <li>{@link IdType#AUTO_INCREMENT} 返回 null（跳过该列）；{@link IdType#INPUT} 要求调用方预赋值。</li>
  *     </ul>
@@ -45,6 +46,7 @@ public class IdGeneratorRouter {
         this.builtin.put(IdType.UUID, new UuidGenerator());
         this.builtin.put(IdType.ASSIGN_ID, new SnowflakeIdGenerator(tinyJdbcRuntime.getSnowflakeId()));
         this.builtin.put(IdType.SEQUENCE, new SequenceGenerator());
+        this.builtin.put(IdType.NANO_ID, new NanoIdGenerator());
     }
 
     /**
@@ -98,6 +100,12 @@ public class IdGeneratorRouter {
         if (idType == IdType.OBJECT_ID) {
             if (fieldType != String.class) {
                 throw new TinyJdbcException("The type of " + context.getFieldName() + " field must be String when objectId!");
+            }
+            return id;
+        }
+        if (idType == IdType.NANO_ID) {
+            if (fieldType != String.class) {
+                throw new TinyJdbcException("The type of " + context.getFieldName() + " field must be String when nanoId!");
             }
             return id;
         }

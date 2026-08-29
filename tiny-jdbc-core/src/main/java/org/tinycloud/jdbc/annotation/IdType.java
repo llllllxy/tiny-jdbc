@@ -8,7 +8,8 @@ public enum IdType {
     ASSIGN_ID(3),
     UUID(4),
     SEQUENCE(5),
-    CUSTOM(6);
+    CUSTOM(6),
+    NANO_ID(7);
 
     private final int key;
 
