@@ -19,13 +19,13 @@ import static org.junit.Assert.fail;
  */
 public class PageVerifyMain {
 
-    // 验证：DB2 使用 ROW_NUMBER() OVER (ORDER BY 1)，且不再出现错误的 ROWNUMBER()
+    // 验证：DB2 使用 ROWNUMBER() OVER()（与 MyBatis-Plus / PageHelper 保持一致的写法）
     @Test
     public void testDb2PagingSqlUsesRowNumber() {
         DB2PageHandleImpl handler = new DB2PageHandleImpl();
         PagingSQLProvider p = handler.handlerPagingSQL("SELECT * FROM t", 2, 10);
-        assertTrue(p.getSql().contains("ROW_NUMBER() OVER (ORDER BY 1)"));
-        assertFalse(p.getSql().contains("ROWNUMBER"));
+        assertTrue(p.getSql().contains("ROWNUMBER() OVER()"));
+        assertFalse(p.getSql().contains("ROW_NUMBER"));
         // pageStart = (2-1)*10+1 = 11, pageEnd = 11+10-1 = 20
         assertEquals(11L, ((Number) p.getParameters()[0]).longValue());
         assertEquals(20L, ((Number) p.getParameters()[1]).longValue());
