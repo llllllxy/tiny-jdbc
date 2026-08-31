@@ -155,4 +155,38 @@ public class TableParserUtils {
             return new Pair<>(columnList, primaryKeyColumn);
         });
     }
+
+    /**
+     * 解析实体字段对应的数据库列名。
+     * <p>
+     * 列名规则与 {@link #getTableColumn} 保持一致：{@code @Column.value()} 优先，否则驼峰转下划线。
+     * </p>
+     *
+     * @param clazz     实体类类型
+     * @param fieldName Java 字段名（驼峰）
+     * @return 数据库列名
+     */
+    public static String resolveColumnName(Class<?> clazz, String fieldName) {
+        if (clazz == null || StrUtils.isEmpty(fieldName)) {
+            throw new TinyJdbcException("resolveColumnName clazz/fieldName cannot be null or empty");
+        }
+        Field target = null;
+        Field[] fields = ReflectUtils.getFields(clazz);
+        if (fields != null) {
+            for (Field field : fields) {
+                if (field.getName().equals(fieldName)) {
+                    target = field;
+                    break;
+                }
+            }
+        }
+        if (target == null) {
+            throw new TinyJdbcException("resolveColumnName " + clazz.getName() + " no field named " + fieldName);
+        }
+        Column columnAnnotation = target.getAnnotation(Column.class);
+        if (columnAnnotation != null && StrUtils.isNotEmpty(columnAnnotation.value())) {
+            return columnAnnotation.value();
+        }
+        return StrUtils.camelToUnderline(target.getName());
+    }
 }

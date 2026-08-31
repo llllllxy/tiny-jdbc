@@ -5,6 +5,7 @@ import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
 import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.util.LambdaUtils;
 import org.tinycloud.jdbc.util.ReflectUtils;
+import org.tinycloud.jdbc.util.TableParserUtils;
 
 import java.time.LocalDateTime;
 
@@ -71,13 +72,15 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
     @Override
     public <T> void updateCriteriaFill(UpdateCriteria<T> criteria, Class<T> entityClass) {
         if (ReflectUtils.hasField(entityClass, UPDATE_USER_ID_FIELD)) {
-            if (!criteria.hasUpdateColumn("update_user_id")) {
-                criteria.set("update_user_id", currentUserId());
+            String column = TableParserUtils.resolveColumnName(entityClass, UPDATE_USER_ID_FIELD);
+            if (!criteria.hasUpdateColumn(column)) {
+                criteria.set(column, currentUserId());
             }
         }
         if (ReflectUtils.hasField(entityClass, UPDATE_TIME_FIELD)) {
-            if (!criteria.hasUpdateColumn("update_time")) {
-                criteria.set("update_time", LocalDateTime.now());
+            String column = TableParserUtils.resolveColumnName(entityClass, UPDATE_TIME_FIELD);
+            if (!criteria.hasUpdateColumn(column)) {
+                criteria.set(column, LocalDateTime.now());
             }
         }
     }

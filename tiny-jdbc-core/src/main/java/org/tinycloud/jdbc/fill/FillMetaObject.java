@@ -67,7 +67,7 @@ public class FillMetaObject {
     }
 
     /**
-     * 更新场景严格填充：仅当当前字段值为 null 时才写入
+     * 更新场景严格填充：只要传入的值不为 null 就覆盖写入（更新覆盖语义，不检查当前字段值）
      */
     public void strictUpdateFill(String fieldName, Object value) {
         if (value != null) {
