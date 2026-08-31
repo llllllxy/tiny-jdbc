@@ -133,14 +133,21 @@ public class SnowflakeId {
         mpId.append(datacenterId);
         String name = ManagementFactory.getRuntimeMXBean().getName();
         if (name != null && !name.isEmpty()) {
-            // GET jvmPid
-            int pid = Integer.parseInt(name.split("@")[0]);
+            int pid;
+            try {
+                // GET jvmPid（运行时名通常形如 "1235@hostname"）
+                pid = Integer.parseInt(name.split("@")[0]);
+            } catch (NumberFormatException e) {
+                // 运行时名非 "pid@host" 格式（容器/特殊环境下无法解析出 pid），
+                // 用运行时名自身 hash 作为稳定兜底，避免默认构造直接失败，并保证同进程稳定。
+                pid = name.hashCode();
+            }
             if (pid < 10) { // 疑似容器环境
                 pid = ThreadLocalRandom.current().nextInt(10, 4194304);
             }
             mpId.append(pid);
         }
-        // MAC + PID 的 hashcode 获取16个低位
+        // datacenterId + jvmPid 的 hashcode 获取16个低位（无 MAC 参与）
         return (mpId.toString().hashCode() & 0xffff) % (maxWorkerId + 1);
     }
 
