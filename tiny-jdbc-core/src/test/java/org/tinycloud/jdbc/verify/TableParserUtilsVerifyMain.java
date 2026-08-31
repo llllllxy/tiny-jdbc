@@ -5,12 +5,15 @@ import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.util.TableParserUtils;
 
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * TableParserUtils.resolveColumnName 的测试：@Column 值优先、默认驼峰转下划线、字段不存在报错。
+ * TableParserUtils.resolveColumnName 与 resolveColumnToPropertyMap 的测试。
  */
 public class TableParserUtilsVerifyMain {
 
@@ -19,6 +22,9 @@ public class TableParserUtilsVerifyMain {
         private String customField;
 
         private String plainField;
+
+        @Column(value = "IGNORED", exist = false)
+        private String ignoredField;
     }
 
     // 验证：@Column.value() 优先
@@ -42,5 +48,15 @@ public class TableParserUtilsVerifyMain {
         } catch (TinyJdbcException e) {
             assertTrue(e.getMessage().contains("no field named"));
         }
+    }
+
+    // 验证：列名→属性名映射（@Column 优先、默认下划线、exist=false 跳过）
+    @Test
+    public void testResolveColumnToPropertyMap() {
+        Map<String, String> map = TableParserUtils.resolveColumnToPropertyMap(Demo.class);
+        assertEquals("customField", map.get("custom_col"));
+        assertEquals("plainField", map.get("plain_field"));
+        assertFalse(map.containsKey("ignored"));
+        assertFalse(map.containsKey("ignored_field"));
     }
 }

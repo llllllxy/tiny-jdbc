@@ -1,7 +1,6 @@
 package org.tinycloud.jdbc.support;
 
 import org.springframework.core.GenericTypeResolver;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.util.ClassUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -28,6 +27,7 @@ import org.tinycloud.jdbc.page.PageCheck;
 import org.tinycloud.jdbc.page.PageHandleResult;
 import org.tinycloud.jdbc.sql.SQL;
 import org.tinycloud.jdbc.util.ArrayUtils;
+import org.tinycloud.jdbc.util.TableRowMapper;
 import org.tinycloud.jdbc.util.CollectionUtils;
 import org.tinycloud.jdbc.util.tuple.Pair;
 
@@ -80,7 +80,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         }
         Class<?> resolved = resolvedArgs[0];
         entityClass = (Class<T>) resolved;
-        rowMapper = BeanPropertyRowMapper.newInstance(entityClass);
+        rowMapper = TableRowMapper.newInstance(entityClass);
     }
 
     // ======================== 抽离的私有工具方法（加do前缀） ========================
@@ -238,7 +238,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
 
     @Override
     public <F> List<F> select(String sql, Class<F> clazz, Object... params) {
-        return this.doQuery(sql, new BeanPropertyRowMapper<>(clazz), params);
+        return this.doQuery(sql, new TableRowMapper<>(clazz), params);
     }
 
     @Override
@@ -281,7 +281,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         Long count = this.doQueryForObject(handleResult.getCountSql(), Long.class, params);
         List<F> records;
         if (count != null && count > 0L) {
-            records = this.doQuery(handleResult.getPageSql(), new BeanPropertyRowMapper<>(clazz), ArrayUtils.mergeArrays(params, handleResult.getParameters()));
+            records = this.doQuery(handleResult.getPageSql(), new TableRowMapper<>(clazz), ArrayUtils.mergeArrays(params, handleResult.getParameters()));
         } else {
             records = new ArrayList<>();
         }

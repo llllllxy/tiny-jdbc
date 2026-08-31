@@ -8,6 +8,7 @@ import org.tinycloud.jdbc.util.tuple.Pair;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +26,8 @@ public class TableParserUtils {
     private static final Map<Class<?>, String> tableNameCache = new ConcurrentHashMap<>(128);
 
     private static final Map<Class<?>, Pair<List<String>, String>> tableColumnCache = new ConcurrentHashMap<>(128);
+
+    private static final Map<Class<?>, Map<String, String>> columnToPropertyCache = new ConcurrentHashMap<>(64);
 
 
     /**
@@ -188,5 +191,36 @@ public class TableParserUtils {
             return columnAnnotation.value();
         }
         return StrUtils.camelToUnderline(target.getName());
+    }
+
+    /**
+     * 构建实体「数据库列名(小写) → 属性名」映射，用于结果集映射。
+     * <p>
+     * 复用 {@link #getTableColumn} 的列名规则（{@code @Column.value()} 优先，否则驼峰转下划线），
+     * 并跳过 {@code @Column(exist=false)} 字段。结果缓存于类级 {@code ConcurrentHashMap}，避免逐条反射。
+     * </p>
+     *
+     * @param clazz 实体类类型
+     * @return 列名(小写) → 属性名 映射
+     */
+    public static Map<String, String> resolveColumnToPropertyMap(Class<?> clazz) {
+        return ConcurrentHashMapUtils.computeIfAbsent(columnToPropertyCache, clazz, key -> {
+            Map<String, String> map = new HashMap<>(16);
+            Field[] fields = resolveFields(key);
+            for (Field field : fields) {
+                Column columnAnnotation = field.getAnnotation(Column.class);
+                if (columnAnnotation != null && !columnAnnotation.exist()) {
+                    continue;
+                }
+                String column;
+                if (columnAnnotation != null && StrUtils.isNotEmpty(columnAnnotation.value())) {
+                    column = columnAnnotation.value();
+                } else {
+                    column = StrUtils.camelToUnderline(field.getName());
+                }
+                map.put(column.toLowerCase(), field.getName());
+            }
+            return map;
+        });
     }
 }
