@@ -67,10 +67,10 @@ public class IdGeneratorRouter {
             throw new TinyJdbcException("INPUT primary key [" + context.getFieldName() + "] must be set by the caller before insert.");
         }
 
-        IdGeneratorInterface generator = resolveGenerator(idType);
+        IdGeneratorInterface generator = this.resolveGenerator(idType);
         Object id = generator.nextId(context);
-        Object converted = convert(context, id);
-        setField(context, converted);
+        Object converted = this.convert(context, id);
+        this.setField(context, converted);
         return converted;
     }
 
@@ -79,13 +79,13 @@ public class IdGeneratorRouter {
      */
     private IdGeneratorInterface resolveGenerator(IdType idType) {
         if (idType == IdType.CUSTOM) {
-            IdGeneratorInterface custom = tinyJdbcRuntime.getIdGeneratorInterface();
+            IdGeneratorInterface custom = this.tinyJdbcRuntime.getIdGeneratorInterface();
             if (custom == null) {
                 throw new TinyJdbcException("IdType.CUSTOM requires an IdGeneratorInterface bean.");
             }
             return custom;
         }
-        IdGeneratorInterface generator = builtin.get(idType);
+        IdGeneratorInterface generator = this.builtin.get(idType);
         if (generator == null) {
             throw new TinyJdbcException("No id generator for idType: " + idType + "!");
         }
@@ -135,7 +135,11 @@ public class IdGeneratorRouter {
             }
             return id;
         }
-        // CUSTOM：允许任意可转换类型
+        // CUSTOM：允许任意可转换类型，但生成结果不能为 null，避免插入空主键
+        if (id == null) {
+            throw new TinyJdbcException("The custom id generator returned null for field [" + context.getFieldName()
+                    + "], please make sure the custom IdGeneratorInterface nextId() returns a non-null value.");
+        }
         try {
             return ConvertUtils.convert(id, fieldType);
         } catch (Exception e) {

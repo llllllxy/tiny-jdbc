@@ -412,6 +412,10 @@ public class SqlGenerator {
             }
             columns.append(column).append(",");
         }
+        // 全部字段都被 exist=false 或忽略时，无法构建可查询列
+        if (columns.length() == 0) {
+            throw new TinyJdbcException("No valid columns to select! All fields are marked as exist=false or ignored.");
+        }
         // 截去columns的最后一个字符
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
 

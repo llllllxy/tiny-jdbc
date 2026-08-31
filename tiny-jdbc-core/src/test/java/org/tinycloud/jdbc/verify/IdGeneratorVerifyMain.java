@@ -136,6 +136,20 @@ public class IdGeneratorVerifyMain {
     }
 
     @Test
+    public void testCustomNullResultThrows() {
+        // CUSTOM 生成器返回 null 时应报错，避免插入空主键
+        IdGeneratorInterface custom = entity -> null;
+        Demo demo = new Demo();
+        IdContext ctx = ctx(demo, field(Demo.class, "id"), String.class, IdType.CUSTOM);
+        try {
+            router(custom).generate(ctx);
+            fail("expected TinyJdbcException for null custom id");
+        } catch (TinyJdbcException e) {
+            assertTrue(e.getMessage().contains("returned null"));
+        }
+    }
+
+    @Test
     public void testAutoIncrementReturnsNull() {
         Demo demo = new Demo();
         IdContext ctx = ctx(demo, field(Demo.class, "id"), Long.class, IdType.AUTO_INCREMENT);
