@@ -48,6 +48,7 @@ public class SqlGenerator {
 
         StringBuilder columns = new StringBuilder();
         StringBuilder values = new StringBuilder();
+        String primaryKeyColumn = null;
         for (Field field : fields) {
             ReflectUtils.makeAccessible(field);
             Class<?> fieldType = field.getType();
@@ -71,6 +72,12 @@ public class SqlGenerator {
             }
             // 如果是主键列
             if (idAnnotation != null) {
+                // 多主键校验：与 updateByIdSql/selectSql 保持一致
+                if (primaryKeyColumn != null) {
+                    throw new TinyJdbcException("Only one @Id is supported, multiple primary key columns found in class "
+                            + object.getClass().getName() + ": " + primaryKeyColumn + ", " + column);
+                }
+                primaryKeyColumn = column;
                 // 处理主键生成/赋值，返回最终的主键值（可能是自动生成的）
                 fieldValue = processPrimaryKey(field, fieldValue, fieldName, fieldType, idAnnotation, object, jdbcTemplate, tinyJdbcRuntime);
                 // 为自增主键时，返回 null，此时跳过该字段（无需加入 SQL）
