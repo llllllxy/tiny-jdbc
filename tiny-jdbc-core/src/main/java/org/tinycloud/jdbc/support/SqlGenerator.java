@@ -14,8 +14,8 @@ import org.tinycloud.jdbc.id.IdContext;
 import org.tinycloud.jdbc.id.IdGeneratorRouter;
 import org.tinycloud.jdbc.util.ReflectUtils;
 import org.tinycloud.jdbc.util.StrUtils;
+import org.tinycloud.jdbc.util.TableInfo;
 import org.tinycloud.jdbc.util.TableParserUtils;
-import org.tinycloud.jdbc.util.tuple.Pair;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -41,6 +41,7 @@ public class SqlGenerator {
     public static SqlProvider insertSql(Object object, boolean ignoreNulls, JdbcTemplate jdbcTemplate, TinyJdbcRuntime tinyJdbcRuntime) {
         Field[] fields = TableParserUtils.resolveFields(object);
         String tableName = TableParserUtils.getTableName(object);
+        TableInfo tableInfo = TableParserUtils.getTableInfo(object.getClass());
 
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
@@ -48,7 +49,6 @@ public class SqlGenerator {
 
         StringBuilder columns = new StringBuilder();
         StringBuilder values = new StringBuilder();
-        String primaryKeyColumn = null;
         for (Field field : fields) {
             ReflectUtils.makeAccessible(field);
             Class<?> fieldType = field.getType();
@@ -59,11 +59,7 @@ public class SqlGenerator {
             if (columnAnnotation != null && !columnAnnotation.exist()) {
                 continue;
             }
-            if (columnAnnotation != null && StrUtils.isNotEmpty(columnAnnotation.value())) {
-                column = columnAnnotation.value();
-            } else {
-                column = StrUtils.camelToUnderline(fieldName);
-            }
+            column = tableInfo.getColumn(fieldName);
             Object fieldValue;
             try {
                 fieldValue = field.get(object);
@@ -72,12 +68,6 @@ public class SqlGenerator {
             }
             // 如果是主键列
             if (idAnnotation != null) {
-                // 多主键校验：与 updateByIdSql/selectSql 保持一致
-                if (primaryKeyColumn != null) {
-                    throw new TinyJdbcException("Only one @Id is supported, multiple primary key columns found in class "
-                            + object.getClass().getName() + ": " + primaryKeyColumn + ", " + column);
-                }
-                primaryKeyColumn = column;
                 // 处理主键生成/赋值，返回最终的主键值（可能是自动生成的）
                 fieldValue = processPrimaryKey(field, fieldValue, fieldName, fieldType, idAnnotation, object, jdbcTemplate, tinyJdbcRuntime);
                 // 为自增主键时，返回 null，此时跳过该字段（无需加入 SQL）
@@ -157,6 +147,7 @@ public class SqlGenerator {
     public static SqlProvider updateByIdSql(Object object, boolean ignoreNulls) {
         Field[] fields = TableParserUtils.resolveFields(object);
         String tableName = TableParserUtils.getTableName(object);
+        TableInfo tableInfo = TableParserUtils.getTableInfo(object.getClass());
 
         StringBuilder sql = new StringBuilder();
         List<Object> parameters = new ArrayList<>();
@@ -171,11 +162,7 @@ public class SqlGenerator {
             if (columnAnnotation != null && !columnAnnotation.exist()) {
                 continue;
             }
-            if (columnAnnotation != null && StrUtils.isNotEmpty(columnAnnotation.value())) {
-                column = columnAnnotation.value();
-            } else {
-                column = StrUtils.camelToUnderline(field.getName());
-            }
+            column = tableInfo.getColumn(field.getName());
             Object filedValue = null;
             try {
                 filedValue = field.get(object);
@@ -183,10 +170,7 @@ public class SqlGenerator {
                 throw new TinyJdbcException("get field value failed: " + field.getName(), e);
             }
             if (idAnnotation != null) {
-                if (whereColumns.length() > 0) {
-                    throw new TinyJdbcException("Only one @Id is supported, multiple primary key columns found in class "
-                            + object.getClass().getName() + ": " + whereColumns + ", " + column);
-                }
+                // 多 @Id 校验已由 TableInfo 统一保证（仅一个主键），此处直接定位主键列
                 whereColumns.append(column);
                 whereValues = filedValue;
                 continue;
@@ -278,6 +262,7 @@ public class SqlGenerator {
     public static SqlProvider deleteSql(Object object) {
         Field[] fields = TableParserUtils.resolveFields(object);
         String tableName = TableParserUtils.getTableName(object);
+        TableInfo tableInfo = TableParserUtils.getTableInfo(object.getClass());
 
         StringBuilder sql = new StringBuilder();
         StringBuilder whereColumns = new StringBuilder();
@@ -290,11 +275,7 @@ public class SqlGenerator {
             if (columnAnnotation != null && !columnAnnotation.exist()) {
                 continue;
             }
-            if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                column = StrUtils.camelToUnderline(field.getName());
-            } else {
-                column = columnAnnotation.value();
-            }
+            column = tableInfo.getColumn(field.getName());
             Object filedValue = null;
             try {
                 filedValue = field.get(object);
@@ -382,6 +363,7 @@ public class SqlGenerator {
      */
     public static SqlProvider selectSql(Object object) {
         String tableName = TableParserUtils.getTableName(object);
+        TableInfo tableInfo = TableParserUtils.getTableInfo(object.getClass());
         Field[] fields = TableParserUtils.resolveFields(object);
 
         StringBuilder columns = new StringBuilder();
@@ -395,11 +377,7 @@ public class SqlGenerator {
             if (columnAnnotation != null && !columnAnnotation.exist()) {
                 continue;
             }
-            if (columnAnnotation == null || StrUtils.isEmpty(columnAnnotation.value())) {
-                column = StrUtils.camelToUnderline(field.getName());
-            } else {
-                column = columnAnnotation.value();
-            }
+            column = tableInfo.getColumn(field.getName());
             Object filedValue = null;
             try {
                 filedValue = field.get(object);
@@ -439,10 +417,9 @@ public class SqlGenerator {
      */
     public static SqlProvider selectByIdSql(Object id, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
-        Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
-        String primaryKeyColumn = pair.getRight();
-        List<String> columnList = pair.getLeft();
-        String tableColumn = String.join(",", columnList);
+        TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
+        String primaryKeyColumn = requirePrimaryKeyColumn(tableInfo);
+        String tableColumn = String.join(",", tableInfo.getColumns());
         List<Object> parameters = new ArrayList<>();
         parameters.add(id);
         SqlProvider so = new SqlProvider();
@@ -459,10 +436,9 @@ public class SqlGenerator {
      */
     public static SqlProvider selectByIdsSql(Class<?> clazz, List<Object> ids) {
         String tableName = TableParserUtils.getTableName(clazz);
-        Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
-        String primaryKeyColumn = pair.getRight();
-        List<String> columnList = pair.getLeft();
-        String tableColumn = String.join(",", columnList);
+        TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
+        String primaryKeyColumn = requirePrimaryKeyColumn(tableInfo);
+        String tableColumn = String.join(",", tableInfo.getColumns());
 
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(tableColumn).append(" FROM ").append(tableName)
@@ -485,8 +461,8 @@ public class SqlGenerator {
      */
     public static SqlProvider deleteByIdSql(Object id, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
-        Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
-        String primaryKeyColumn = pair.getRight();
+        TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
+        String primaryKeyColumn = requirePrimaryKeyColumn(tableInfo);
 
         List<Object> parameters = new ArrayList<>();
         parameters.add(id);
@@ -503,8 +479,8 @@ public class SqlGenerator {
      */
     public static SqlProvider deleteByIdsSql(Class<?> clazz, List<Object> ids) {
         String tableName = TableParserUtils.getTableName(clazz);
-        Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
-        String primaryKeyColumn = pair.getRight();
+        TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
+        String primaryKeyColumn = requirePrimaryKeyColumn(tableInfo);
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ").append(tableName).append(" WHERE ").append(primaryKeyColumn).append(" IN ");
         // 构建 IN 查询的 SQL 语句
@@ -527,9 +503,9 @@ public class SqlGenerator {
         String tableName = TableParserUtils.getTableName(clazz);
         String tableColumn = criteria.selectSql();
         if (StrUtils.isEmpty(tableColumn)) {
-            Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
-            List<String> columnList = pair.getLeft();
-            tableColumn = String.join(",", columnList);
+            TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
+            requirePrimaryKeyColumn(tableInfo);
+            tableColumn = String.join(",", tableInfo.getColumns());
         }
         String whereSql = criteria.whereSql();
         List<Object> parameters = criteria.getParameters();
@@ -551,9 +527,9 @@ public class SqlGenerator {
         String tableName = TableParserUtils.getTableName(clazz);
         String tableColumn = lambdaCriteria.selectSql();
         if (StrUtils.isEmpty(tableColumn)) {
-            Pair<List<String>, String> pair = TableParserUtils.getTableColumn(clazz);
-            List<String> columnList = pair.getLeft();
-            tableColumn = String.join(",", columnList);
+            TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
+            requirePrimaryKeyColumn(tableInfo);
+            tableColumn = String.join(",", tableInfo.getColumns());
         }
 
         String whereSql = lambdaCriteria.whereSql();
@@ -591,5 +567,20 @@ public class SqlGenerator {
         so.setSql("SELECT COUNT(*) FROM " + tableName + lambdaCriteria.whereSql());
         so.setParameters(lambdaCriteria.getParameters());
         return so;
+    }
+
+    /**
+     * 读取实体主键列，若实体未声明 {@code @Id} 则抛出明确异常（与历史 getTableColumn 行为一致），
+     * 避免将 null 主键列拼进 SQL 导致 "WHERE null=?"。
+     *
+     * @param tableInfo 表结构元信息
+     * @return 主键列名
+     */
+    private static String requirePrimaryKeyColumn(TableInfo tableInfo) {
+        String primaryKeyColumn = tableInfo.getPrimaryKeyColumn();
+        if (StrUtils.isEmpty(primaryKeyColumn)) {
+            throw new TinyJdbcException("Please correctly set the primary key attribute column!");
+        }
+        return primaryKeyColumn;
     }
 }

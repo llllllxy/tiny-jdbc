@@ -59,4 +59,16 @@ public class TableParserUtilsVerifyMain {
         assertFalse(map.containsKey("ignored"));
         assertFalse(map.containsKey("ignored_field"));
     }
+
+    // 验证：isPersistentField —— 仅有效字段为 true；exist=false / 不存在 / null / 空 均为 false
+    @Test
+    public void testIsPersistentField() {
+        assertTrue(TableParserUtils.isPersistentField(Demo.class, "customField"));
+        assertTrue(TableParserUtils.isPersistentField(Demo.class, "plainField"));
+        assertFalse(TableParserUtils.isPersistentField(Demo.class, "ignoredField"));
+        assertFalse(TableParserUtils.isPersistentField(Demo.class, "notExist"));
+        assertFalse(TableParserUtils.isPersistentField(null, "customField"));
+        assertFalse(TableParserUtils.isPersistentField(Demo.class, null));
+        assertFalse(TableParserUtils.isPersistentField(Demo.class, ""));
+    }
 }

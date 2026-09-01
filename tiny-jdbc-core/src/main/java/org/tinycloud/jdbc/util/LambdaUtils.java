@@ -1,7 +1,6 @@
 package org.tinycloud.jdbc.util;
 
 import org.springframework.util.ClassUtils;
-import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.criteria.TypeFunction;
 
 import java.io.Serializable;
@@ -20,22 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 2024-04-02 10:55
  */
 public class LambdaUtils {
-
-    /**
-     * 缓存实体类字段到数据库列名的映射。
-     */
-    private static final ClassValue<Map<String, String>> LAMBDA_TO_FIELD_CACHE = new ClassValue<Map<String, String>>() {
-        /**
-         * 为每个实体类创建独立的字段列名缓存。
-         *
-         * @param type 实体类
-         * @return 当前实体类对应的字段列名缓存
-         */
-        @Override
-        protected Map<String, String> computeValue(Class<?> type) {
-            return new ConcurrentHashMap<>();
-        }
-    };
 
     /**
      * 缓存实体类字段到 Lambda Getter 的映射。
@@ -84,32 +67,19 @@ public class LambdaUtils {
         }
         final String className = instantiatedMethodType.substring(start + 1, end).replace("/", ".");
         final Class<?> entityClass = ClassUtils.getUserClass(ClassUtils.resolveClassName(className, getter.getClass().getClassLoader()));
-        Map<String, String> columnNameCache = LAMBDA_TO_FIELD_CACHE.get(entityClass);
-        String cachedColumnName = columnNameCache.get(fieldName);
-        if (cachedColumnName != null) {
-            return cachedColumnName;
-        }
-        return ConcurrentHashMapUtils.computeIfAbsent(columnNameCache, fieldName, key -> {
-            try {
-                Field field = ReflectUtils.getAccessibleField(entityClass, fieldName);
-                Column annotation = field.getAnnotation(Column.class);
-                if (annotation != null && !annotation.exist()) {
-                    throw new IllegalArgumentException("Field '" + fieldName + "' marked with @Column(exist=false), which is not allowed to be used in a lambda expression.");
-                }
-                if (annotation == null || StrUtils.isEmpty(annotation.value())) {
-                    return StrUtils.camelToUnderline(fieldName);
-                }
-                return annotation.value();
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Failed to infer property name from method '" + methodName + "': " + e.getMessage(), e);
-            } catch (NoSuchFieldException e) {
-                throw new IllegalArgumentException("Field '" + fieldName + "' not found in class '" + entityClass.getName() + "'", e);
-            } catch (SecurityException e) {
-                throw new RuntimeException("Security manager blocked reflection access: " + e.getMessage(), e);
-            } catch (Exception e) {
-                throw new RuntimeException("Unexpected error while getting lambda column name: " + e.getMessage(), e);
+        try {
+            // 统一走 TableInfo：@Column.value() 优先，否则驼峰转下划线；字段存在性 / exist=false 均由其校验
+            TableInfo tableInfo = TableParserUtils.getTableInfo(entityClass);
+            if (tableInfo.getField(fieldName) == null) {
+                throw new IllegalArgumentException("Field '" + fieldName + "' not found in class '" + entityClass.getName() + "'");
             }
-        });
+            if (!tableInfo.isPersistentField(fieldName)) {
+                throw new IllegalArgumentException("Field '" + fieldName + "' marked with @Column(exist=false), which is not allowed to be used in a lambda expression.");
+            }
+            return tableInfo.getColumn(fieldName);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Failed to infer property name from method '" + methodName + "': " + e.getMessage(), e);
+        }
     }
 
     /**

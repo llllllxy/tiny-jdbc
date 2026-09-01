@@ -25,7 +25,7 @@ public class SqlGeneratorMultiIdVerifyMain {
         entity.secondId = 2L;
         entity.name = "multiId";
 
-        assertThrows(() -> TableParserUtils.getTableColumn(VerifyMultiIdEntity.class), "getTableColumn should reject multiple @Id");
+        assertThrows(() -> TableParserUtils.getTableInfo(VerifyMultiIdEntity.class), "getTableInfo should reject multiple @Id");
         assertThrows(() -> SqlGenerator.updateByIdSql(entity, true), "updateByIdSql should reject multiple @Id");
 
         System.out.println("SqlGeneratorMultiIdVerifyMain passed.");
