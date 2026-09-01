@@ -3,6 +3,7 @@ package org.tinycloud.jdbc.sql;
 import org.tinycloud.jdbc.criteria.TypeFunction;
 import org.tinycloud.jdbc.sql.enums.SqlJoinType;
 import org.tinycloud.jdbc.util.LambdaUtils;
+import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,10 @@ public class Join {
     private final List<OnCondition> onConditions = new ArrayList<>();
 
     public Join(String table, String alias, SqlJoinType joinType) {
+        SqlIdentifierUtils.checkTableName(table);
+        if (alias != null && !alias.trim().isEmpty()) {
+            SqlIdentifierUtils.checkAlias(alias);
+        }
         this.table = table;
         this.alias = alias;
         this.joinType = joinType;
@@ -31,6 +36,8 @@ public class Join {
      * 列到列连接条件：{@code field1 = field2}（右侧为字段引用，不参数化）。
      */
     public Join on(String field1, String field2) {
+        SqlIdentifierUtils.checkColumnRef(field1);
+        SqlIdentifierUtils.checkColumnRef(field2);
         this.onConditions.add(new OnCondition(field1, "=", new FieldReference(field2), true));
         return this;
     }
@@ -39,6 +46,7 @@ public class Join {
      * 带操作符的连接条件：{@code field1 opt value}。
      */
     public Join on(String field1, String opt, Object value) {
+        SqlIdentifierUtils.checkColumnRef(field1);
         this.onConditions.add(new OnCondition(field1, opt, value, isRef(value)));
         return this;
     }
@@ -47,6 +55,8 @@ public class Join {
      * 追加 AND 条件（列到列）。
      */
     public Join and(String field1, String field2) {
+        SqlIdentifierUtils.checkColumnRef(field1);
+        SqlIdentifierUtils.checkColumnRef(field2);
         this.onConditions.add(new OnCondition(field1, "=", new FieldReference(field2), true));
         return this;
     }
@@ -55,6 +65,7 @@ public class Join {
      * 追加 AND 条件（带操作符）。
      */
     public Join and(String field1, String opt, Object value) {
+        SqlIdentifierUtils.checkColumnRef(field1);
         this.onConditions.add(new OnCondition(field1, opt, value, isRef(value)));
         return this;
     }

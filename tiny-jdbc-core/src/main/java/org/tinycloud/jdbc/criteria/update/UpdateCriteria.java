@@ -27,7 +27,7 @@ public class UpdateCriteria<T> extends AbstractCriteria<T, UpdateCriteria<T>> {
      */
     public final <R> UpdateCriteria<T> set(boolean whether, String field, R value) {
         if (whether) {
-            this.updateValues.put(field, value);
+            this.updateValues.put(this.checkedColumnRef(field), value);
         }
         return this;
     }
@@ -58,7 +58,8 @@ public class UpdateCriteria<T> extends AbstractCriteria<T, UpdateCriteria<T>> {
      */
     public UpdateCriteria<T> setIncrement(String field, Number value) {
         String increaseValue = value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : String.valueOf(value);
-        this.updateValues.put(field, new RawUpdateSqlValue(field + " + " + increaseValue));
+        String checked = this.checkedColumnRef(field);
+        this.updateValues.put(checked, new RawUpdateSqlValue(checked + " + " + increaseValue));
         return this;
     }
 
@@ -74,7 +75,8 @@ public class UpdateCriteria<T> extends AbstractCriteria<T, UpdateCriteria<T>> {
      */
     public UpdateCriteria<T> setDecrement(String field, Number value) {
         String decreaseValue = value instanceof BigDecimal ? ((BigDecimal) value).toPlainString() : String.valueOf(value);
-        this.updateValues.put(field, new RawUpdateSqlValue(field + " - " + decreaseValue));
+        String checked = this.checkedColumnRef(field);
+        this.updateValues.put(checked, new RawUpdateSqlValue(checked + " - " + decreaseValue));
         return this;
     }
 

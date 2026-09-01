@@ -7,6 +7,7 @@ import org.tinycloud.jdbc.sql.enums.ClauseState;
 import org.tinycloud.jdbc.sql.enums.Operation;
 import org.tinycloud.jdbc.sql.enums.SqlJoinType;
 import org.tinycloud.jdbc.util.LambdaUtils;
+import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -66,10 +67,12 @@ public class SQL<T> {
     private volatile ClauseState havingState = ClauseState.NOT_CALLED;
 
     private SQL(String table) {
+        SqlIdentifierUtils.checkTableName(table);
         this.table = table;
     }
 
     private SQL(String table, String alias) {
+        SqlIdentifierUtils.checkTableName(table);
         this.table = table;
         this.tableAlias = alias;
     }
@@ -98,6 +101,20 @@ public class SQL<T> {
         return new SQL<>(tableAnnotation.value(), alias);
     }
 
+    /**
+     * 构造一段受信任的原始 SQL 标记。
+     * <p>
+     * 例如 {@code SQL.raw("FOR UPDATE")}。请务必仅用受信、常量内容包裹；
+     * 不要在未经 {@link RawSql#wrap(String)} 显式授权时传入不受控输入。
+     * </p>
+     *
+     * @param sql 原始 SQL 片段
+     * @return 受信 SQL 标记
+     */
+    public static RawSql raw(String sql) {
+        return RawSql.wrap(sql);
+    }
+
     // ------------------------ SELECT ------------------------
 
     public SQL<T> select() {
@@ -109,6 +126,7 @@ public class SQL<T> {
     public SQL<T> select(String... columns) {
         this.validateOperation(Operation.SELECT);
         for (String column : columns) {
+            SqlIdentifierUtils.checkColumnRef(column);
             this.selectItems.add(new SelectItem(column, Collections.emptyList()));
         }
         return this;
@@ -141,7 +159,9 @@ public class SQL<T> {
             this.selectItems.add(new SelectItem("*", Collections.emptyList()));
         } else {
             for (Object col : columns) {
-                this.selectItems.add(new SelectItem(String.valueOf(col), Collections.emptyList()));
+                String column = String.valueOf(col);
+                SqlIdentifierUtils.checkColumnRef(column);
+                this.selectItems.add(new SelectItem(column, Collections.emptyList()));
             }
         }
         return this;
@@ -181,6 +201,9 @@ public class SQL<T> {
         }
         this.operation = Operation.SELECT;
         this.subQueryFrom = subQuery;
+        if (alias != null && !alias.trim().isEmpty()) {
+            SqlIdentifierUtils.checkAlias(alias);
+        }
         this.fromAsAlias = alias;
         return this;
     }
@@ -323,6 +346,7 @@ public class SQL<T> {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The ORDER BY clause can only be used in SELECT statements.");
         }
+        SqlIdentifierUtils.checkColumnRef(column);
         this.orderByClauses.add(new OrderBy(column, false));
         return this;
     }
@@ -330,6 +354,9 @@ public class SQL<T> {
     public SQL<T> groupBy(String... columns) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The GROUP BY clause can only be used in SELECT statements.");
+        }
+        for (String column : columns) {
+            SqlIdentifierUtils.checkColumnRef(column);
         }
         this.groupByColumns.addAll(Arrays.asList(columns));
         return this;
@@ -391,6 +418,9 @@ public class SQL<T> {
     public SQL<T> insert(String... columns) {
         this.validateOperation(Operation.INSERT);
         insertMode = "INSERT";
+        for (String column : columns) {
+            SqlIdentifierUtils.checkColumnName(column);
+        }
         Collections.addAll(this.insertColumns, columns);
         return this;
     }
@@ -402,6 +432,9 @@ public class SQL<T> {
     public SQL<T> insertIgnoreInto(String... columns) {
         this.validateOperation(Operation.INSERT);
         insertMode = "INSERT IGNORE";
+        for (String column : columns) {
+            SqlIdentifierUtils.checkColumnName(column);
+        }
         Collections.addAll(this.insertColumns, columns);
         return this;
     }
@@ -409,6 +442,9 @@ public class SQL<T> {
     public SQL<T> replaceInto(String... columns) {
         this.validateOperation(Operation.INSERT);
         insertMode = "REPLACE";
+        for (String column : columns) {
+            SqlIdentifierUtils.checkColumnName(column);
+        }
         Collections.addAll(this.insertColumns, columns);
         return this;
     }
@@ -453,6 +489,7 @@ public class SQL<T> {
      */
     public SQL<T> onDuplicateKeyUpdate(String column, Object value) {
         this.requireInsertOperation("onDuplicateKeyUpdate");
+        SqlIdentifierUtils.checkColumnName(column);
         this.onDupUpdate.put(column, value);
         return this;
     }
@@ -471,6 +508,9 @@ public class SQL<T> {
      */
     public SQL<T> onDuplicateKeyUpdateValues(String... columns) {
         this.requireInsertOperation("onDuplicateKeyUpdateValues");
+        for (String column : columns) {
+            SqlIdentifierUtils.checkColumnName(column);
+        }
         Collections.addAll(this.onDupUpdateValues, columns);
         return this;
     }
@@ -521,6 +561,7 @@ public class SQL<T> {
         if (this.operation != Operation.UPDATE) {
             throw new TinyJdbcException("The set() method can only be called after update().");
         }
+        SqlIdentifierUtils.checkColumnRef(column);
         this.updateValues.put(column, value);
         return this;
     }
@@ -541,6 +582,7 @@ public class SQL<T> {
         if (this.operation != Operation.UPDATE) {
             throw new TinyJdbcException("The set() method can only be called after update().");
         }
+        SqlIdentifierUtils.checkColumnRef(column);
         this.updateValues.put(column, subQuery);
         return this;
     }

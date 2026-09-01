@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc.sql.condition;
 
 import org.tinycloud.jdbc.sql.enums.JoinType;
+import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 import java.util.List;
 import java.util.Collections;
@@ -19,6 +20,7 @@ public class NullCondition implements ConditionElement {
     private final JoinType joinType;
 
     public NullCondition(String column, boolean isNull, JoinType joinType) {
+        SqlIdentifierUtils.checkColumnRef(column);
         this.column = column;
         this.isNull = isNull;
         this.joinType = joinType;

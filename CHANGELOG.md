@@ -22,6 +22,10 @@
 - **按 `@Column` 的结果映射器（`362bf3f`）**：新增 `TableRowMapper`，识别 `@Column.value()` 做「列名 → 属性名」精确映射，修复自定义 `@Column` 查询结果映射为 `null` 的问题；`AbstractSqlSupport` 的 `select` / 分页查询默认改用该映射器（赋值仍复用 Spring `BeanWrapper`，类型转换能力与 `BeanPropertyRowMapper` 一致）。
 - **`FuncBuilder` 补齐 Lambda 重载（`d81c19a`）**：`FuncBuilder` 支持 `TypeFunction`（方法引用）形式的函数参数，用法更贴近流畅 API。
 
+### 安全性加固
+
+- **标识符安全边界（`待发布`）**：新增 `SqlIdentifierUtils` 白名单校验器，对 SQL 构建器 / 条件构造器中的表名、列引用、别名、裸列名做默认严格校验，拒绝含空白、分号、引号、注释、括号、前导数字等非法标识符，阻断标识符拼接注入。`last(String)` 也默认做尾部片段安全校验（拒绝分号 / 引号 / 注释符）；新增受信任原始 SQL 标记 `RawSql`（`SQL.raw(...)` / `last(RawSql)`）作为显式授权出口，仅应传入可信常量。Lambda 列（`TypeFunction`，经实体元数据解析）与 `FuncBuilder` 表达式参数保持透明、不做校验。
+
 ### 主键生成架构重构
 
 - **主键生成策略模型化（`fbe96e0`）**：主键生成逻辑从 `SqlGenerator` 内联分支抽离为 `IdGeneratorInterface` + `IdGeneratorRouter`，按 `IdType` 统一分发生成器并完成类型校验、类型转换与实体字段回写。

@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc.sql.condition;
 
 import org.tinycloud.jdbc.sql.enums.JoinType;
+import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,6 +22,7 @@ public class BetweenCondition implements ConditionElement {
     private final JoinType joinType;
 
     public BetweenCondition(String column, Object value1, Object value2, boolean isNot, JoinType joinType) {
+        SqlIdentifierUtils.checkColumnRef(column);
         this.column = column;
         this.value1 = value1;
         this.value2 = value2;

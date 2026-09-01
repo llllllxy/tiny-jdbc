@@ -1,7 +1,9 @@
 package org.tinycloud.jdbc.criteria.query;
 
 import org.tinycloud.jdbc.criteria.AbstractCriteria;
+import org.tinycloud.jdbc.sql.RawSql;
 import org.tinycloud.jdbc.util.ArrayUtils;
+import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 import java.util.Arrays;
 
@@ -23,7 +25,9 @@ public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
      */
     public final QueryCriteria<T> select(String... field) {
         if (ArrayUtils.isNotEmpty(field)) {
-            this.selectFields.addAll(Arrays.asList(field));
+            for (String f : field) {
+                this.selectFields.add(this.checkedColumnRef(f));
+            }
         }
         return this;
     }
@@ -50,7 +54,7 @@ public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
      */
     public final QueryCriteria<T> orderBy(boolean whether, String field, boolean isDesc) {
         if (whether) {
-            String orderByString = field;
+            String orderByString = this.checkedColumnRef(field);
             if (isDesc) {
                 orderByString += " DESC";
             }
@@ -108,13 +112,36 @@ public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
     /**
      * 在 SQL 语句末尾添加自定义 SQL 片段。
      * 会先清空之前添加的末尾 SQL 片段，再添加新的片段。
+     * <p>
+     * <b>安全说明：</b>{@code last()} 的入参会被当作原始 SQL 尾部片段追加，不会被参数化。
+     * 默认会做一次「尾部片段安全校验」，拒绝包含分号 / 引号 / 注释 / {@code --} / {@code #} 等
+     * 可能截断或拼接语句的内容。若确需追加不受限的原始 SQL，请用
+     * {@link #last(RawSql)} 显式授权（只应传入可信常量）。
+     * </p>
      *
      * @param lastSql 要添加到 SQL 语句末尾的自定义 SQL 片段。
      * @return 返回当前 QueryCriteria 对象，支持链式调用。
      */
     public final QueryCriteria<T> last(String lastSql) {
+        SqlIdentifierUtils.checkTailSql(lastSql);
         this.lastSqls.clear();
         this.lastSqls.add(lastSql);
+        return this;
+    }
+
+    /**
+     * 在 SQL 语句末尾添加一段<b>受信任</b>的原始 SQL 片段。
+     * <p>
+     * 用 {@link RawSql#wrap(String)} 显式包裹后即可跳过默认的尾部片段安全校验。
+     * 请仅传入可信、常量内容。
+     * </p>
+     *
+     * @param lastSql 受信任的 SQL 片段
+     * @return 返回当前 QueryCriteria 对象，支持链式调用。
+     */
+    public final QueryCriteria<T> last(RawSql lastSql) {
+        this.lastSqls.clear();
+        this.lastSqls.add(lastSql.sql());
         return this;
     }
 

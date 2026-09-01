@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.sql.condition;
 
 import org.tinycloud.jdbc.sql.FieldReference;
 import org.tinycloud.jdbc.sql.enums.JoinType;
+import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +22,7 @@ public class SimpleCondition implements ConditionElement {
     private final JoinType joinType;
 
     public SimpleCondition(String column, String operator, Object value, JoinType joinType) {
+        SqlIdentifierUtils.checkColumnRef(column);
         this.column = column;
         this.operator = operator;
         this.value = value;

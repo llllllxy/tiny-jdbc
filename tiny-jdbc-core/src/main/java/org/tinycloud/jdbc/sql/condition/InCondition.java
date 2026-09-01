@@ -3,6 +3,7 @@ package org.tinycloud.jdbc.sql.condition;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.sql.SQL;
 import org.tinycloud.jdbc.sql.enums.JoinType;
+import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,6 +28,7 @@ public class InCondition implements ConditionElement {
         if (values == null || values.isEmpty()) {
             throw new TinyJdbcException("The values of IN/NOT IN condition cannot be null or empty, column: " + column);
         }
+        SqlIdentifierUtils.checkColumnRef(column);
         this.column = column;
         this.values = values;
         this.subQuery = null;
@@ -38,6 +40,7 @@ public class InCondition implements ConditionElement {
         if (subQuery == null) {
             throw new TinyJdbcException("The sub query of IN/NOT IN condition cannot be null, column: " + column);
         }
+        SqlIdentifierUtils.checkColumnRef(column);
         this.column = column;
         this.values = null;
         this.subQuery = subQuery;

@@ -27,7 +27,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children lt(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " < ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " < ?";
             this.conditions.add(condition);
             this.whereParameters.add(value);
         });
@@ -39,7 +39,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children lte(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " <= ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " <= ?";
             this.conditions.add(condition);
             this.whereParameters.add(value);
         });
@@ -51,7 +51,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children gt(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " > ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " > ?";
             this.conditions.add(condition);
             this.whereParameters.add(value);
         });
@@ -63,7 +63,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children gte(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " >= ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " >= ?";
             this.conditions.add(condition);
             this.whereParameters.add(value);
         });
@@ -75,7 +75,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children eq(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " = ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " = ?";
             this.conditions.add(condition);
             this.whereParameters.add(value);
         });
@@ -87,7 +87,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children notEq(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " <> ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " <> ?";
             this.conditions.add(condition);
             this.whereParameters.add(value);
         });
@@ -99,7 +99,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children isNull(boolean whether, String field) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " IS NULL";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " IS NULL";
             this.conditions.add(condition);
         });
     }
@@ -110,7 +110,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children isNotNull(boolean whether, String field) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " IS NOT NULL";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " IS NOT NULL";
             this.conditions.add(condition);
         });
     }
@@ -124,7 +124,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
             this.validateInValues(field, values);
             StringBuilder condition = new StringBuilder();
             condition.append(getConditionPrefix())
-                    .append(field)
+                    .append(this.checkedColumnRef(field))
                     .append(" IN (")
                     .append(IntStream.range(0, values.size()).mapToObj(i -> "?").collect(Collectors.joining(", ")))
                     .append(")");
@@ -142,7 +142,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
             this.validateInValues(field, values);
             StringBuilder condition = new StringBuilder();
             condition.append(getConditionPrefix())
-                    .append(field)
+                    .append(this.checkedColumnRef(field))
                     .append(" NOT IN (")
                     .append(IntStream.range(0, values.size()).mapToObj(i -> "?").collect(Collectors.joining(", ")))
                     .append(")");
@@ -157,7 +157,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children like(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " LIKE ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " LIKE ?";
             this.conditions.add(condition);
             this.whereParameters.add("%" + value + "%");
         });
@@ -169,7 +169,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children notLike(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " NOT LIKE ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " NOT LIKE ?";
             this.conditions.add(condition);
             this.whereParameters.add("%" + value + "%");
         });
@@ -181,7 +181,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children leftLike(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " LIKE ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " LIKE ?";
             this.conditions.add(condition);
             this.whereParameters.add("%" + value);
         });
@@ -193,7 +193,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children notLeftLike(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " NOT LIKE ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " NOT LIKE ?";
             this.conditions.add(condition);
             this.whereParameters.add("%" + value);
         });
@@ -205,7 +205,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children rightLike(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " LIKE ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " LIKE ?";
             this.conditions.add(condition);
             this.whereParameters.add(value + "%");
         });
@@ -217,7 +217,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children notRightLike(boolean whether, String field, R value) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + field + " NOT LIKE ?";
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " NOT LIKE ?";
             this.conditions.add(condition);
             this.whereParameters.add(value + "%");
         });
@@ -229,7 +229,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children between(boolean whether, String field, R start, R end) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + "(" + field + " BETWEEN ? AND ?)";
+            String condition = this.getConditionPrefix() + "(" + this.checkedColumnRef(field) + " BETWEEN ? AND ?)";
             this.conditions.add(condition);
             this.whereParameters.add(start);
             this.whereParameters.add(end);
@@ -242,7 +242,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     public <R> Children notBetween(boolean whether, String field, R start, R end) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + "(" + field + " NOT BETWEEN ? AND ?)";
+            String condition = this.getConditionPrefix() + "(" + this.checkedColumnRef(field) + " NOT BETWEEN ? AND ?)";
             this.conditions.add(condition);
             this.whereParameters.add(start);
             this.whereParameters.add(end);

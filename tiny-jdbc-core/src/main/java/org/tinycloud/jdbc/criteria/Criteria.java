@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.criteria;
 
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.util.LambdaUtils;
+import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,6 +75,18 @@ public abstract class Criteria<T> {
         // 重置状态，确保下一个条件默认用 AND
         this.nextIsOr = false;
         return prefix;
+    }
+
+    /**
+     * 校验并原样返回一个合法的「列引用」。非法时抛出 {@link TinyJdbcException}，
+     * 供各 String 形式的字段条件方法复用。
+     *
+     * @param columnRef 列引用
+     * @return 校验通过的列引用
+     */
+    protected final String checkedColumnRef(String columnRef) {
+        SqlIdentifierUtils.checkColumnRef(columnRef);
+        return columnRef;
     }
 
     /**

@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc.sql;
 
 import org.tinycloud.jdbc.exception.TinyJdbcException;
+import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 /**
  * <p>
@@ -9,6 +10,8 @@ import org.tinycloud.jdbc.exception.TinyJdbcException;
  * <p>
  *     用于 SET 赋值、条件比较等场景，例如
  *     {@code set("u.email", new FieldReference("a.email"))} 生成 {@code u.email = a.email}。
+ *     默认按「列引用」白名单校验；若确需传入不受限的表达式，请改用
+ *     {@link RawSql} 显式授权。
  * </p>
  *
  * @author liuxingyu01
@@ -24,6 +27,7 @@ public class FieldReference {
         if (column == null || column.trim().isEmpty()) {
             throw new TinyJdbcException("FieldReference column cannot be null or empty");
         }
+        SqlIdentifierUtils.checkColumnRef(column);
         this.column = column;
     }
 

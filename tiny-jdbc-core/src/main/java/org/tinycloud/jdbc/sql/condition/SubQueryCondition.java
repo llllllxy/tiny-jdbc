@@ -2,6 +2,7 @@ package org.tinycloud.jdbc.sql.condition;
 
 import org.tinycloud.jdbc.sql.SQL;
 import org.tinycloud.jdbc.sql.enums.JoinType;
+import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 import java.util.List;
 
@@ -26,6 +27,9 @@ public class SubQueryCondition implements ConditionElement {
      * @param joinType 与其它条件的连接符
      */
     public SubQueryCondition(String column, String operator, SQL<?> subQuery, JoinType joinType) {
+        if (column != null) {
+            SqlIdentifierUtils.checkColumnRef(column);
+        }
         this.column = column;
         this.operator = operator;
         this.subQuery = subQuery;
