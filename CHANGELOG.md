@@ -2,6 +2,51 @@
 
 本文件依据 Git 标签、版本发布提交及对应代码差异整理。每个版本均给出可回溯的发布锚点；标记为“升级必读”的版本包含已确认的 API 或包路径迁移。
 
+## 2.0.2
+
+> 发布日期：待发布 ｜ 发布提交：待发布 ｜ 升级路径：2.0.1 → 2.0.2
+
+### 类型概览
+
+| 维度 | 内容 |
+|------|------|
+| 新增特性 | 内置主键生成器 `NanoId` / `ULID`；按 `@Column` 的结果映射器 `TableRowMapper` |
+| 架构重构 | 主键生成策略模型化（`IdGeneratorInterface` + `IdGeneratorRouter`）；生成器类下沉到 `id.generator` 子包 |
+| 稳定性修复 | 雪花 ID 回退与解析稳健化、DB2 分页写法、SQL 参数渲染与主键校验等多处修复 |
+| 破坏性变更 | 无（`nanoId` / `ulid` / `uuid` 主键字段类型要求 `String`） |
+
+### 新增特性
+
+- **NanoId 主键生成器（`bdeadef`）**：新增 `IdType.NANO_ID` 内置主键生成策略，生成面向 URL 的紧凑随机字符串。
+- **ULID 主键生成器（`0559d53`）**：新增 `IdType.ULID` 内置主键生成策略，生成有序、可排序的 26 位 ULID 字符串。
+- **按 `@Column` 的结果映射器（`362bf3f`）**：新增 `TableRowMapper`，识别 `@Column.value()` 做「列名 → 属性名」精确映射，修复自定义 `@Column` 查询结果映射为 `null` 的问题；`AbstractSqlSupport` 的 `select` / 分页查询默认改用该映射器（赋值仍复用 Spring `BeanWrapper`，类型转换能力与 `BeanPropertyRowMapper` 一致）。
+- **`FuncBuilder` 补齐 Lambda 重载（`d81c19a`）**：`FuncBuilder` 支持 `TypeFunction`（方法引用）形式的函数参数，用法更贴近流畅 API。
+
+### 主键生成架构重构
+
+- **主键生成策略模型化（`fbe96e0`）**：主键生成逻辑从 `SqlGenerator` 内联分支抽离为 `IdGeneratorInterface` + `IdGeneratorRouter`，按 `IdType` 统一分发生成器并完成类型校验、类型转换与实体字段回写。
+- **生成器类下沉（`9b62283`）**：`ObjectIdGenerator` / `SequenceGenerator` / `SnowflakeIdGenerator` / `UuidGenerator` 等实现类移至 `id.generator` 子包。
+- **雪花 ID 稳健化（`ac2ce74` / `e3aec67`）**：雪花 ID 回退改为随机化，修复时间戳反解与中断标志；`getWorkerId` 解析更稳健并修正注释。
+
+### 稳定性修复
+
+- **DB2 分页写法（`f056c01` / `163ff7c`）**：DB2 分页改用 `ROWNUMBER() OVER()` 写法，与主流分页插件保持一致；修正 DB2 分页函数名，并对未知数据库类型显式报错。
+- **日志 SQL 参数渲染（`9b794ce`）**：修正日志中 SQL 参数渲染，忽略字符串与注释内的占位符，避免误替换。
+- **主键与字段校验（`775edc8` / `ca3aa8b`）**：`insertSql` 增加多 `@Id` 校验；`selectSql` 全字段 `exist=false` 时给出明确错误。
+- **自动填充列名解析（`250aac8`）**：修正 `strictUpdateFill` 注释，并支持按 `@Column` 解析更新列名。
+
+### 依赖维护
+
+- **Maven 插件版本更新（`28500d3`）**：更新构建插件版本，保持构建稳定性。
+
+### 升级检查清单
+
+- [ ] 如使用 `@Id(idType = IdType.NANO_ID)` / `IdType.ULID`，确认主键字段类型为 `String`（`NANO_ID` / `ULID` / `UUID` 均要求 `String`）。
+- [ ] 如直接引用 `IdUtils` 或具体生成器实现（`ObjectIdGenerator` / `SequenceGenerator` 等）为公开 API，请核对包路径迁移至 `id.generator`。
+- [ ] 回归验证自定义 `@Column` 实体类的查询与分页结果映射，确认映射行为符合预期。
+
+---
+
 ## 2.0.1
 
 > 发布日期：2026-08-27 ｜ 发布提交：`720b68f` ｜ 升级路径：2.0.0 → 2.0.1

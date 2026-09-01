@@ -4,7 +4,6 @@ import org.tinycloud.jdbc.criteria.TypeFunction;
 import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
 import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.util.LambdaUtils;
-import org.tinycloud.jdbc.util.ReflectUtils;
 import org.tinycloud.jdbc.util.TableParserUtils;
 
 import java.time.LocalDateTime;
@@ -41,16 +40,16 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
         Long userId = currentUserId();
         LocalDateTime now = LocalDateTime.now();
 
-        if (ReflectUtils.hasField(entity.getClass(), CREATE_USER_ID_FIELD)) {
+        if (TableParserUtils.isPersistentField(entity.getClass(), CREATE_USER_ID_FIELD)) {
             metaObject.fillIfNull(CREATE_USER_ID_FIELD, userId);
         }
-        if (ReflectUtils.hasField(entity.getClass(), CREATE_TIME_FIELD)) {
+        if (TableParserUtils.isPersistentField(entity.getClass(), CREATE_TIME_FIELD)) {
             metaObject.fillIfNull(CREATE_TIME_FIELD, now);
         }
-        if (ReflectUtils.hasField(entity.getClass(), UPDATE_USER_ID_FIELD)) {
+        if (TableParserUtils.isPersistentField(entity.getClass(), UPDATE_USER_ID_FIELD)) {
             metaObject.fillIfNull(UPDATE_USER_ID_FIELD, userId);
         }
-        if (ReflectUtils.hasField(entity.getClass(), UPDATE_TIME_FIELD)) {
+        if (TableParserUtils.isPersistentField(entity.getClass(), UPDATE_TIME_FIELD)) {
             metaObject.fillIfNull(UPDATE_TIME_FIELD, now);
         }
     }
@@ -61,23 +60,23 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
         Long userId = currentUserId();
         LocalDateTime now = LocalDateTime.now();
 
-        if (ReflectUtils.hasField(entity.getClass(), UPDATE_USER_ID_FIELD)) {
+        if (TableParserUtils.isPersistentField(entity.getClass(), UPDATE_USER_ID_FIELD)) {
             metaObject.fillOverride(UPDATE_USER_ID_FIELD, userId);
         }
-        if (ReflectUtils.hasField(entity.getClass(), UPDATE_TIME_FIELD)) {
+        if (TableParserUtils.isPersistentField(entity.getClass(), UPDATE_TIME_FIELD)) {
             metaObject.fillOverride(UPDATE_TIME_FIELD, now);
         }
     }
 
     @Override
     public <T> void updateCriteriaFill(UpdateCriteria<T> criteria, Class<T> entityClass) {
-        if (ReflectUtils.hasField(entityClass, UPDATE_USER_ID_FIELD)) {
+        if (TableParserUtils.isPersistentField(entityClass, UPDATE_USER_ID_FIELD)) {
             String column = TableParserUtils.resolveColumnName(entityClass, UPDATE_USER_ID_FIELD);
             if (!criteria.hasUpdateColumn(column)) {
                 criteria.set(column, currentUserId());
             }
         }
-        if (ReflectUtils.hasField(entityClass, UPDATE_TIME_FIELD)) {
+        if (TableParserUtils.isPersistentField(entityClass, UPDATE_TIME_FIELD)) {
             String column = TableParserUtils.resolveColumnName(entityClass, UPDATE_TIME_FIELD);
             if (!criteria.hasUpdateColumn(column)) {
                 criteria.set(column, LocalDateTime.now());
@@ -87,13 +86,13 @@ public class AuditMetaObjectHandler implements MetaObjectHandler {
 
     @Override
     public <T> void updateLambdaCriteriaFill(LambdaUpdateCriteria<T> criteria, Class<T> entityClass) {
-        if (ReflectUtils.hasField(entityClass, UPDATE_USER_ID_FIELD)) {
+        if (TableParserUtils.isPersistentField(entityClass, UPDATE_USER_ID_FIELD)) {
             TypeFunction<T, ?> field = LambdaUtils.getLambdaGetter(entityClass, UPDATE_USER_ID_FIELD);
             if (!criteria.hasUpdateColumn(field)) {
                 criteria.set(field, currentUserId());
             }
         }
-        if (ReflectUtils.hasField(entityClass, UPDATE_TIME_FIELD)) {
+        if (TableParserUtils.isPersistentField(entityClass, UPDATE_TIME_FIELD)) {
             TypeFunction<T, ?> field = LambdaUtils.getLambdaGetter(entityClass, UPDATE_TIME_FIELD);
             if (!criteria.hasUpdateColumn(field)) {
                 criteria.set(field, LocalDateTime.now());

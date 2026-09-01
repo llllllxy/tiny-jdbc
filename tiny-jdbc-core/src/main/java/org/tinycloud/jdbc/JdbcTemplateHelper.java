@@ -1,6 +1,5 @@
 package org.tinycloud.jdbc;
 
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.tinycloud.jdbc.config.TinyJdbcRuntime;
@@ -8,6 +7,7 @@ import org.tinycloud.jdbc.page.*;
 import org.tinycloud.jdbc.sql.SQL;
 import org.tinycloud.jdbc.util.ArrayUtils;
 import org.tinycloud.jdbc.util.DataAccessUtils;
+import org.tinycloud.jdbc.util.TableRowMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +81,7 @@ public class JdbcTemplateHelper {
      * @return 包含查询结果的对象列表
      */
     public <F> List<F> select(String sql, Class<F> clazz, Object... params) {
-        return getJdbcTemplate().query(sql, new BeanPropertyRowMapper<>(clazz), params);
+        return getJdbcTemplate().query(sql, new TableRowMapper<>(clazz), params);
     }
 
     /**
@@ -138,7 +138,7 @@ public class JdbcTemplateHelper {
         Long count = getJdbcTemplate().queryForObject(handleResult.getCountSql(), Long.class, params);
         List<F> records;
         if (count != null && count > 0L) {
-            records = getJdbcTemplate().query(handleResult.getPageSql(), new BeanPropertyRowMapper<>(clazz), ArrayUtils.mergeArrays(params, handleResult.getParameters()));
+            records = getJdbcTemplate().query(handleResult.getPageSql(), new TableRowMapper<>(clazz), ArrayUtils.mergeArrays(params, handleResult.getParameters()));
         } else {
             records = new ArrayList<>();
         }
