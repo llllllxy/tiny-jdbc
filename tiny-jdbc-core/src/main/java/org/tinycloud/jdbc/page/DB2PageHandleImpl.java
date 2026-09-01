@@ -18,8 +18,9 @@ public class DB2PageHandleImpl implements IPageHandle {
      */
     @Override
     public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
-        long pageStart = (pageNo - 1) * pageSize + 1;
-        long pageEnd = pageStart + pageSize - 1;
+        long offset = PageCheck.offset(pageNo, pageSize);
+        long pageStart = offset + 1L;
+        long pageEnd = offset + pageSize;
         StringBuilder sql = new StringBuilder("SELECT * FROM ( SELECT B.*, ROWNUMBER() OVER() AS RN FROM ( ");
         sql.append(oldSQL);
         sql.append(" ) AS B ) AS A WHERE A.RN BETWEEN ").append("?").append(" AND ")

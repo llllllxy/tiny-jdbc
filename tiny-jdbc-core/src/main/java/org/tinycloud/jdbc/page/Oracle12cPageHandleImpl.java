@@ -12,7 +12,7 @@ public class Oracle12cPageHandleImpl implements IPageHandle {
     @Override
     public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         StringBuilder sql = new StringBuilder();
-        long offset = (pageNo - 1L) * pageSize;
+        long offset = PageCheck.offset(pageNo, pageSize);
         long limit = pageSize;
 
         sql.append(oldSQL);

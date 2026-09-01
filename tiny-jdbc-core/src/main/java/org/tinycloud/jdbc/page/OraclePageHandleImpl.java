@@ -19,8 +19,8 @@ public class OraclePageHandleImpl implements IPageHandle {
      */
     @Override
     public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
-        long pageStart = (pageNo - 1L) * pageSize;
-        long pageEnd = pageNo * pageSize;
+        long pageStart = PageCheck.offset(pageNo, pageSize);
+        long pageEnd = PageCheck.pageEnd(pageNo, pageSize);
         StringBuilder sql = new StringBuilder("SELECT * FROM ( SELECT TMP_TB.*, ROWNUM ROW_ID FROM ( ");
         sql.append(oldSQL);
         sql.append(" ) TMP_TB WHERE ROWNUM <=  ")

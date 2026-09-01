@@ -51,7 +51,7 @@ public class Page<T> implements Serializable {
         this.total = total;
         this.pageSize = pageSize;
         this.pageNum = pageNum;
-        this.pages = (total + pageSize - 1) / pageSize;
+        this.pages = PageCheck.pages(total, pageSize);
     }
 
     public Long getPageNum() {
@@ -92,7 +92,7 @@ public class Page<T> implements Serializable {
 
     public void setTotal(Long total) {
         this.total = total;
-        this.pages = (total + pageSize - 1) / pageSize;
+        this.pages = PageCheck.pages(total, pageSize);
     }
 
     @Override

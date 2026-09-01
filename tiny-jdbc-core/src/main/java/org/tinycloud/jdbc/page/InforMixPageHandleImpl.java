@@ -22,7 +22,7 @@ public class InforMixPageHandleImpl implements IPageHandle {
      */
     @Override
     public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
-        long offset = (pageNo - 1L) * pageSize;
+        long offset = PageCheck.offset(pageNo, pageSize);
         long limit = pageSize;
         StringBuilder ret = new StringBuilder();
         // 这个sql的分页的是紧跟着SELECT的（SELECT SKIP ? FIRST ? * FROM user WHERE age > 18），所以暂时拼接，无法参数后置

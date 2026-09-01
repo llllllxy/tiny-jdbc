@@ -52,7 +52,7 @@ public class OffsetPage<T> implements Serializable {
         this.total = total;
         this.offset = offset;
         this.limit = limit;
-        this.pages = (total + limit - 1) / limit;
+        this.pages = PageCheck.pages(total, limit);
     }
 
     public Long getOffset() {
@@ -69,6 +69,10 @@ public class OffsetPage<T> implements Serializable {
 
     public void setLimit(Long limit) {
         this.limit = limit;
+    }
+
+    public Long getPages() {
+        return pages;
     }
 
     public void setPages(Long pages) {
@@ -89,7 +93,7 @@ public class OffsetPage<T> implements Serializable {
 
     public void setTotal(Long total) {
         this.total = total;
-        this.pages = (total + limit - 1) / limit;
+        this.pages = PageCheck.pages(total, limit);
     }
 
     @Override
