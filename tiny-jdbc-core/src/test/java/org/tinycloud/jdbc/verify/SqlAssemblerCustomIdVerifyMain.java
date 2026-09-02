@@ -8,13 +8,13 @@ import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.config.TinyJdbcRuntime;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
-import org.tinycloud.jdbc.support.SqlGenerator;
+import org.tinycloud.jdbc.support.SqlAssembler;
 import org.tinycloud.jdbc.support.SqlProvider;
 
 /**
  * 使用 main 方法快速验证 CUSTOM 主键策略的运行时配置校验。
  */
-public class SqlGeneratorCustomIdVerifyMain {
+public class SqlAssemblerCustomIdVerifyMain {
 
     /**
      * 验证 CUSTOM 主键策略在未配置和已配置自定义生成器时的行为。
@@ -25,19 +25,19 @@ public class SqlGeneratorCustomIdVerifyMain {
         TinyJdbcRuntime missingRuntime = createRuntime(null);
         VerifyCustomIdEntity missingConfigEntity = new VerifyCustomIdEntity();
         missingConfigEntity.name = "missingConfig";
-        assertThrows(() -> SqlGenerator.insertSql(missingConfigEntity, true, null, missingRuntime), "missing IdGeneratorInterface should throw");
+        assertThrows(() -> SqlAssembler.buildInsertSql(missingConfigEntity, true, null, missingRuntime), "missing IdGeneratorInterface should throw");
 
         TinyJdbcRuntime configuredRuntime = createRuntime(entity -> 1001L);
         VerifyCustomIdEntity entity = new VerifyCustomIdEntity();
         entity.name = "configured";
-        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, true, null, configuredRuntime);
+        SqlProvider sqlProvider = SqlAssembler.buildInsertSql(entity, true, null, configuredRuntime);
 
         assertEquals(1001L, entity.id, "custom id should inject into entity");
         assertEquals("INSERT INTO t_verify_custom_id (id,name) VALUES (?,?)", sqlProvider.getSql(), "insert SQL mismatch");
         assertEquals(1001L, sqlProvider.getParameters().get(0), "id parameter mismatch");
         assertEquals("configured", sqlProvider.getParameters().get(1), "name parameter mismatch");
 
-        System.out.println("SqlGeneratorCustomIdVerifyMain passed.");
+        System.out.println("SqlAssemblerCustomIdVerifyMain passed.");
         System.out.println("sql = " + sqlProvider.getSql());
         System.out.println("params = " + sqlProvider.getParameters());
     }

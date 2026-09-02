@@ -69,7 +69,9 @@ public class TinyJdbcAutoConfiguration {
                 Boolean.TRUE.equals(properties.getOpenRuntimeDbType()),
                 idGeneratorProvider.getIfAvailable(),
                 snowflakeConfigProvider.getIfAvailable(),
-                metaObjectHandlerProvider.getIfAvailable());
+                metaObjectHandlerProvider.getIfAvailable(),
+                properties.getBatchInsertMode(),
+                properties.getBatchInsertSize());
         if (runtime.isBanner()) {
             runtime.printBanner();
         }

@@ -1,13 +1,13 @@
 package org.tinycloud.jdbc.support;
 
 import org.springframework.core.GenericTypeResolver;
-import org.springframework.util.ClassUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.util.ClassUtils;
 import org.tinycloud.jdbc.config.TinyJdbcRuntime;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
@@ -16,27 +16,20 @@ import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.fill.FillMetaObject;
 import org.tinycloud.jdbc.fill.MetaObjectHandler;
-import org.tinycloud.jdbc.interceptor.SqlExecution;
-import org.tinycloud.jdbc.interceptor.SqlExecutor;
-import org.tinycloud.jdbc.interceptor.SqlInterceptor;
-import org.tinycloud.jdbc.interceptor.SqlRequest;
-import org.tinycloud.jdbc.interceptor.SqlType;
+import org.tinycloud.jdbc.interceptor.*;
 import org.tinycloud.jdbc.page.IPageHandle;
 import org.tinycloud.jdbc.page.Page;
 import org.tinycloud.jdbc.page.PageCheck;
 import org.tinycloud.jdbc.page.PageHandleResult;
 import org.tinycloud.jdbc.sql.SQL;
 import org.tinycloud.jdbc.util.ArrayUtils;
-import org.tinycloud.jdbc.util.TableRowMapper;
 import org.tinycloud.jdbc.util.CollectionUtils;
+import org.tinycloud.jdbc.util.TableRowMapper;
 import org.tinycloud.jdbc.util.tuple.Pair;
 
 import java.io.Serializable;
 import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * jdbc抽象类，给出默认的支持
@@ -356,7 +349,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (id == null) {
             throw new TinyJdbcException("selectById id cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectByIdSql(id, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildSelectByIdSql(id, entityClass);
         return this.selectOne(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
@@ -365,7 +358,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(ids)) {
             throw new TinyJdbcException("selectByIds ids cannot be null or empty");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectByIdsSql(entityClass, new ArrayList<>(ids));
+        SqlProvider sqlProvider = SqlAssembler.buildSelectByIdsSql(entityClass, new ArrayList<>(ids));
         return this.select(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
@@ -374,7 +367,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (entity == null) {
             throw new TinyJdbcException("select entity cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
+        SqlProvider sqlProvider = SqlAssembler.buildSelectSql(entity);
         return this.select(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
@@ -383,7 +376,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             throw new TinyJdbcException("select criteria cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectCriteriaSql(criteria, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildSelectCriteriaSql(criteria, entityClass);
         return this.select(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
@@ -392,7 +385,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (lambdaCriteria == null) {
             throw new TinyJdbcException("select lambdaCriteria cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildSelectLambdaCriteriaSql(lambdaCriteria, entityClass);
         return this.select(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
@@ -401,7 +394,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (entity == null) {
             throw new TinyJdbcException("paginate entity cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectSql(entity);
+        SqlProvider sqlProvider = SqlAssembler.buildSelectSql(entity);
         return this.paginate(sqlProvider.getSql(), page, sqlProvider.getParameters().toArray());
     }
 
@@ -410,7 +403,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             throw new TinyJdbcException("paginate criteria cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectCriteriaSql(criteria, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildSelectCriteriaSql(criteria, entityClass);
         return this.paginate(sqlProvider.getSql(), page, sqlProvider.getParameters().toArray());
     }
 
@@ -419,7 +412,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (lambdaCriteria == null) {
             throw new TinyJdbcException("paginate lambdaCriteria cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectLambdaCriteriaSql(lambdaCriteria, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildSelectLambdaCriteriaSql(lambdaCriteria, entityClass);
         return this.paginate(sqlProvider.getSql(), page, sqlProvider.getParameters().toArray());
     }
 
@@ -428,7 +421,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             throw new TinyJdbcException("criteria cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectCountCriteriaSql(criteria, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildSelectCountCriteriaSql(criteria, entityClass);
         return selectOneObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
     }
 
@@ -437,7 +430,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (lambdaCriteria == null) {
             throw new TinyJdbcException("lambdaCriteria cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.selectCountLambdaCriteriaSql(lambdaCriteria, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildSelectCountLambdaCriteriaSql(lambdaCriteria, entityClass);
         return selectOneObject(sqlProvider.getSql(), Long.class, sqlProvider.getParameters().toArray());
     }
 
@@ -452,7 +445,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("insert entity cannot be null");
         }
         this.doInsertFill(entity);
-        SqlProvider sqlProvider = SqlGenerator.insertSql(entity, ignoreNulls, this.getJdbcTemplate(), this.getTinyJdbcRuntime());
+        SqlProvider sqlProvider = SqlAssembler.buildInsertSql(entity, ignoreNulls, this.getJdbcTemplate(), this.getTinyJdbcRuntime());
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("insert parameters cannot be null");
         }
@@ -480,7 +473,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("update entity cannot be null");
         }
         this.doUpdateFill(entity);
-        SqlProvider sqlProvider = SqlGenerator.updateByIdSql(entity, ignoreNulls);
+        SqlProvider sqlProvider = SqlAssembler.buildUpdateByIdSql(entity, ignoreNulls);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
@@ -493,7 +486,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("criteria cannot be null");
         }
         this.doUpdateCriteriaFill(criteria);
-        SqlProvider sqlProvider = SqlGenerator.updateByCriteriaSql(criteria, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildUpdateByCriteriaSql(criteria, entityClass);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
@@ -506,7 +499,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("lambdaCriteria cannot be null");
         }
         this.doUpdateLambdaCriteriaFill(lambdaCriteria);
-        SqlProvider sqlProvider = SqlGenerator.updateByLambdaCriteriaSql(lambdaCriteria, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildUpdateByLambdaCriteriaSql(lambdaCriteria, entityClass);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("update parameters cannot be null");
         }
@@ -518,7 +511,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (entity == null) {
             throw new TinyJdbcException("delete entity cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.deleteSql(entity);
+        SqlProvider sqlProvider = SqlAssembler.buildDeleteSql(entity);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("delete parameters cannot be null");
         }
@@ -530,7 +523,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             throw new TinyJdbcException("delete lambdaCriteria cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.deleteLambdaCriteriaSql(criteria, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildDeleteLambdaCriteriaSql(criteria, entityClass);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("delete parameters cannot be null");
         }
@@ -542,7 +535,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             throw new TinyJdbcException("delete criteria cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.deleteCriteriaSql(criteria, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildDeleteCriteriaSql(criteria, entityClass);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("delete parameters cannot be null");
         }
@@ -554,7 +547,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (id == null) {
             throw new TinyJdbcException("deleteById id cannot be null");
         }
-        SqlProvider sqlProvider = SqlGenerator.deleteByIdSql(id, entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildDeleteByIdSql(id, entityClass);
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("deleteById parameters cannot be null");
         }
@@ -566,7 +559,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (CollectionUtils.isEmpty(ids)) {
             throw new TinyJdbcException("deleteByIds ids cannot be null or empty");
         }
-        SqlProvider sqlProvider = SqlGenerator.deleteByIdsSql(entityClass, new ArrayList<>(ids));
+        SqlProvider sqlProvider = SqlAssembler.buildDeleteByIdsSql(entityClass, new ArrayList<>(ids));
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("deleteById parameters cannot be null");
         }
@@ -575,14 +568,41 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
 
     @Override
     public int[] batchInsert(Collection<T> collection, boolean ignoreNulls) {
+        return this.batchInsert(collection, ignoreNulls, this.getTinyJdbcRuntime().getBatchMode());
+    }
+
+    /**
+     * 批量插入，显式指定执行模式。
+     *
+     * @param collection  待插入实体集合
+     * @param ignoreNulls 是否忽略 null 字段
+     * @param mode        执行模式
+     * @return 每个元素表示对应实体的受影响行数
+     */
+    public int[] batchInsert(Collection<T> collection, boolean ignoreNulls, BatchMode mode) {
         if (CollectionUtils.isEmpty(collection)) {
             throw new TinyJdbcException("batchInsert collection cannot be null or empty");
         }
+        BatchMode effective = mode == null ? this.getTinyJdbcRuntime().getBatchMode() : mode;
+        if (effective == BatchMode.MULTI_VALUE) {
+            return this.doBatchInsertMultiValue(collection, ignoreNulls);
+        } else {
+            return this.doBatchInsertJdbcBatch(collection, ignoreNulls);
+        }
+    }
+
+    /**
+     * JDBC 批量插入：逐实体生成 SQL，收集参数后交给 {@code JdbcTemplate.batchUpdate}。
+     *
+     * <p>要求所有实体生成完全一致的 SQL，否则抛出异常。自增主键不写回实体。
+     * 若 JDBC URL 未配置 {@code rewriteBatchedStatements=true}，底层实际仍是逐条往返。</p>
+     */
+    private int[] doBatchInsertJdbcBatch(Collection<T> collection, boolean ignoreNulls) {
         List<Object[]> batchArgs = new ArrayList<>(collection.size());
         String sql = null;
         for (T t : collection) {
             this.doInsertFill(t);
-            SqlProvider sqlProvider = SqlGenerator.insertSql(t, ignoreNulls, this.getJdbcTemplate(), this.getTinyJdbcRuntime());
+            SqlProvider sqlProvider = SqlAssembler.buildInsertSql(t, ignoreNulls, this.getJdbcTemplate(), this.getTinyJdbcRuntime());
             if (sql == null || sql.isEmpty()) {
                 sql = sqlProvider.getSql();
             } else if (!sql.equals(sqlProvider.getSql())) {
@@ -595,9 +615,58 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         return this.doSqlExecute(request, invocation -> this.getJdbcTemplate().batchUpdate(invocation.getSql(), invocation.getBatchArgs()));
     }
 
+    /**
+     * 多值批量插入：把集合切块，每块生成单条 {@code INSERT ... VALUES (...),(...)}。
+     *
+     * <p>注意：批量模式下自增主键不回写实体（无法可靠按行映射）；返回数组的每个元素为该行所在
+     * 语句的受影响行数按行分摊（正常插入时为 1）。</p>
+     */
+    private int[] doBatchInsertMultiValue(Collection<T> collection, boolean ignoreNulls) {
+        for (T t : collection) {
+            this.doInsertFill(t);
+        }
+        BatchInsertSql batch = SqlAssembler.buildBatchInsert(collection, ignoreNulls, this.getJdbcTemplate(), this.getTinyJdbcRuntime());
+        int batchSize = Math.max(1, this.getTinyJdbcRuntime().getBatchInsertSize());
+        List<Object[]> rows = batch.getRows();
+        int[] result = new int[rows.size()];
+        String columnClause = String.join(", ", batch.getColumns());
+        int index = 0;
+        while (index < rows.size()) {
+            int end = Math.min(index + batchSize, rows.size());
+            StringBuilder sb = new StringBuilder("INSERT INTO ").append(batch.getTableName())
+                    .append(" (").append(columnClause).append(") VALUES ");
+            List<Object> params = new ArrayList<>();
+            for (int i = index; i < end; i++) {
+                Object[] row = rows.get(i);
+                if (i > index) {
+                    sb.append(", ");
+                }
+                sb.append("(");
+                for (int j = 0; j < row.length; j++) {
+                    if (j > 0) {
+                        sb.append(", ");
+                    }
+                    sb.append("?");
+                }
+                sb.append(")");
+                Collections.addAll(params, row);
+            }
+            String stmt = sb.toString();
+            SqlRequest<Integer> request = new SqlRequest<>(stmt, params.toArray(), SqlType.UPDATE);
+            int affected = this.doSqlExecute(request, invocation -> this.getJdbcTemplate().update(invocation.getSql(), invocation.getArgs()));
+            int chunkRows = end - index;
+            int perRow = chunkRows == 0 ? 0 : affected / chunkRows;
+            for (int k = index; k < end; k++) {
+                result[k] = perRow;
+            }
+            index = end;
+        }
+        return result;
+    }
+
     @Override
     public void truncate() {
-        SqlProvider sqlProvider = SqlGenerator.truncateSql(entityClass);
+        SqlProvider sqlProvider = SqlAssembler.buildTruncateSql(entityClass);
         this.execute(sqlProvider.getSql());
     }
 }

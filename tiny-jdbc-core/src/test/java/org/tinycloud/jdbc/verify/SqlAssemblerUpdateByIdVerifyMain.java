@@ -2,7 +2,7 @@ package org.tinycloud.jdbc.verify;
 import org.junit.Test;
 
 import org.tinycloud.jdbc.exception.TinyJdbcException;
-import org.tinycloud.jdbc.support.SqlGenerator;
+import org.tinycloud.jdbc.support.SqlAssembler;
 import org.tinycloud.jdbc.support.SqlProvider;
 
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 使用 main 方法快速验证 updateById SQL 生成逻辑。
  */
-public class SqlGeneratorUpdateByIdVerifyMain {
+public class SqlAssemblerUpdateByIdVerifyMain {
 
     /**
      * 验证 updateById 在有更新字段和没有更新字段时的行为。
@@ -22,7 +22,7 @@ public class SqlGeneratorUpdateByIdVerifyMain {
         entity.setId(100L);
         entity.setUpdateUserId(200L);
 
-        SqlProvider sqlProvider = SqlGenerator.updateByIdSql(entity, true);
+        SqlProvider sqlProvider = SqlAssembler.buildUpdateByIdSql(entity, true);
         List<Object> parameters = sqlProvider.getParameters();
 
         assertEquals("UPDATE t_verify_demo SET update_user_id=? WHERE id=?", sqlProvider.getSql(), "update SQL mismatch");
@@ -32,9 +32,9 @@ public class SqlGeneratorUpdateByIdVerifyMain {
 
         VerifyDemoEntity emptyUpdateEntity = new VerifyDemoEntity();
         emptyUpdateEntity.setId(101L);
-        assertThrows(() -> SqlGenerator.updateByIdSql(emptyUpdateEntity, true), "empty update columns should throw");
+        assertThrows(() -> SqlAssembler.buildUpdateByIdSql(emptyUpdateEntity, true), "empty update columns should throw");
 
-        System.out.println("SqlGeneratorUpdateByIdVerifyMain passed.");
+        System.out.println("SqlAssemblerUpdateByIdVerifyMain passed.");
         System.out.println("sql = " + sqlProvider.getSql());
         System.out.println("params = " + parameters);
     }

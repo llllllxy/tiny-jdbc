@@ -7,6 +7,7 @@ import org.tinycloud.jdbc.id.DatacenterAndWorkerProvider;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.SnowflakeConfigInterface;
 import org.tinycloud.jdbc.id.SnowflakeId;
+import org.tinycloud.jdbc.support.BatchMode;
 import org.tinycloud.jdbc.util.DbType;
 import org.tinycloud.jdbc.util.LocalHostUtils;
 
@@ -64,6 +65,16 @@ public final class TinyJdbcRuntime {
     private final SnowflakeId snowflakeId;
 
     /**
+     * 批量插入执行模式。
+     */
+    private final BatchMode batchMode;
+
+    /**
+     * 多值批量插入时每语句最大行数。
+     */
+    private final int batchInsertSize;
+
+    /**
      * 创建 TinyJDBC 运行时上下文。
      *
      * <p>该构造器只接收已经解析的运行时值，避免 core 模块依赖 Spring Boot 的属性绑定模型。</p>
@@ -83,12 +94,41 @@ public final class TinyJdbcRuntime {
                            IdGeneratorInterface idGeneratorInterface,
                            SnowflakeConfigInterface snowflakeConfigInterface,
                            MetaObjectHandler metaObjectHandler) {
+        this(banner, version, dbType, openRuntimeDbType, idGeneratorInterface,
+                snowflakeConfigInterface, metaObjectHandler,
+                BatchMode.JDBC_BATCH, 1000);
+    }
+
+    /**
+     * 创建 TinyJDBC 运行时上下文（含批量写入配置）。
+     *
+     * @param banner                       是否打印 Banner
+     * @param version                      当前组件版本
+     * @param dbType                       默认数据库类型，可为 null
+     * @param openRuntimeDbType            是否按运行时数据源动态识别数据库类型
+     * @param idGeneratorInterface         自定义 ID 生成器，可为 null
+     * @param snowflakeConfigInterface     雪花 ID 配置，可为 null
+     * @param metaObjectHandler            自动填充处理器，可为 null
+     * @param batchMode                    批量插入模式
+     * @param batchInsertSize              多值批量插入每语句最大行数
+     */
+    public TinyJdbcRuntime(boolean banner,
+                           String version,
+                           DbType dbType,
+                           boolean openRuntimeDbType,
+                           IdGeneratorInterface idGeneratorInterface,
+                           SnowflakeConfigInterface snowflakeConfigInterface,
+                           MetaObjectHandler metaObjectHandler,
+                           BatchMode batchMode,
+                           int batchInsertSize) {
         this.banner = banner;
         this.version = version;
         this.dbType = dbType;
         this.openRuntimeDbType = openRuntimeDbType;
         this.idGeneratorInterface = idGeneratorInterface;
         this.metaObjectHandler = metaObjectHandler;
+        this.batchMode = batchMode == null ? BatchMode.JDBC_BATCH : batchMode;
+        this.batchInsertSize = batchInsertSize <= 0 ? 1000 : batchInsertSize;
         this.snowflakeId = this.createSnowflakeId(snowflakeConfigInterface);
     }
 
@@ -153,6 +193,24 @@ public final class TinyJdbcRuntime {
      */
     public SnowflakeId getSnowflakeId() {
         return this.snowflakeId;
+    }
+
+    /**
+     * 获取批量插入模式。
+     *
+     * @return 批量插入模式
+     */
+    public BatchMode getBatchMode() {
+        return this.batchMode;
+    }
+
+    /**
+     * 获取多值批量插入每语句最大行数。
+     *
+     * @return 每语句最大行数
+     */
+    public int getBatchInsertSize() {
+        return this.batchInsertSize;
     }
 
     /**

@@ -6,13 +6,13 @@ import org.tinycloud.jdbc.annotation.Id;
 import org.tinycloud.jdbc.annotation.IdType;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
-import org.tinycloud.jdbc.support.SqlGenerator;
+import org.tinycloud.jdbc.support.SqlAssembler;
 import org.tinycloud.jdbc.util.TableParserUtils;
 
 /**
  * 使用 main 方法快速验证多 @Id 标记会被明确拦截。
  */
-public class SqlGeneratorMultiIdVerifyMain {
+public class SqlAssemblerMultiIdVerifyMain {
 
     /**
      * 验证表字段解析和 updateById SQL 生成不会静默接受多个 @Id。
@@ -26,9 +26,9 @@ public class SqlGeneratorMultiIdVerifyMain {
         entity.name = "multiId";
 
         assertThrows(() -> TableParserUtils.getTableInfo(VerifyMultiIdEntity.class), "getTableInfo should reject multiple @Id");
-        assertThrows(() -> SqlGenerator.updateByIdSql(entity, true), "updateByIdSql should reject multiple @Id");
+        assertThrows(() -> SqlAssembler.buildUpdateByIdSql(entity, true), "updateByIdSql should reject multiple @Id");
 
-        System.out.println("SqlGeneratorMultiIdVerifyMain passed.");
+        System.out.println("SqlAssemblerMultiIdVerifyMain passed.");
     }
 
     /**

@@ -1,6 +1,7 @@
 package org.tinycloud.jdbc;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.tinycloud.jdbc.support.BatchMode;
 import org.tinycloud.jdbc.util.DbType;
 
 /**
@@ -38,6 +39,16 @@ public class TinyJdbcProperties {
      * 是否打印 SQL 执行结果。
      */
     private Boolean sqlStatResultEnabled = false;
+
+    /**
+     * 批量插入模式。
+     */
+    private BatchMode batchInsertMode = BatchMode.JDBC_BATCH;
+
+    /**
+     * 多值批量插入每语句最大行数。
+     */
+    private int batchInsertSize = 1000;
 
     /**
      * 获取是否打印 Banner。
@@ -127,5 +138,41 @@ public class TinyJdbcProperties {
      */
     public void setSqlStatResultEnabled(Boolean sqlStatResultEnabled) {
         this.sqlStatResultEnabled = sqlStatResultEnabled;
+    }
+
+    /**
+     * 获取批量插入模式。
+     *
+     * @return 批量插入模式
+     */
+    public BatchMode getBatchInsertMode() {
+        return this.batchInsertMode;
+    }
+
+    /**
+     * 设置批量插入模式。
+     *
+     * @param batchInsertMode 批量插入模式
+     */
+    public void setBatchInsertMode(BatchMode batchInsertMode) {
+        this.batchInsertMode = batchInsertMode;
+    }
+
+    /**
+     * 获取多值批量插入每语句最大行数。
+     *
+     * @return 每语句最大行数
+     */
+    public int getBatchInsertSize() {
+        return this.batchInsertSize;
+    }
+
+    /**
+     * 设置多值批量插入每语句最大行数。
+     *
+     * @param batchInsertSize 每语句最大行数
+     */
+    public void setBatchInsertSize(int batchInsertSize) {
+        this.batchInsertSize = batchInsertSize;
     }
 }

@@ -10,10 +10,10 @@
 
 | 维度 | 内容 |
 |------|------|
-| 新增特性 | 内置主键生成器 `NanoId` / `ULID`；按 `@Column` 的结果映射器 `TableRowMapper` |
-| 架构重构 | 主键生成策略模型化（`IdGeneratorInterface` + `IdGeneratorRouter`）；生成器类下沉到 `id.generator` 子包 |
+| 新增特性 | 内置主键生成器 `NanoId` / `ULID`；按 `@Column` 的结果映射器 `TableRowMapper`；批量插入模式 `BatchMode` |
+| 架构重构 | 主键生成策略模型化（`IdGeneratorInterface` + `IdGeneratorRouter`）；生成器类下沉到 `id.generator` 子包；`SqlGenerator` 重命名为 `SqlAssembler`，方法统一 `build*` 前缀 |
 | 稳定性修复 | 雪花 ID 回退与解析稳健化、DB2 分页写法、SQL 参数渲染与主键校验等多处修复 |
-| 破坏性变更 | 无（`nanoId` / `ulid` / `uuid` 主键字段类型要求 `String`） |
+| 破坏性变更 | `SqlGenerator` 重命名为 `SqlAssembler`（直接调用方需修正用名）；`nanoId` / `ulid` / `uuid` 主键字段类型要求 `String` |
 
 ### 新增特性
 
@@ -25,6 +25,19 @@
 ### 安全性加固
 
 - **标识符安全边界（`待发布`）**：新增 `SqlIdentifierUtils` 白名单校验器，对 SQL 构建器 / 条件构造器中的表名、列引用、别名、裸列名做默认严格校验，拒绝含空白、分号、引号、注释、括号、前导数字等非法标识符，阻断标识符拼接注入。`last(String)` 也默认做尾部片段安全校验（拒绝分号 / 引号 / 注释符）；新增受信任原始 SQL 标记 `RawSql`（`SQL.raw(...)` / `last(RawSql)`）作为显式授权出口，仅应传入可信常量。Lambda 列（`TypeFunction`，经实体元数据解析）与 `FuncBuilder` 表达式参数保持透明、不做校验。
+
+### 批量写入优化
+
+- **批量插入模式（`待发布`）**：新增 `BatchMode`（`JDBC_BATCH` / `MULTI_VALUE`）。`JDBC_BATCH` 为默认值，沿用 `JdbcTemplate.batchUpdate`；`MULTI_VALUE` 把集合切块后生成单条多值 `INSERT ... VALUES (...),(...)`，显著减少网络往返与解析开销。可通过 `tiny-jdbc.batch-insert-mode` / `tiny-jdbc.batch-insert-size` 配置，或调用 `batchInsert(collection, ignoreNulls, mode)` 显式指定。
+- **`rewriteBatchedStatements` 定位**：该参数属于 MySQL JDBC URL 配置，框架无法代码内强制。`JDBC_BATCH` 模式下建议连接串携带 `rewriteBatchedStatements=true` 才真正合并往返；`MULTI_VALUE` 模式不依赖该参数，天然减少往返。
+- **主键回写限制（`待发布`）**：批量写入下自增主键<b>不回写</b>到实体（多行 INSERT 的生成键无法可靠按行映射）；单条 `insert(entity)` 仍回写。非自增主键（如 `ASSIGN_ID` / `NANO_ID`）在批量前逐实体的 `IdGeneratorRouter` 生成并回写，再打包参数。
+- **列一致性约束**：`MULTI_VALUE` 要求集合内所有实体的可写列集一致。`ignoreNulls=true` 时以首个实体的非空列集为准，后续实体列集不一致将抛出明确异常；`ignoreNulls=false` 时 null 字段以 SQL `NULL` 占位保留。
+
+### 底层 API 调整（重命名）
+
+- **`SqlGenerator` 重命名为 `SqlAssembler`（`待发布`）**：SQL 组装器类名更贴合「把实体 / 条件构造器 / 主键列表翻译成可执行 SQL」的职责；所有构建方法统一为 `build*` 前缀（如 `insertSql` → `buildInsertSql`、`selectByIdsSql` → `buildSelectByIdsSql`），与已有 `buildBatchInsert` 命名保持一致。直接调用旧 `SqlGenerator.*` 或按旧名 import 的项目需同步修改。
+- **类注释重写（`待发布`）**：`SqlAssembler` 类级注释按「职责边界 / 输入分类 / 元数据规则 / 批量插入」四块重写，准确描述其实际作用（只组装不执行、收敛 `@Table` / `@Column` / `@Id` 规则）。
+
 
 ### 主键生成架构重构
 
@@ -118,7 +131,7 @@
 - **移除 `GlobalConfig`**：不再提供 `GlobalConfig.setConfig()` / `GlobalConfig.getConfig()` 等静态 API。框架内部统一通过 `TinyJdbcRuntime` 获取运行时配置、ID 生成器和自动填充处理器，避免多 Spring 上下文、集成测试之间共享可变状态。
 - **`TinyJdbcProperties` 保持在 Starter 模块**：继续使用 `org.tinycloud.jdbc.TinyJdbcProperties` 进行 Spring Boot 配置绑定；core 仅保留不依赖 Spring Boot 的 `TinyJdbcRuntime`，用户无需修改属性类 import。
 - **移除 `tiny-jdbc.close-conn`**：数据库类型识别使用 `DataSourceUtils.getConnection()` / `releaseConnection()` 管理连接；不再允许通过配置关闭或绕过连接释放，以保证事务绑定连接不会被框架提前关闭。
-- **底层扩展 API 调整**：直接调用 `SqlGenerator.insertSql(...)`、直接创建 `JdbcTemplateHelper`，或自定义继承 `AbstractSqlSupport` 的项目，需传入 / 提供 `TinyJdbcRuntime`。
+- **底层扩展 API 调整**：直接调用 `SqlAssembler.buildInsertSql(...)`、直接创建 `JdbcTemplateHelper`，或自定义继承 `AbstractSqlSupport` 的项目，需传入 / 提供 `TinyJdbcRuntime`。
 
 ### 连接释放与连接池兼容性
 
@@ -138,7 +151,7 @@
 - [ ] 全局搜索 `GlobalConfig`，删除静态配置初始化和访问代码。
 - [ ] 如直接使用 `TinyJdbcProperties`，确认仍从 `org.tinycloud.jdbc.TinyJdbcProperties` 导入。
 - [ ] 删除 `tiny-jdbc.close-conn` 配置项；不要以关闭开关替代 Spring 的 `DataSourceUtils` 连接释放。
-- [ ] 如直接使用 `SqlGenerator.insertSql(...)`，补充 `TinyJdbcRuntime` 参数。
+- [ ] 如直接使用 `SqlAssembler.buildInsertSql(...)`，补充 `TinyJdbcRuntime` 参数。
 - [ ] 如自定义继承 `AbstractSqlSupport`，实现 `getTinyJdbcRuntime()`。
 - [ ] 如直接 `new JdbcTemplateHelper(...)`，在构造参数中传入 `TinyJdbcRuntime`。
 - [ ] 在事务方法及多数据源场景回归验证分页与数据库类型自动识别。
@@ -477,7 +490,7 @@
 | 变更 | 升级动作 |
 |------|----------|
 | 删除 `GlobalConfigUtils`（`505a502`） | 将静态调用迁移至 `GlobalConfig` 对应方法 |
-| `SqlGenerator` 包路径迁移（`6bd1768`） | `org.tinycloud.jdbc.sql.SqlGenerator` → `org.tinycloud.jdbc.support.SqlGenerator` |
+| `SqlGenerator` 包路径迁移（`6bd1768`） | `org.tinycloud.jdbc.sql.SqlGenerator` → `org.tinycloud.jdbc.support.SqlAssembler` |
 | `SqlProvider` 包路径迁移（`6bd1768`） | `org.tinycloud.jdbc.sql.SqlProvider` → `org.tinycloud.jdbc.support.SqlProvider` |
 
 ### 升级检查清单

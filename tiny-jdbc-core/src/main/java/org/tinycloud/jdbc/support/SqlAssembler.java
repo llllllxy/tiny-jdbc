@@ -19,18 +19,55 @@ import org.tinycloud.jdbc.util.TableParserUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * sql生成器，通过传入的对象，将对象转为要执行的SQL，要绑定到SQL的参数
+ * SQL 组装器：把「领域模型 / 条件构造器 / 主键列表」翻译成可执行的 SQL 及其绑定参数。
+ *
+ * <p><b>职责边界</b>：本类<b>只负责组装 SQL</b>，不负责执行。真正执行 SQL
+ * （连接获取、拦截器链、结果映射）由 {@link AbstractSqlSupport} / {@code SqlExecutor} 承担；
+ * 调用方拿到的只是 {@link SqlProvider}（sql + parameters）或 {@link BatchInsertSql}，仅作为
+ * 待执行 / 待提交的 SQL 载体。</p>
+ *
+ * <h3>输入</h3>
+ * <ul>
+ *   <li><b>实体对象</b> → 单行 {@code INSERT} / {@code UPDATE}（byId）/ {@code DELETE} / {@code SELECT}；</li>
+ *   <li><b>条件构造器</b>（{@link QueryCriteria} / {@link LambdaQueryCriteria} /
+ *       {@link UpdateCriteria} / {@link LambdaUpdateCriteria}）→ {@code SELECT} / {@code COUNT} /
+ *       {@code UPDATE} / {@code DELETE}；</li>
+ *   <li><b>主键或主键集合</b> → {@code SELECT ... BY id(s)} / {@code DELETE ... BY id(s)}；</li>
+ *   <li><b>实体集合</b> → 多值批量 {@code INSERT}（返回 {@link BatchInsertSql}）。</li>
+ * </ul>
+ *
+ * <h3>统一收敛的元数据规则</h3>
+ * <p>所有方法均基于 {@link TableParserUtils} 缓存的 {@link TableInfo} 元数据解析：
+ * {@code @Table} 决定表名、{@code @Column}（含 {@code exist=false}）决定属性↔列映射、
+ * {@code @Id} + {@code IdType} 决定主键策略。因此「属性 ↔ 列 ↔ 生成 SQL」只有一套规则、一处实现。
+ * 具体包括：</p>
+ * <ul>
+ *   <li>跳过 {@code @Column(exist=false)} 字段；</li>
+ *   <li>自增主键（{@code IdType.AUTO_INCREMENT}）从插入列集剔除，交由数据库生成，不写回实体；</li>
+ *   <li>其余主键策略经 {@link IdGeneratorRouter} 生成并<b>回写</b>实体字段；</li>
+ *   <li>{@code ignoreNulls} 为 {@code true} 时跳过 {@code null} 字段；</li>
+ *   <li>按主键操作（byId / byIds）要求实体声明唯一的 {@code @Id}，缺失时明确报错。</li>
+ * </ul>
+ *
+ * <h3>批量插入</h3>
+ * <p>{@link #buildBatchInsert} 生成<b>稳定列集 + 行参数</b>载体：列集取自集合内首个实体，
+ * 其余实体列集必须与其一致（多值 INSERT 要求所有行共享同一列），否则抛出异常；自增主键始终剔除。
+ * 载体的行参数供 {@code MULTI_VALUE} 多值 INSERT 或进一步切块使用。</p>
+ *
+ * <p><b>注意</b>：本类全部为<b>静态无状态</b>方法；部分方法（插入 / 批量）因序列型主键生成，
+ * 需要传入 {@link JdbcTemplate} 与 {@link TinyJdbcRuntime}。</p>
  *
  * @author liuxingyu01
  * @since 2023-07-28-16:49
  **/
-public class SqlGenerator {
+public class SqlAssembler {
 
     /**
      * 构建插入SQL
@@ -38,7 +75,7 @@ public class SqlGenerator {
      * @param object 入参
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider insertSql(Object object, boolean ignoreNulls, JdbcTemplate jdbcTemplate, TinyJdbcRuntime tinyJdbcRuntime) {
+    public static SqlProvider buildInsertSql(Object object, boolean ignoreNulls, JdbcTemplate jdbcTemplate, TinyJdbcRuntime tinyJdbcRuntime) {
         Field[] fields = TableParserUtils.resolveFields(object);
         String tableName = TableParserUtils.getTableName(object);
         TableInfo tableInfo = TableParserUtils.getTableInfo(object.getClass());
@@ -102,6 +139,127 @@ public class SqlGenerator {
     }
 
     /**
+     * 构建批量插入载体：一份稳定列集 + 一组行参数，供多值 INSERT 或批量 upsert 复用。
+     *
+     * <p>列集取自集合内<b>首个</b>实体；其余实体必须与其列集完全一致，否则抛出异常
+     * （多值 INSERT 要求所有行共享同一列集）。自增主键始终从列集剔除（由数据库生成）。</p>
+     *
+     * @param objects           待插入实体集合，不能为空
+     * @param ignoreNulls       是否忽略 null 字段
+     * @param jdbcTemplate      JdbcTemplate（用于序列类主键生成）
+     * @param tinyJdbcRuntime   运行时上下文（用于主键生成分派）
+     * @return 批量插入载体
+     */
+    public static BatchInsertSql buildBatchInsert(Collection<?> objects, boolean ignoreNulls,
+                                                  JdbcTemplate jdbcTemplate, TinyJdbcRuntime tinyJdbcRuntime) {
+        if (objects == null || objects.isEmpty()) {
+            throw new TinyJdbcException("buildBatchInsert collection cannot be null or empty");
+        }
+        List<?> list = new ArrayList<>(objects);
+        Object first = list.get(0);
+        TableInfo tableInfo = TableParserUtils.getTableInfo(first.getClass());
+        String tableName = tableInfo.getTableName();
+
+        List<ColumnItem> firstItems = resolveInsertColumns(first, ignoreNulls, jdbcTemplate, tinyJdbcRuntime);
+        if (firstItems.isEmpty()) {
+            throw new TinyJdbcException("No valid columns to insert! All fields are marked as exist=false or ignored.");
+        }
+        List<String> columns = firstItems.stream().map(ColumnItem::getColumn).collect(Collectors.toList());
+        List<Object[]> rows = new ArrayList<>();
+        rows.add(firstItems.stream().map(ColumnItem::getValue).toArray());
+
+        for (int i = 1; i < list.size(); i++) {
+            Object obj = list.get(i);
+            List<ColumnItem> items = resolveInsertColumns(obj, ignoreNulls, jdbcTemplate, tinyJdbcRuntime);
+            if (!sameColumns(columns, items)) {
+                throw new TinyJdbcException("batchInsert requires the same columns for all entities, first columns: "
+                        + columns + ", current columns: "
+                        + items.stream().map(ColumnItem::getColumn).collect(Collectors.toList()));
+            }
+            rows.add(items.stream().map(ColumnItem::getValue).toArray());
+        }
+
+        String pkColumn = tableInfo.getPrimaryKeyColumn();
+        boolean autoIncrement = pkColumn != null && !columns.contains(pkColumn);
+        return new BatchInsertSql(tableName, columns, rows, pkColumn, autoIncrement);
+    }
+
+    /**
+     * 单实体插入列解析：返回需要写入的列及其取值（含主键处理）。
+     *
+     * <p>遵循与 {@link #buildInsertSql} 一致的规则：跳过 {@code @Column(exist=false)}；
+     * 自增主键返回 null 时跳过该列；{@code ignoreNulls} 为 true 时跳过 null 值列。</p>
+     */
+    private static List<ColumnItem> resolveInsertColumns(Object object, boolean ignoreNulls,
+                                                         JdbcTemplate jdbcTemplate, TinyJdbcRuntime tinyJdbcRuntime) {
+        TableInfo tableInfo = TableParserUtils.getTableInfo(object.getClass());
+        Field[] fields = TableParserUtils.resolveFields(object);
+        List<ColumnItem> items = new ArrayList<>();
+        for (Field field : fields) {
+            if (!tableInfo.isPersistentField(field.getName())) {
+                continue;
+            }
+            ReflectUtils.makeAccessible(field);
+            Id idAnnotation = field.getAnnotation(Id.class);
+            String column = tableInfo.getColumn(field.getName());
+            Object value = getFieldValue(field, object);
+            if (idAnnotation != null) {
+                value = processPrimaryKey(field, value, field.getName(), field.getType(), idAnnotation, object, jdbcTemplate, tinyJdbcRuntime);
+                if (value == null) {
+                    // 自增主键：由数据库生成，剔除该列
+                    continue;
+                }
+            }
+            if (ignoreNulls && value == null) {
+                continue;
+            }
+            items.add(new ColumnItem(column, value));
+        }
+        return items;
+    }
+
+    private static Object getFieldValue(Field field, Object object) {
+        try {
+            return field.get(object);
+        } catch (IllegalAccessException e) {
+            throw new TinyJdbcException("get field value failed: " + field.getName(), e);
+        }
+    }
+
+    private static boolean sameColumns(List<String> columns, List<ColumnItem> items) {
+        if (columns.size() != items.size()) {
+            return false;
+        }
+        for (int i = 0; i < columns.size(); i++) {
+            if (!columns.get(i).equals(items.get(i).getColumn())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 单实体插入列项：列名 + 取值。
+     */
+    private static final class ColumnItem {
+        private final String column;
+        private final Object value;
+
+        ColumnItem(String column, Object value) {
+            this.column = column;
+            this.value = value;
+        }
+
+        String getColumn() {
+            return column;
+        }
+
+        Object getValue() {
+            return value;
+        }
+    }
+
+    /**
      * 抽取的私有方法：处理主键字段的生成、赋值逻辑
      *
      * @param field        主键字段
@@ -144,7 +302,7 @@ public class SqlGenerator {
      * @param object 入参
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider updateByIdSql(Object object, boolean ignoreNulls) {
+    public static SqlProvider buildUpdateByIdSql(Object object, boolean ignoreNulls) {
         Field[] fields = TableParserUtils.resolveFields(object);
         String tableName = TableParserUtils.getTableName(object);
         TableInfo tableInfo = TableParserUtils.getTableInfo(object.getClass());
@@ -183,10 +341,10 @@ public class SqlGenerator {
             parameters.add(filedValue);
         }
         if (whereValues == null) {
-            throw new TinyJdbcException("SqlGenerator updateByIdSql primaryKeyId can not null!");
+            throw new TinyJdbcException("SqlAssembler buildUpdateByIdSql primaryKeyId can not null!");
         }
         if (columns.length() == 0) {
-            throw new TinyJdbcException("SqlGenerator updateByIdSql updateColumns can not null!");
+            throw new TinyJdbcException("SqlAssembler buildUpdateByIdSql updateColumns can not null!");
         }
         String tableColumn = columns.subSequence(0, columns.length() - 1).toString();
         sql.append("UPDATE ")
@@ -212,7 +370,7 @@ public class SqlGenerator {
      * @param criteria 条件构造器
      * @return 组装完毕的SqlProvider
      */
-    public static <T> SqlProvider updateByCriteriaSql(UpdateCriteria<T> criteria, Class<?> clazz) {
+    public static <T> SqlProvider buildUpdateByCriteriaSql(UpdateCriteria<T> criteria, Class<?> clazz) {
         String whereSql = criteria.whereSql();
         String updateSql = criteria.updateSql();
         if (StrUtils.isEmpty(whereSql) || !whereSql.contains("WHERE")) {
@@ -236,7 +394,7 @@ public class SqlGenerator {
      * @param criteria 条件构造器
      * @return 组装完毕的SqlProvider
      */
-    public static <T> SqlProvider updateByLambdaCriteriaSql(LambdaUpdateCriteria<T> criteria, Class<?> clazz) {
+    public static <T> SqlProvider buildUpdateByLambdaCriteriaSql(LambdaUpdateCriteria<T> criteria, Class<?> clazz) {
         String whereSql = criteria.whereSql();
         String updateSql = criteria.updateSql();
         if (StrUtils.isEmpty(whereSql) || !whereSql.contains("WHERE")) {
@@ -259,7 +417,7 @@ public class SqlGenerator {
      * @param object 入参
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider deleteSql(Object object) {
+    public static SqlProvider buildDeleteSql(Object object) {
         Field[] fields = TableParserUtils.resolveFields(object);
         String tableName = TableParserUtils.getTableName(object);
         TableInfo tableInfo = TableParserUtils.getTableInfo(object.getClass());
@@ -289,7 +447,7 @@ public class SqlGenerator {
             parameters.add(filedValue);
         }
         if (StrUtils.isEmpty(whereColumns.toString())) {
-            throw new TinyJdbcException("SqlGenerator deleteSql whereColumns can not null!");
+            throw new TinyJdbcException("SqlAssembler buildDeleteSql whereColumns can not null!");
         }
         sql.append("DELETE FROM ");
         sql.append(tableName);
@@ -308,7 +466,7 @@ public class SqlGenerator {
      * @param criteria 条件构造器
      * @return 组装完毕的SqlProvider
      */
-    public static <T> SqlProvider deleteCriteriaSql(UpdateCriteria<T> criteria, Class<?> clazz) {
+    public static <T> SqlProvider buildDeleteCriteriaSql(UpdateCriteria<T> criteria, Class<?> clazz) {
         String criteriaSql = criteria.whereSql();
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new TinyJdbcException("The parameter criteria can not null or empty!");
@@ -328,7 +486,7 @@ public class SqlGenerator {
      * @param criteria 条件构造器Lambda
      * @return 组装完毕的SqlProvider
      */
-    public static <T> SqlProvider deleteLambdaCriteriaSql(LambdaUpdateCriteria<T> criteria, Class<?> clazz) {
+    public static <T> SqlProvider buildDeleteLambdaCriteriaSql(LambdaUpdateCriteria<T> criteria, Class<?> clazz) {
         String criteriaSql = criteria.whereSql();
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new TinyJdbcException("The parameter criteria can not null or empty!");
@@ -348,7 +506,7 @@ public class SqlGenerator {
      * @param clazz Entity类型
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider truncateSql(Class<?> clazz) {
+    public static SqlProvider buildTruncateSql(Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
         SqlProvider so = new SqlProvider();
         so.setSql("TRUNCATE TABLE " + tableName);
@@ -361,7 +519,7 @@ public class SqlGenerator {
      * @param object 入参Entity，查询参数也是从这个类里获取
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider selectSql(Object object) {
+    public static SqlProvider buildSelectSql(Object object) {
         String tableName = TableParserUtils.getTableName(object);
         TableInfo tableInfo = TableParserUtils.getTableInfo(object.getClass());
         Field[] fields = TableParserUtils.resolveFields(object);
@@ -415,7 +573,7 @@ public class SqlGenerator {
      * @param clazz 实体类Entity.class
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider selectByIdSql(Object id, Class<?> clazz) {
+    public static SqlProvider buildSelectByIdSql(Object id, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
         TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
         String primaryKeyColumn = requirePrimaryKeyColumn(tableInfo);
@@ -434,7 +592,7 @@ public class SqlGenerator {
      * @param clazz 实体类Entity.class
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider selectByIdsSql(Class<?> clazz, List<Object> ids) {
+    public static SqlProvider buildSelectByIdsSql(Class<?> clazz, List<Object> ids) {
         String tableName = TableParserUtils.getTableName(clazz);
         TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
         String primaryKeyColumn = requirePrimaryKeyColumn(tableInfo);
@@ -459,7 +617,7 @@ public class SqlGenerator {
      * @param id 入参
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider deleteByIdSql(Object id, Class<?> clazz) {
+    public static SqlProvider buildDeleteByIdSql(Object id, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
         TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
         String primaryKeyColumn = requirePrimaryKeyColumn(tableInfo);
@@ -477,7 +635,7 @@ public class SqlGenerator {
      *
      * @return 组装完毕的SqlProvider
      */
-    public static SqlProvider deleteByIdsSql(Class<?> clazz, List<Object> ids) {
+    public static SqlProvider buildDeleteByIdsSql(Class<?> clazz, List<Object> ids) {
         String tableName = TableParserUtils.getTableName(clazz);
         TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
         String primaryKeyColumn = requirePrimaryKeyColumn(tableInfo);
@@ -499,7 +657,7 @@ public class SqlGenerator {
      * @param clazz    实体类Entity.class
      * @return 组装完毕的SqlProvider
      */
-    public static <T> SqlProvider selectCriteriaSql(QueryCriteria<T> criteria, Class<?> clazz) {
+    public static <T> SqlProvider buildSelectCriteriaSql(QueryCriteria<T> criteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
         String tableColumn = criteria.selectSql();
         if (StrUtils.isEmpty(tableColumn)) {
@@ -523,7 +681,7 @@ public class SqlGenerator {
      * @param clazz          实体类Entity.class
      * @return 组装完毕的SqlProvider
      */
-    public static <T> SqlProvider selectLambdaCriteriaSql(LambdaQueryCriteria<T> lambdaCriteria, Class<?> clazz) {
+    public static <T> SqlProvider buildSelectLambdaCriteriaSql(LambdaQueryCriteria<T> lambdaCriteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
         String tableColumn = lambdaCriteria.selectSql();
         if (StrUtils.isEmpty(tableColumn)) {
@@ -547,7 +705,7 @@ public class SqlGenerator {
      * @param criteria 条件构造器
      * @return 组装完毕的SqlProvider
      */
-    public static <T> SqlProvider selectCountCriteriaSql(QueryCriteria<T> criteria, Class<?> clazz) {
+    public static <T> SqlProvider buildSelectCountCriteriaSql(QueryCriteria<T> criteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
         SqlProvider so = new SqlProvider();
         so.setSql("SELECT COUNT(*) FROM " + tableName + criteria.whereSql());
@@ -561,7 +719,7 @@ public class SqlGenerator {
      * @param lambdaCriteria 条件构造器lambda
      * @return 组装完毕的SqlProvider
      */
-    public static <T> SqlProvider selectCountLambdaCriteriaSql(LambdaQueryCriteria<T> lambdaCriteria, Class<?> clazz) {
+    public static <T> SqlProvider buildSelectCountLambdaCriteriaSql(LambdaQueryCriteria<T> lambdaCriteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
         SqlProvider so = new SqlProvider();
         so.setSql("SELECT COUNT(*) FROM " + tableName + lambdaCriteria.whereSql());

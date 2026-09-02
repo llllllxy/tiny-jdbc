@@ -6,15 +6,15 @@ import org.tinycloud.jdbc.annotation.Id;
 import org.tinycloud.jdbc.annotation.IdType;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
-import org.tinycloud.jdbc.support.SqlGenerator;
+import org.tinycloud.jdbc.support.SqlAssembler;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * SqlGenerator.insertSql 对多 @Id 的校验测试：多个主键字段时应报错（与 updateByIdSql 一致）。
+ * SqlAssembler.buildInsertSql 对多 @Id 的校验测试：多个主键字段时应报错（与 updateByIdSql 一致）。
  */
-public class SqlGeneratorInsertMultiIdVerifyMain {
+public class SqlAssemblerInsertMultiIdVerifyMain {
 
     @Table("t_multi_id")
     public static class MultiIdEntity {
@@ -58,7 +58,7 @@ public class SqlGeneratorInsertMultiIdVerifyMain {
         entity.setIdB(2L);
         entity.setName("x");
         try {
-            SqlGenerator.insertSql(entity, false, null, null);
+            SqlAssembler.buildInsertSql(entity, false, null, null);
             fail("expected TinyJdbcException for multiple @Id");
         } catch (TinyJdbcException e) {
             assertTrue(e.getMessage().contains("Only one @Id"));

@@ -116,7 +116,7 @@ public class TableInfoVerifyMain {
         assertEquals("user_name", TableParserUtils.resolveColumnName(Demo.class, "userName"));
     }
 
-    // 多 @Id 统一在 TableInfo 构建时抛错（不再依赖 SqlGenerator 各处校验）
+    // 多 @Id 统一在 TableInfo 构建时抛错（不再依赖 SqlAssembler 各处校验）
     @Test
     public void testMultipleIdThrows() {
         try {
