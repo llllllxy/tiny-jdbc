@@ -156,11 +156,25 @@ public class SqlAssembler {
             throw new TinyJdbcException("buildBatchInsert collection cannot be null or empty");
         }
         List<?> list = new ArrayList<>(objects);
-        Object first = list.get(0);
-        TableInfo tableInfo = TableParserUtils.getTableInfo(first.getClass());
+        // 校验所有实体类型一致且非 null：表名、主键等元数据取自首元素，若后续元素来自不同实体类，
+        // 即使列集恰好相同也可能把值写入错误的表（静默数据错写），因此先做整体校验。
+        Class<?> entityClass = null;
+        for (int i = 0; i < list.size(); i++) {
+            Object entity = list.get(i);
+            if (entity == null) {
+                throw new TinyJdbcException("batchInsert entity at index " + i + " cannot be null");
+            }
+            if (entityClass == null) {
+                entityClass = entity.getClass();
+            } else if (entity.getClass() != entityClass) {
+                throw new TinyJdbcException("batchInsert requires all entities to have the same type, expected "
+                        + entityClass.getName() + ", but index " + i + " is " + entity.getClass().getName());
+            }
+        }
+        TableInfo tableInfo = TableParserUtils.getTableInfo(entityClass);
         String tableName = tableInfo.getTableName();
 
-        List<ColumnItem> firstItems = resolveInsertColumns(first, ignoreNulls, jdbcTemplate, tinyJdbcRuntime);
+        List<ColumnItem> firstItems = resolveInsertColumns(list.get(0), ignoreNulls, jdbcTemplate, tinyJdbcRuntime);
         if (firstItems.isEmpty()) {
             throw new TinyJdbcException("No valid columns to insert! All fields are marked as exist=false or ignored.");
         }
@@ -593,6 +607,9 @@ public class SqlAssembler {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider buildSelectByIdsSql(Class<?> clazz, List<Object> ids) {
+        if (ids == null || ids.isEmpty()) {
+            throw new TinyJdbcException("selectByIds ids cannot be null or empty");
+        }
         String tableName = TableParserUtils.getTableName(clazz);
         TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
         String primaryKeyColumn = requirePrimaryKeyColumn(tableInfo);
@@ -605,9 +622,11 @@ public class SqlAssembler {
         String placeholders = IntStream.range(0, ids.size()).mapToObj(i -> "?").collect(Collectors.joining(",", "(", ")"));
         sql.append(placeholders);
 
+        // 防御性拷贝：避免调用方后续修改原列表导致占位符与参数数量不匹配
+        List<Object> parameters = new ArrayList<>(ids);
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
-        so.setParameters(ids);
+        so.setParameters(parameters);
         return so;
     }
 
@@ -636,6 +655,9 @@ public class SqlAssembler {
      * @return 组装完毕的SqlProvider
      */
     public static SqlProvider buildDeleteByIdsSql(Class<?> clazz, List<Object> ids) {
+        if (ids == null || ids.isEmpty()) {
+            throw new TinyJdbcException("deleteByIds ids cannot be null or empty");
+        }
         String tableName = TableParserUtils.getTableName(clazz);
         TableInfo tableInfo = TableParserUtils.getTableInfo(clazz);
         String primaryKeyColumn = requirePrimaryKeyColumn(tableInfo);
@@ -644,9 +666,11 @@ public class SqlAssembler {
         // 构建 IN 查询的 SQL 语句
         String placeholders = IntStream.range(0, ids.size()).mapToObj(i -> "?").collect(Collectors.joining(",", "(", ")"));
         sql.append(placeholders);
+        // 防御性拷贝：避免调用方后续修改原列表导致占位符与参数数量不匹配
+        List<Object> parameters = new ArrayList<>(ids);
         SqlProvider so = new SqlProvider();
         so.setSql(sql.toString());
-        so.setParameters(ids);
+        so.setParameters(parameters);
         return so;
     }
 
@@ -708,7 +732,7 @@ public class SqlAssembler {
     public static <T> SqlProvider buildSelectCountCriteriaSql(QueryCriteria<T> criteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
         SqlProvider so = new SqlProvider();
-        so.setSql("SELECT COUNT(*) FROM " + tableName + criteria.whereSql());
+        so.setSql("SELECT COUNT(*) FROM " + tableName + criteria.whereConditions());
         so.setParameters(criteria.getParameters());
         return so;
     }
@@ -722,7 +746,7 @@ public class SqlAssembler {
     public static <T> SqlProvider buildSelectCountLambdaCriteriaSql(LambdaQueryCriteria<T> lambdaCriteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
         SqlProvider so = new SqlProvider();
-        so.setSql("SELECT COUNT(*) FROM " + tableName + lambdaCriteria.whereSql());
+        so.setSql("SELECT COUNT(*) FROM " + tableName + lambdaCriteria.whereConditions());
         so.setParameters(lambdaCriteria.getParameters());
         return so;
     }

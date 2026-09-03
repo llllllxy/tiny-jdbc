@@ -51,6 +51,7 @@
 - **日志 SQL 参数渲染（`9b794ce`）**：修正日志中 SQL 参数渲染，忽略字符串与注释内的占位符，避免误替换。
 - **主键与字段校验（`775edc8` / `ca3aa8b`）**：`insertSql` 增加多 `@Id` 校验；`selectSql` 全字段 `exist=false` 时给出明确错误。
 - **自动填充列名解析（`250aac8`）**：修正 `strictUpdateFill` 注释，并支持按 `@Column` 解析更新列名。
+- **COUNT 查询条件提取（`待发布`）**：`selectCount` 不再复用 `whereSql()` 的排序与 `last()` 尾片段，改为仅取条件部分（`whereConditions()`）；避免生成 `SELECT COUNT(*) ... ORDER BY ...` 或 `FOR UPDATE` 等，在 PostgreSQL 等数据库上非法 / 语义错误的聚合查询。
 
 ### 依赖维护
 

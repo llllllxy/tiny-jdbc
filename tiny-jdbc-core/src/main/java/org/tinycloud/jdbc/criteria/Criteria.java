@@ -194,6 +194,31 @@ public abstract class Criteria<T> {
      * @return 条件SQL片段
      */
     public String whereSql() {
+        StringBuilder sql = new StringBuilder(whereConditions());
+        if (!this.orderBys.isEmpty()) {
+            sql.append(" ORDER BY ").append(String.join(",", this.orderBys));
+        }
+        if (!this.lastSqls.isEmpty()) {
+            sql.append(" ").append(this.lastSqls.get(0));
+        }
+        return sql.toString();
+    }
+
+    /**
+     * 仅生成条件部分的 SQL 片段（带 {@code WHERE}），<b>不包含</b> {@code ORDER BY} 与
+     * {@code last()} 尾片段。
+     *
+     * <p>{@link #whereSql()} 会在此基础上追加排序与尾片段；而统计总数等场景
+     * 只需条件本身（例如 {@code SELECT COUNT(*) ...}），不应携带排序或行锁等尾选项，
+     * 否则在 PostgreSQL 等数据库上会产生非法或语义错误的聚合查询。</p>
+     *
+     * <pre>
+     * 如： WHERE age < 28 AND name IN ('Bob', 'John')
+     * </pre>
+     *
+     * @return 条件 SQL 片段；无条件时返回空串
+     */
+    public String whereConditions() {
         StringBuilder sql = new StringBuilder();
         if (!this.conditions.isEmpty()) {
             sql.append(" WHERE ");
@@ -209,12 +234,6 @@ public abstract class Criteria<T> {
                 }
                 sql.append(condition);
             }
-        }
-        if (!this.orderBys.isEmpty()) {
-            sql.append(" ORDER BY ").append(String.join(",", this.orderBys));
-        }
-        if (!this.lastSqls.isEmpty()) {
-            sql.append(" ").append(this.lastSqls.get(0));
         }
         return sql.toString();
     }
