@@ -23,7 +23,9 @@ public class StrategyConfig {
     private final boolean enableLombok;
 
     /**
-     * 主键策略（可选）
+     * 主键策略（可选）。
+     * <p>当该值为 {@code null} 时，代码生成器会根据主键列是否自增自动推断：
+     * 自增主键生成 {@code AUTO_INCREMENT}，否则生成 {@code INPUT}。</p>
      */
     private final IdType idType;
 
@@ -60,7 +62,12 @@ public class StrategyConfig {
         private String[] includeTables;
         private boolean useActualColumnNames = false;
         private boolean enableLombok = true;
-        private IdType idType = IdType.INPUT;
+        /**
+         * 主键策略，默认 {@code null}。
+         * <p>当为 {@code null} 时，代码生成器根据主键列是否自增自动推断
+         * （自增 → AUTO_INCREMENT，非自增 → INPUT）。显式设置则固定使用该策略生成。</p>
+         */
+        private IdType idType = null;
 
         // 支持可变参数（更优雅）
         public Builder includeTables(String... tables) {
@@ -78,6 +85,12 @@ public class StrategyConfig {
             return this;
         }
 
+        /**
+         * 设置主键策略。不设置（保持 {@code null}）时由生成器根据主键列是否自增自动推断。
+         *
+         * @param idType 主键策略
+         * @return 当前 Builder 实例
+         */
         public Builder idType(IdType idType) {
             this.idType = idType;
             return this;

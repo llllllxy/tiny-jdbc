@@ -60,14 +60,49 @@ public class TypeUtils {
         return fieldName;
     }
 
+    /**
+     * 根据 JDBC 类型和精度生成 Java 类型（两参便捷方法，仅保留小数位）。
+     * <p>委托给 {@link #getJavaType(int, int, int)}，此时 {@code columnSize} 视为未知（传 0）。</p>
+     *
+     * @param sqlType       数据库列类型（{@link java.sql.Types}）
+     * @param decimalDigits 小数位数
+     * @return 对应的 Java 类型（可能带包名）
+     */
     public static String getJavaType(int sqlType, int decimalDigits) {
+        return getJavaType(sqlType, 0, decimalDigits);
+    }
+
+    /**
+     * 根据 JDBC 类型、列大小和小数位数生成 Java 类型。
+     * <p>映射规则如下：</p>
+     * <ul>
+     *     <li>DATE → {@code java.time.LocalDate}</li>
+     *     <li>TIME → {@code java.time.LocalTime}</li>
+     *     <li>TIMESTAMP → {@code java.time.LocalDateTime}</li>
+     *     <li>TIMESTAMP_WITH_TIMEZONE → {@code java.time.OffsetDateTime}</li>
+     *     <li>TINYINT → {@code Byte}，SMALLINT → {@code Short}，INTEGER → {@code Integer}，BIGINT → {@code Long}</li>
+     *     <li>DECIMAL/NUMERIC：{@code decimalDigits > 0} 为 {@code BigDecimal}；
+     *         {@code decimalDigits == 0} 且列大小 1..9 为 {@code Integer}、10..18 为 {@code Long}、
+     *         其余（≤0 或 >18）为 {@code BigDecimal}</li>
+     * </ul>
+     *
+     * @param sqlType       数据库列类型（{@link java.sql.Types}）
+     * @param columnSize    列大小（宽度）
+     * @param decimalDigits 小数位数
+     * @return 对应的 Java 类型（可能带包名）
+     */
+    public static String getJavaType(int sqlType, int columnSize, int decimalDigits) {
         switch (sqlType) {
             case Types.BIT:
             case Types.BOOLEAN:
                 return "Boolean";
 
             case Types.TINYINT:
+                return "Byte";
+
             case Types.SMALLINT:
+                return "Short";
+
             case Types.INTEGER:
                 return "Integer";
 
@@ -83,7 +118,18 @@ public class TypeUtils {
 
             case Types.NUMERIC:
             case Types.DECIMAL:
-                return decimalDigits > 0 ? "java.math.BigDecimal" : "Long";
+                if (decimalDigits > 0) {
+                    return "java.math.BigDecimal";
+                }
+                if (decimalDigits == 0) {
+                    if (columnSize >= 1 && columnSize <= 9) {
+                        return "Integer";
+                    }
+                    if (columnSize >= 10 && columnSize <= 18) {
+                        return "Long";
+                    }
+                }
+                return "java.math.BigDecimal";
 
             case Types.CHAR:
             case Types.VARCHAR:
@@ -94,10 +140,16 @@ public class TypeUtils {
                 return "String";
 
             case Types.DATE:
+                return "java.time.LocalDate";
+
             case Types.TIME:
+                return "java.time.LocalTime";
+
             case Types.TIMESTAMP:
+                return "java.time.LocalDateTime";
+
             case Types.TIMESTAMP_WITH_TIMEZONE:
-                return "java.util.Date";
+                return "java.time.OffsetDateTime";
 
             case Types.BINARY:
             case Types.VARBINARY:

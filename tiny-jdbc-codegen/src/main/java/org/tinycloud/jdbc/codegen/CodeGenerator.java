@@ -119,7 +119,7 @@ public class CodeGenerator {
             ColumnInfo columnInfo = new ColumnInfo();
             columnInfo.setColumnName(column.getColumnName());
 
-            String fullJavaType = TypeUtils.getJavaType(column.getDataType(), column.getDecimalDigits());
+            String fullJavaType = TypeUtils.getJavaType(column.getDataType(), column.getColumnSize(), column.getDecimalDigits());
             columnInfo.setJavaType(TypeUtils.getSimpleJavaType(fullJavaType));
 
             String fieldName;
@@ -190,7 +190,7 @@ public class CodeGenerator {
         List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
         if (!primaryKeys.isEmpty()) {
             ColumnMeta pk = primaryKeys.get(0);
-            String fullJavaType = TypeUtils.getJavaType(pk.getDataType(), pk.getDecimalDigits());
+            String fullJavaType = TypeUtils.getJavaType(pk.getDataType(), pk.getColumnSize(), pk.getDecimalDigits());
             idType = TypeUtils.getSimpleJavaType(fullJavaType);
         }
         model.put("idType", idType);
