@@ -16,6 +16,7 @@
 | 结果类型映射 | `TableRowMapper` 改按目标属性类型精确取值，修复 `BLOB/CLOB`、Oracle 特殊类型、`primitive` 空值、枚举及 `java.time` 转换；新增「列 → 字段」映射 |
 | 代码生成器 | 按列精度精确映射 Java 类型；`IdType` 默认按主键自增自动推断；实体类注释模板修复 |
 | 破坏性变更 | `SqlGenerator` 重命名为 `SqlAssembler`（直接调用方需修正用名）；`nanoId` / `ulid` / `uuid` 主键字段类型要求 `String` |
+| 条件构造器 | `criteria` 补齐 `GROUP BY` / `HAVING`、聚合列表达式 `selectExpr`、`EXISTS` 子查询、`apply` 原始片段、同名 `in`/`notIn` 可变参数、`setField` 字段赋值、`like` 通配符转义 |
 
 ### 新增特性
 
@@ -56,6 +57,16 @@
 - **自动填充列名解析（`250aac8`）**：修正 `strictUpdateFill` 注释，并支持按 `@Column` 解析更新列名。
 - **COUNT 查询条件提取（`待发布`）**：`selectCount` 不再复用 `whereSql()` 的排序与 `last()` 尾片段，改为仅取条件部分（`whereConditions()`）；避免生成 `SELECT COUNT(*) ... ORDER BY ...` 或 `FOR UPDATE` 等，在 PostgreSQL 等数据库上非法 / 语义错误的聚合查询。
 
+### 条件构造器增强（criteria）
+
+- **`groupBy` / `having`（`待发布`）**：`QueryCriteria` / `LambdaQueryCriteria` 支持 `GROUP BY` 与 `HAVING`，拼接顺序为 `WHERE ... GROUP BY ... HAVING ... ORDER BY`；`having(String, Object...)` 参数化绑定，默认做尾部片段安全校验。
+- **`selectExpr`（`待发布`）**：支持把受信任的聚合 / 函数表达式作为查询列（如 `count(*) as cnt`、`sum(amount)`、`date(create_time)`），配合 `groupBy` 实现聚合统计；走 `SqlIdentifierUtils.checkTailSql` 安全校验。
+- **`exists` / `notExists`（`待发布`）**：支持 `EXISTS` / `NOT EXISTS` 子查询条件（如 `exists("select 1 from t_order o where o.user_id = t.id")`），子查询以小括号包裹，可带 `?` 参数。
+- **`apply`（`待发布`）**：支持追加受信任的原始 SQL 条件片段（如 `apply("date(create_time) = ?", v)`、`apply("a = b")`），兜底字段间比较 / 函数条件。
+- **`in` / `notIn` 可变参数（`待发布`）**：新增 `Object...` 可变参数重载，与既有 `Collection` 版同名共存（对齐 MyBatis-Plus）；注意传裸 `null` 会因重载歧义编译失败，空值请传 `Collections.emptyList()`（空集合仍走“运行时应抛 `TinyJdbcException`”校验）。
+- **`setField`（`待发布`）**：`UpdateCriteria` / `LambdaUpdateCriteria` 支持字段对字段赋值（`setField("create_time", "update_time")` → `create_time = update_time`），取值以列引用写入 SQL、不入参数列表。
+- **`like` 通配符转义（`待发布`）**：`like` 家族新增 `boolean escape` 重载（如 `like(field, value, true)`），对值内的 `%` / `_` / `\` 转义并追加 `ESCAPE` 子句，避免值内通配符被当作模式匹配；默认行为不变（opt-in）。注意 `ESCAPE` 子句按 MySQL / H2 语义实现。
+
 ### 代码生成器增强
 
 - **Java 类型映射精确化（`a50cc43`）**：`TypeUtils.getJavaType` 新增按列大小与小数位精确分派 —— `TINYINT`→`Byte`、`SMALLINT`→`Short`、`DECIMAL`/`NUMERIC` 按 `decimalDigits` 与 `columnSize` 映射为 `BigDecimal` / `Integer` / `Long`、`DATE`/`TIME`/`TIMESTAMP`/`TIMESTAMP_WITH_TIMEZONE` 分别映射为 `LocalDate` / `LocalTime` / `LocalDateTime` / `OffsetDateTime`；主键与普通列均传入列大小参与判定。
@@ -73,6 +84,7 @@
 - [ ] 如直接引用 `IdUtils` 或具体生成器实现（`ObjectIdGenerator` / `SequenceGenerator` 等）为公开 API，请核对包路径迁移至 `id.generator`。
 - [ ] 回归验证自定义 `@Column` 实体类的查询与分页结果映射，确认映射行为符合预期。
 - [ ] 如使用代码生成器：核对新生成的 `java.time` / `Byte` / `Short` 类型与主键策略（自增 → `AUTO_INCREMENT`，非自增 → `INPUT`）是否符合预期；类型映射有变化，旧项目可能需调整实体字段类型。
+- [ ] 如用 criteria 的 `groupBy` / `having` 聚合，确认用 `selectExpr` 选中了聚合列（如 `count(*) as cnt`）；仅 `GROUP BY` 而 `SELECT` 含非分组列，在 `ONLY_FULL_GROUP_BY` / PostgreSQL 等数据库会报错。
 
 ---
 
