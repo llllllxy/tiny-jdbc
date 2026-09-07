@@ -13,6 +13,8 @@
 | 新增特性 | 内置主键生成器 `NanoId` / `ULID`；按 `@Column` 的结果映射器 `TableRowMapper`；批量插入模式 `BatchMode` |
 | 架构重构 | 主键生成策略模型化（`IdGeneratorInterface` + `IdGeneratorRouter`）；生成器类下沉到 `id.generator` 子包；`SqlGenerator` 重命名为 `SqlAssembler`，方法统一 `build*` 前缀 |
 | 稳定性修复 | 雪花 ID 回退与解析稳健化、DB2 分页写法、SQL 参数渲染与主键校验等多处修复 |
+| 结果类型映射 | `TableRowMapper` 改按目标属性类型精确取值，修复 `BLOB/CLOB`、Oracle 特殊类型、`primitive` 空值、枚举及 `java.time` 转换；新增「列 → 字段」映射 |
+| 代码生成器 | 按列精度精确映射 Java 类型；`IdType` 默认按主键自增自动推断；实体类注释模板修复 |
 | 破坏性变更 | `SqlGenerator` 重命名为 `SqlAssembler`（直接调用方需修正用名）；`nanoId` / `ulid` / `uuid` 主键字段类型要求 `String` |
 
 ### 新增特性
@@ -20,6 +22,7 @@
 - **NanoId 主键生成器（`bdeadef`）**：新增 `IdType.NANO_ID` 内置主键生成策略，生成面向 URL 的紧凑随机字符串。
 - **ULID 主键生成器（`0559d53`）**：新增 `IdType.ULID` 内置主键生成策略，生成有序、可排序的 26 位 ULID 字符串。
 - **按 `@Column` 的结果映射器（`362bf3f`）**：新增 `TableRowMapper`，识别 `@Column.value()` 做「列名 → 属性名」精确映射，修复自定义 `@Column` 查询结果映射为 `null` 的问题；`AbstractSqlSupport` 的 `select` / 分页查询默认改用该映射器（赋值仍复用 Spring `BeanWrapper`，类型转换能力与 `BeanPropertyRowMapper` 一致）。
+- **`TableRowMapper` 按目标类型精确取值（`b3feadd`）**：结果映射改按目标属性类型经 Spring `JdbcUtils.getResultSetValue` 精确取值，替代原先的 `rs.getObject` 裸取值，修复 `BLOB/CLOB`、Oracle 特殊类型、`primitive` 空值、枚举及 `java.time` 等场景的转换失败问题；`TableRowMapper` 注入 `DefaultConversionService`，类型处理能力与 `BeanPropertyRowMapper` 对齐。随同新增 `TableParserUtils.resolveColumnToFieldMap` / `TableInfo.getColumnToFieldMap`，暴露「列名 → 字段」映射。
 - **`FuncBuilder` 补齐 Lambda 重载（`d81c19a`）**：`FuncBuilder` 支持 `TypeFunction`（方法引用）形式的函数参数，用法更贴近流畅 API。
 
 ### 安全性加固
@@ -53,6 +56,13 @@
 - **自动填充列名解析（`250aac8`）**：修正 `strictUpdateFill` 注释，并支持按 `@Column` 解析更新列名。
 - **COUNT 查询条件提取（`待发布`）**：`selectCount` 不再复用 `whereSql()` 的排序与 `last()` 尾片段，改为仅取条件部分（`whereConditions()`）；避免生成 `SELECT COUNT(*) ... ORDER BY ...` 或 `FOR UPDATE` 等，在 PostgreSQL 等数据库上非法 / 语义错误的聚合查询。
 
+### 代码生成器增强
+
+- **Java 类型映射精确化（`a50cc43`）**：`TypeUtils.getJavaType` 新增按列大小与小数位精确分派 —— `TINYINT`→`Byte`、`SMALLINT`→`Short`、`DECIMAL`/`NUMERIC` 按 `decimalDigits` 与 `columnSize` 映射为 `BigDecimal` / `Integer` / `Long`、`DATE`/`TIME`/`TIMESTAMP`/`TIMESTAMP_WITH_TIMEZONE` 分别映射为 `LocalDate` / `LocalTime` / `LocalDateTime` / `OffsetDateTime`；主键与普通列均传入列大小参与判定。
+- **主键策略自动推断（`a50cc43`）**：`StrategyConfig` 的 `idType` 默认由 `INPUT` 改为 `null`，代码生成器根据主键列是否自增自动推断（自增 → `AUTO_INCREMENT`，否则 → `INPUT`），显式设置则固定使用该策略；相关注释一并补充。
+- **实体类注释模板修复（`e51249e`）**：修复 `entity.ftl` 中 `@author` / `@date` 被 `tableComment?has_content` 包裹、表无注释时这两行随之消失的问题；现调整为 `@author` / `@date` 始终输出，表注释作为可选部分。
+- **代码生成器单元测试（`5a3f92a` / `e51249e`）**：新增基于内存 `TableMeta` 的生成测试与实体注释模板回归用例 —— 覆盖默认 / 显式 / 自动推断 `IdType`，并分别校验表有无注释时 `@author` / `@date` 均正确输出。
+
 ### 依赖维护
 
 - **Maven 插件版本更新（`28500d3`）**：更新构建插件版本，保持构建稳定性。
@@ -62,6 +72,7 @@
 - [ ] 如使用 `@Id(idType = IdType.NANO_ID)` / `IdType.ULID`，确认主键字段类型为 `String`（`NANO_ID` / `ULID` / `UUID` 均要求 `String`）。
 - [ ] 如直接引用 `IdUtils` 或具体生成器实现（`ObjectIdGenerator` / `SequenceGenerator` 等）为公开 API，请核对包路径迁移至 `id.generator`。
 - [ ] 回归验证自定义 `@Column` 实体类的查询与分页结果映射，确认映射行为符合预期。
+- [ ] 如使用代码生成器：核对新生成的 `java.time` / `Byte` / `Short` 类型与主键策略（自增 → `AUTO_INCREMENT`，非自增 → `INPUT`）是否符合预期；类型映射有变化，旧项目可能需调整实体字段类型。
 
 ---
 

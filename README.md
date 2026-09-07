@@ -39,7 +39,7 @@
 <dependency>
   <groupId>top.lxyccc</groupId>
   <artifactId>tiny-jdbc-boot-starter</artifactId>
-  <version>2.0.1</version>
+  <version>2.0.2</version>
 </dependency>
 ```
 
@@ -59,6 +59,10 @@ tiny-jdbc:
   sql-stat-enabled: false
   # 是否打印sql执行结果，默认false
   sql-stat-result-enabled: false
+  # 批量插入模式：JDBC_BATCH（默认，走 JdbcTemplate.batchUpdate）或 MULTI_VALUE（多值 INSERT，减少网络往返）
+  batch-insert-mode: JDBC_BATCH
+  # MULTI_VALUE 模式下，单条多值 INSERT 一次携带的最大行数
+  batch-insert-size: 1000
 ```
 
 #### SQL 统计配置
@@ -313,6 +317,7 @@ public class UploadFile implements Serializable {
 | `int insert(T entity, boolean ignoreNulls);`                        | 插入entity里的数据，可选择是否忽略entity里值为null的属性，如果主键策略为assignId、uuid、objectId或custom，那将在entity里返回自动生成的主键值                               |
 | `int[] batchInsert(Collection<T> collection);`                      | 批量插入给定的实例集合，默认忽略 null 值，返回数组长度与集合长度相同，每个元素表示对应实例受影响的行数。注意：当忽略 null 值时，所有实例中非 null 的属性列必须一致，否则可能导致插入不正确。                      |
 | `int[] batchInsert(Collection<T> collection, boolean ignoreNulls);` | 批量插入给定的实例集合，可选择是否忽略 null 值，返回数组长度与集合长度相同，每个元素表示对应实例受影响的行数。注意：当 ignoreNulls 为 true 时，所有实例中非 null 的属性列必须一致，否则可能导致参数绑定错误或插入不正确。 |
+| `int[] batchInsert(Collection<T> collection, boolean ignoreNulls, BatchMode mode);` | 批量插入给定的实例集合，可选择是否忽略 null 值并指定批量模式（`JDBC_BATCH` / `MULTI_VALUE`）。`MULTI_VALUE` 将集合切块后生成单条多值 `INSERT ... VALUES (...),(...)`，减少网络往返与解析开销；`JDBC_BATCH` 走 `JdbcTemplate.batchUpdate`。批量插入下<b>自增主键不回写</b>到实体；非自增主键（`ASSIGN_ID` / `NANO_ID` / `ULID` 等）在批量前逐实体生成并回写。 |
 
 
 ### 更新操作
@@ -698,7 +703,7 @@ public class StatInterceptor implements SqlInterceptor {
 <dependency>
     <groupId>top.lxyccc</groupId>
     <artifactId>tiny-jdbc-codegen</artifactId>
-    <version>1.9.9</version>
+    <version>2.0.2</version>
 </dependency>
 ```
 
@@ -752,7 +757,7 @@ public class CodegenApplication {
 - `includeTables`：必填，指定需要生成的表（支持多个）
 - `useActualColumnNames`：`true` 时字段名与数据库列名保持一致，`false` 时自动转小驼峰
 - `enableLombok`：是否给实体类添加 `@Data`
-- `idType`：统一指定生成实体主键的 `@Id` 策略
+- `idType`：统一指定生成实体主键的 `@Id` 策略。不设置时（默认）生成器会根据主键列是否自增自动推断：自增 → `AUTO_INCREMENT`，非自增 → `INPUT`；显式设置则固定使用该策略。
 - `outputDir`：生成目录，默认 `generated`
 
 1. 生成结果
