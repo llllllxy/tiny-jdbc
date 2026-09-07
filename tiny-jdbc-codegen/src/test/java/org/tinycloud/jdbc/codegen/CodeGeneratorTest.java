@@ -175,4 +175,35 @@ public class CodeGeneratorTest {
         assertTrue("应使用显式配置的 ASSIGN_ID", entity.contains("@Id(idType = IdType.ASSIGN_ID)"));
         assertFalse("显式配置后不应再自动推断为 AUTO_INCREMENT", entity.contains("AUTO_INCREMENT"));
     }
+
+    // ===== 类注释：空表注释时 @author/@date 仍必须输出 =====
+    @Test
+    public void testEntityCommentEmpty_authorDateAlways() throws Exception {
+        CodeGenerator generator = createGenerator(null);
+
+        TableMeta table = buildTable(false);
+        table.setRemarks(null);
+        invokeGenerate(generator, table, true, false);
+
+        String entity = readFile("com/example/entity/TestTable.java");
+        assertTrue("空表注释时也应输出 @author", entity.contains("@author tester"));
+        assertTrue("空表注释时也应输出 @date", entity.contains("@date"));
+        assertTrue("空表注释时应保留类注释块", entity.contains("/**") && entity.contains("*/"));
+        assertFalse("空表注释时不应出现表注释文本", entity.contains("测试表"));
+    }
+
+    // ===== 类注释：有表注释时 @author/@date 仍必须输出，且包含表注释 =====
+    @Test
+    public void testEntityCommentPresent_authorDateAlways() throws Exception {
+        CodeGenerator generator = createGenerator(null);
+
+        TableMeta table = buildTable(true);
+        table.setRemarks("业务表");
+        invokeGenerate(generator, table, true, false);
+
+        String entity = readFile("com/example/entity/TestTable.java");
+        assertTrue("有表注释时也应输出 @author", entity.contains("@author tester"));
+        assertTrue("有表注释时也应输出 @date", entity.contains("@date"));
+        assertTrue("有表注释时应包含表注释文本", entity.contains("业务表"));
+    }
 }

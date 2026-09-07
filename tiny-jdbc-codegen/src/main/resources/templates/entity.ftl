@@ -13,15 +13,15 @@ import org.tinycloud.jdbc.annotation.Table;
 import ${importItem};
 </#list>
 
-<#-- 表注释 -->
-<#if tableComment?has_content>
+<#-- 类注释：表注释可选，@author/@date 始终输出 -->
 /**
+<#if tableComment?has_content>
 * ${tableComment}
 *
+</#if>
 * @author ${author}
 * @date ${createDate}
 */
-</#if>
 <#if enableLombok>
 @Data
 </#if>
