@@ -21,14 +21,14 @@ public class InConditionVerifyMain {
      */
     @Test public void testAll() {
         QueryCriteria<VerifyDemoEntity> criteria = new QueryCriteria<>();
-        assertThrows(() -> criteria.in("id", null), "criteria in null should throw");
+        assertThrows(() -> criteria.in("id", Collections.emptyList()), "criteria in empty should throw");
         assertThrows(() -> criteria.notIn("id", Collections.emptyList()), "criteria notIn empty should throw");
-        criteria.in(false, "id", null);
+        criteria.in(false, "id", Collections.emptyList());
 
         LambdaUpdateCriteria<VerifyDemoEntity> lambdaCriteria = new LambdaUpdateCriteria<>();
-        assertThrows(() -> lambdaCriteria.in(VerifyDemoEntity::getId, null), "lambda in null should throw");
+        assertThrows(() -> lambdaCriteria.in(VerifyDemoEntity::getId, Collections.emptyList()), "lambda in empty should throw");
         assertThrows(() -> lambdaCriteria.notIn(VerifyDemoEntity::getId, Collections.emptyList()), "lambda notIn empty should throw");
-        lambdaCriteria.in(false, VerifyDemoEntity::getId, null);
+        lambdaCriteria.in(false, VerifyDemoEntity::getId, Collections.emptyList());
 
         assertThrows(() -> SQL.table("t_verify_demo").select().where(w -> w.in("id", (java.util.Collection<?>) null)).toSql(), "sql builder in null should throw");
         assertThrows(() -> SQL.table("t_verify_demo").select().where(w -> w.notIn("id", Collections.emptyList())).toSql(), "sql builder notIn empty should throw");

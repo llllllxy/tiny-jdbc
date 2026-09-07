@@ -81,6 +81,21 @@ public class UpdateCriteria<T> extends AbstractCriteria<T, UpdateCriteria<T>> {
     }
 
     /**
+     * 设置字段间的直接赋值（如 {@code setField("create_time", "update_time")} 生成 {@code create_time = update_time}），
+     * 取值来源以列引用形式写入 SQL，不进入参数列表。
+     *
+     * @param targetColumn 要更新的目标字段名
+     * @param sourceColumn 取值来源字段名
+     * @return 当前 UpdateCriteria 实例，支持链式调用
+     */
+    public UpdateCriteria<T> setField(String targetColumn, String sourceColumn) {
+        String target = this.checkedColumnRef(targetColumn);
+        String source = this.checkedColumnRef(sourceColumn);
+        this.updateValues.put(target, new RawUpdateSqlValue(source));
+        return this;
+    }
+
+    /**
      * 重写父类的 instance 方法，用于创建当前类的一个新实例。
      * 该方法通常在链式调用或构建新的条件构造器时使用，
      * 通过返回一个新的 UpdateCriteria 实例，确保每次操作都可以基于新的上下文进行。

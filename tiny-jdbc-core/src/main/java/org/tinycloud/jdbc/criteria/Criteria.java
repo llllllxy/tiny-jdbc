@@ -6,6 +6,7 @@ import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,16 @@ public abstract class Criteria<T> {
     protected final List<String> lastSqls;
 
     /**
+     * 分组字段（GROUP BY）
+     */
+    protected final List<String> groupBys;
+
+    /**
+     * HAVING 条件（SQL 片段，含 ? 占位符）
+     */
+    protected final List<String> havings;
+
+    /**
      * 构造方法
      */
     public Criteria() {
@@ -64,6 +75,8 @@ public abstract class Criteria<T> {
         this.orderBys = new ArrayList<>();
         this.whereParameters = new ArrayList<>();
         this.lastSqls = new ArrayList<>();
+        this.groupBys = new ArrayList<>();
+        this.havings = new ArrayList<>();
     }
 
     /**
@@ -195,6 +208,8 @@ public abstract class Criteria<T> {
      */
     public String whereSql() {
         StringBuilder sql = new StringBuilder(whereConditions());
+        sql.append(groupBySql());
+        sql.append(havingSql());
         if (!this.orderBys.isEmpty()) {
             sql.append(" ORDER BY ").append(String.join(",", this.orderBys));
         }
@@ -202,6 +217,46 @@ public abstract class Criteria<T> {
             sql.append(" ").append(this.lastSqls.get(0));
         }
         return sql.toString();
+    }
+
+    /**
+     * 生成 GROUP BY 片段（如 {@code " GROUP BY name,age"}）；无分组时返回空串。
+     */
+    public String groupBySql() {
+        if (this.groupBys.isEmpty()) {
+            return "";
+        }
+        return " GROUP BY " + String.join(",", this.groupBys);
+    }
+
+    /**
+     * 生成 HAVING 片段（多个条件以 {@code AND} 连接）；无 HAVING 时返回空串。
+     */
+    public String havingSql() {
+        if (this.havings.isEmpty()) {
+            return "";
+        }
+        StringBuilder sql = new StringBuilder(" HAVING ");
+        for (int i = 0; i < this.havings.size(); i++) {
+            if (i > 0) {
+                sql.append(" AND ");
+            }
+            sql.append(this.havings.get(i));
+        }
+        return sql.toString();
+    }
+
+    /**
+     * 追加一个 HAVING 条件及其参数。参数会被追加到条件参数列表，按「WHERE ... HAVING ...」顺序绑定。
+     *
+     * @param expression HAVING 表达式（含 {@code ?} 占位符，如 {@code "count(*) > ?"}）
+     * @param params     绑定到 {@code ?} 的参数
+     */
+    protected final void addHaving(String expression, Object... params) {
+        this.havings.add(expression);
+        if (params != null) {
+            Collections.addAll(this.whereParameters, params);
+        }
     }
 
     /**

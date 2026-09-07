@@ -33,6 +33,24 @@ public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
     }
 
     /**
+     * 添加<b>聚合 / 函数表达式</b>作为查询列（受信任），如 {@code "count(*) as cnt"}、
+     * {@code "sum(amount)"}、{@code "date(create_time)"}。通常配合 {@link #groupBy(String...)} 使用。
+     * <p>默认做尾部片段安全校验（拒绝分号 / 引号 / 注释 / 控制字符），表达式请传可信常量。</p>
+     *
+     * @param exprs 列表达式（可变参数）
+     * @return 当前 QueryCriteria 对象，支持链式调用
+     */
+    public final QueryCriteria<T> selectExpr(String... exprs) {
+        if (ArrayUtils.isNotEmpty(exprs)) {
+            for (String expr : exprs) {
+                SqlIdentifierUtils.checkTailSql(expr);
+                this.selectFields.add(expr);
+            }
+        }
+        return this;
+    }
+
+    /**
      * 根据指定字段和排序方式进行排序。
      * 默认执行排序操作。
      *
@@ -142,6 +160,36 @@ public class QueryCriteria<T> extends AbstractCriteria<T, QueryCriteria<T>> {
     public final QueryCriteria<T> last(RawSql lastSql) {
         this.lastSqls.clear();
         this.lastSqls.add(lastSql.sql());
+        return this;
+    }
+
+    /**
+     * 指定分组字段（GROUP BY）。
+     *
+     * @param fields 分组字段名（可变参数）
+     * @return 当前 QueryCriteria 对象，支持链式调用。
+     */
+    public final QueryCriteria<T> groupBy(String... fields) {
+        if (ArrayUtils.isNotEmpty(fields)) {
+            for (String f : fields) {
+                this.groupBys.add(this.checkedColumnRef(f));
+            }
+        }
+        return this;
+    }
+
+    /**
+     * 指定 HAVING 条件（作用于聚合结果）。
+     * <p>表达式应包含 {@code ?} 占位符并以参数绑定值（如 {@code "count(*) > ?"}）；
+     * 默认对表达式做尾部片段安全校验（拒绝分号 / 引号 / 注释 / 控制字符）。</p>
+     *
+     * @param expression HAVING 表达式
+     * @param params     绑定到表达式 {@code ?} 的参数
+     * @return 当前 QueryCriteria 对象，支持链式调用。
+     */
+    public final QueryCriteria<T> having(String expression, Object... params) {
+        SqlIdentifierUtils.checkTailSql(expression);
+        this.addHaving(expression, params);
         return this;
     }
 

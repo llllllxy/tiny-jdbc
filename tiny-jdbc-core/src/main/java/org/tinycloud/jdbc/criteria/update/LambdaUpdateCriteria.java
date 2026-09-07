@@ -83,6 +83,21 @@ public class LambdaUpdateCriteria<T> extends AbstractLambdaCriteria<T, LambdaUpd
     }
 
     /**
+     * 设置字段间的直接赋值（如 {@code setField(Demo::getCreateTime, Demo::getUpdateTime)} 生成 {@code create_time = update_time}），
+     * 取值来源以列引用形式写入 SQL，不进入参数列表。
+     *
+     * @param targetField 要更新的目标字段
+     * @param sourceField 取值来源字段
+     * @return 当前 LambdaUpdateCriteria 实例，支持链式调用
+     */
+    public LambdaUpdateCriteria<T> setField(TypeFunction<T, ?> targetField, TypeFunction<T, ?> sourceField) {
+        String target = this.getColumnName(targetField);
+        String source = this.getColumnName(sourceField);
+        this.updateValues.put(target, new RawUpdateSqlValue(source));
+        return this;
+    }
+
+    /**
      * 重写父类的 instance 方法，用于创建当前类的一个新实例。
      * 在构建查询条件时，有时需要基于当前实例的上下文创建一个新的实例，
      * 此方法的作用就是返回一个新的 LambdaUpdateCriteria 实例，
