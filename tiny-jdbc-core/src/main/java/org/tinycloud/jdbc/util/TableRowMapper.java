@@ -3,8 +3,11 @@ package org.tinycloud.jdbc.util;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.JdbcUtils;
 
+import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -16,12 +19,13 @@ import java.util.Map;
  * </p>
  * <p>
  * 默认的 {@link org.springframework.jdbc.core.BeanPropertyRowMapper} 按「列名转驼峰 → 属性名」匹配，
- * 不识别 {@code @Column}。本类改用 {@link TableParserUtils#resolveColumnToPropertyMap} 做「列名 → 属性名」
+ * 不识别 {@code @Column}。本类改用 {@link TableParserUtils#resolveColumnToFieldMap} 做「列名 → 字段」
  * 精确映射（{@code @Column.value()} 优先、否则驼峰转下划线），因此自定义 {@code @Column} 也能正确回写。
  * </p>
  * <p>
- * 赋值仍复用 Spring {@link BeanWrapperImpl}，与 {@code BeanPropertyRowMapper} 的类型转换能力保持一致
- * （支持日期时间、UUID、枚举等），且对属性的 setter 依赖与原先相同，不引入新限制。
+ * 取值复用 Spring {@link JdbcUtils#getResultSetValue} 按目标属性类型精确提取，BLOB/CLOB、primitive null、
+ * Oracle 特殊类型、枚举及 java.time 均能正确转换；赋值复用 {@link BeanWrapperImpl} 并注入
+ * {@link DefaultConversionService}，与 {@code BeanPropertyRowMapper} 的类型转换能力保持一致。
  * </p>
  *
  * @author liuxingyu01
@@ -31,11 +35,11 @@ public class TableRowMapper<T> implements RowMapper<T> {
 
     private final Class<T> type;
 
-    private final Map<String, String> columnToProperty;
+    private final Map<String, Field> columnToField;
 
     public TableRowMapper(Class<T> type) {
         this.type = type;
-        this.columnToProperty = TableParserUtils.resolveColumnToPropertyMap(type);
+        this.columnToField = TableParserUtils.resolveColumnToFieldMap(type);
     }
 
     /**
@@ -53,6 +57,9 @@ public class TableRowMapper<T> implements RowMapper<T> {
     public T mapRow(ResultSet rs, int rowNum) throws SQLException {
         T bean = BeanUtils.instantiateClass(this.type);
         BeanWrapper wrapper = new BeanWrapperImpl(bean);
+        // 与 BeanPropertyRowMapper 对齐：注入 DefaultConversionService，使 JDBC 原始值能转换成
+        // java.time / UUID / 枚举等目标属性类型（否则 Timestamp->LocalDateTime 等会抛类型转换异常）。
+        wrapper.setConversionService(DefaultConversionService.getSharedInstance());
         ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();
         for (int i = 1; i <= columnCount; i++) {
@@ -60,16 +67,18 @@ public class TableRowMapper<T> implements RowMapper<T> {
             if (column == null) {
                 column = metaData.getColumnName(i);
             }
-            String property = column == null ? null : this.columnToProperty.get(column.toLowerCase());
-            if (property == null) {
+            Field field = column == null ? null : this.columnToField.get(column.toLowerCase());
+            if (field == null) {
                 continue;
             }
-            Object value = rs.getObject(i);
+            // 按目标属性类型精确取值（复用 Spring JdbcUtils）：正确处理 primitive/wasNull、
+            // byte[]/Blob/Clob、Oracle 特殊类型、枚举及 java.time，避免仅依赖 getObject 的裸对象导致转换失败。
+            Object value = JdbcUtils.getResultSetValue(rs, i, field.getType());
             if (value == null) {
                 // 值为 null 时不 set，让实体保持默认值（对象字段→null，基础类型→默认值），避免类型转换报错
                 continue;
             }
-            wrapper.setPropertyValue(property, value);
+            wrapper.setPropertyValue(field.getName(), value);
         }
         return bean;
     }

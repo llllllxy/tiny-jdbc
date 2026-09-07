@@ -25,14 +25,52 @@ import java.util.Set;
  */
 public final class TableInfo {
 
+    /**
+     * 实体类。
+     */
     private final Class<?> entityClass;
+
+    /**
+     * 表名（{@code @Table.value()}）；实体未声明 {@code @Table} 时为 null。
+     */
     private final String tableName;
+
+    /**
+     * 主键列名；实体未声明 {@code @Id} 时为 null。
+     */
     private final String primaryKeyColumn;
+
+    /**
+     * 实体全部字段（含 {@code @Column(exist=false)}），按声明顺序（含父类字段）。
+     */
     private final List<Field> allFields;
+
+    /**
+     * 字段名(Java 驼峰) → 列名；含 {@code @Column(exist=false)} 字段。字段名不存在返回 null。
+     */
     private final Map<String, String> fieldToColumn;
+
+    /**
+     * 列名(小写, 数据库列名) → 字段；仅有效字段（排除 {@code @Column(exist=false)}）。
+     * <p>用于「结果集列 → 实体字段」的映射（如 {@link #getFieldByColumn}、{@link #getColumnToFieldMap()}）。</p>
+     */
     private final Map<String, Field> columnToField;
+
+    /**
+     * 字段名(Java 驼峰) → 字段；含 {@code @Column(exist=false)} 字段。
+     * <p>用于「按 Java 字段名 → Field 对象」的查找（如 Lambda 解析、{@link #getField}）。
+     * 与 {@link #columnToField} 的区别：后者的 key 是<b>数据库列名</b>且仅含有效字段，本者的 key 是<b>Java 字段名</b>且含全部字段。</p>
+     */
     private final Map<String, Field> fieldToField;
+
+    /**
+     * 有效（持久化）字段名集合（排除 {@code @Column(exist=false)}），用于 {@link #isPersistentField}。
+     */
     private final Set<String> persistentFieldNames;
+
+    /**
+     * 有效字段（排除 {@code @Column(exist=false)}）的列名列表，按字段声明顺序。
+     */
     private final List<String> columns;
 
     TableInfo(Class<?> entityClass, String tableName, String primaryKeyColumn,
@@ -119,5 +157,12 @@ public final class TableInfo {
             map.put(entry.getKey(), entry.getValue().getName());
         }
         return map;
+    }
+
+    /**
+     * 用于结果集映射的「列名(小写) → 字段」只读映射（仅有效字段）。
+     */
+    public Map<String, Field> getColumnToFieldMap() {
+        return columnToField;
     }
 }

@@ -169,6 +169,17 @@ public class TableParserUtils {
     }
 
     /**
+     * 构建实体「数据库列名(小写) → 字段」映射，供结果集按目标类型精确取值。
+     * <p>跳过 {@code @Column(exist=false)} 字段；结果来自 {@link #getTableInfo} 的类级缓存。</p>
+     *
+     * @param clazz 实体类类型
+     * @return 列名(小写) → 字段 映射
+     */
+    public static Map<String, Field> resolveColumnToFieldMap(Class<?> clazz) {
+        return getTableInfo(clazz).getColumnToFieldMap();
+    }
+
+    /**
      * 判断实体字段是否为有效（持久化）字段：字段存在且未标记 {@code @Column(exist=false)}。
      * <p>
      * 字段不存在或 {@code @Column(exist=false)} 均返回 {@code false}；与 {@link TableInfo#isPersistentField(String)}
