@@ -4,7 +4,6 @@ import org.tinycloud.jdbc.annotation.Column;
 import org.tinycloud.jdbc.annotation.Id;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
-import org.tinycloud.jdbc.util.tuple.Pair;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -87,50 +86,6 @@ public class TableParserUtils {
             throw new TinyJdbcException("getTableName " + clazz.getName() + " no @Table defined");
         }
         return tableName;
-    }
-
-    /**
-     * 获取实体类对应数据库字段名列表和主键字段名。
-     * <p>
-     * <b>已过时：</b>框架内部请改用 {@link #getTableInfo(Class)} 后直接读取
-     * {@link TableInfo#getColumns()} 与 {@link TableInfo#getPrimaryKeyColumn()}。
-     * 本方法保留仅为兼容旧调用，行为保持不变。
-     * </p>
-     *
-     * @param entity 实体类
-     * @param <T>    泛型
-     * @return Pair，左数据库字段名列表，右主键字段名
-     * @deprecated 使用 {@link #getTableInfo(Class)} 与 {@link TableInfo} 替代
-     */
-    @Deprecated
-    public static <T> Pair<List<String>, String> getTableColumn(T entity) {
-        if (entity == null) {
-            throw new TinyJdbcException("getTableColumn entity cannot be null!");
-        }
-        Class<?> clazz = entity.getClass();
-        return getTableColumn(clazz);
-    }
-
-    /**
-     * 获取实体类对应数据库字段名列表和主键字段名。
-     * <p>
-     * <b>已过时：</b>框架内部请改用 {@link #getTableInfo(Class)} 后直接读取
-     * {@link TableInfo#getColumns()} 与 {@link TableInfo#getPrimaryKeyColumn()}。
-     * 本方法保留仅为兼容旧调用，行为保持不变。
-     * </p>
-     *
-     * @param clazz 实体类类型
-     * @param <T>   泛型
-     * @return Pair，左数据库字段名列表，右主键字段名
-     * @deprecated 使用 {@link #getTableInfo(Class)} 与 {@link TableInfo} 替代
-     */
-    @Deprecated
-    public static <T> Pair<List<String>, String> getTableColumn(Class<T> clazz) {
-        TableInfo tableInfo = getTableInfo(clazz);
-        if (StrUtils.isEmpty(tableInfo.getPrimaryKeyColumn())) {
-            throw new TinyJdbcException("Please correctly set the primary key attribute column!");
-        }
-        return new Pair<>(tableInfo.getColumns(), tableInfo.getPrimaryKeyColumn());
     }
 
     /**
