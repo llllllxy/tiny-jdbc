@@ -23,6 +23,8 @@ public class SqlAssemblerCountVerifyMain {
         verifyQueryCriteriaCountStripsOrderAndLast();
         verifyLambdaCriteriaCountStripsOrder();
         verifyWhereConditionsStillLetsWhereSqlKeepOrderAndLast();
+        verifyGroupedHavingCountUsesSubquery();
+        verifyLambdaGroupedHavingCountUsesSubquery();
         System.out.println("SqlAssemblerCountVerifyMain passed.");
     }
 
@@ -71,6 +73,37 @@ public class SqlAssemblerCountVerifyMain {
                 "whereSql should still keep ORDER BY and last for list queries");
     }
 
+    /**
+     * 有分组/HAVING 时，count 应统计满足 HAVING 的分组数，并保持参数顺序。
+     */
+    private static void verifyGroupedHavingCountUsesSubquery() {
+        QueryCriteria<VerifyDemoEntity> criteria = new QueryCriteria<VerifyDemoEntity>()
+                .eq("create_user_id", 100L)
+                .groupBy("remark")
+                .having("count(*) > ?", 2L)
+                .orderBy("remark")
+                .last("FOR UPDATE");
+
+        SqlProvider provider = SqlAssembler.buildSelectCountCriteriaSql(criteria, VerifyDemoEntity.class);
+        assertEquals("SELECT COUNT(*) FROM (SELECT 1 FROM t_verify_demo WHERE create_user_id = ? GROUP BY remark HAVING count(*) > ?) tiny_jdbc_count",
+                provider.getSql(), "grouped count should use a HAVING subquery");
+        assertEquals(Arrays.asList(100L, 2L), provider.getParameters(), "grouped count params should preserve WHERE/HAVING order");
+    }
+
+    /**
+     * Lambda 版同样应保留 GROUP BY/HAVING 与参数。
+     */
+    private static void verifyLambdaGroupedHavingCountUsesSubquery() {
+        LambdaQueryCriteria<VerifyDemoEntity> criteria = new LambdaQueryCriteria<VerifyDemoEntity>()
+                .eq(VerifyDemoEntity::getCreateUserId, 100L)
+                .groupBy(VerifyDemoEntity::getCreateTime)
+                .having("count(*) > ?", 2L);
+
+        SqlProvider provider = SqlAssembler.buildSelectCountLambdaCriteriaSql(criteria, VerifyDemoEntity.class);
+        assertEquals("SELECT COUNT(*) FROM (SELECT 1 FROM t_verify_demo WHERE create_user_id = ? GROUP BY create_time HAVING count(*) > ?) tiny_jdbc_count",
+                provider.getSql(), "lambda grouped count should use a HAVING subquery");
+        assertEquals(Arrays.asList(100L, 2L), provider.getParameters(), "lambda grouped count params should preserve WHERE/HAVING order");
+    }
     private static void assertEquals(Object expected, Object actual, String message) {
         if (expected == null ? actual != null : !expected.equals(actual)) {
             throw new IllegalStateException(message + " expected=" + expected + ", actual=" + actual);

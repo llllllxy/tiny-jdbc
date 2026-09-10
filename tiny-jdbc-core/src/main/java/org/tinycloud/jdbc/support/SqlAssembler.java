@@ -731,9 +731,16 @@ public class SqlAssembler {
      */
     public static <T> SqlProvider buildSelectCountCriteriaSql(QueryCriteria<T> criteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
+        String conditionSql = criteria.whereGroupByHavingSql();
+        String countSql;
+        if (criteria.hasGroupByOrHaving()) {
+            countSql = "SELECT COUNT(*) FROM (SELECT 1 FROM " + tableName + conditionSql + ") tiny_jdbc_count";
+        } else {
+            countSql = "SELECT COUNT(*) FROM " + tableName + conditionSql;
+        }
         SqlProvider so = new SqlProvider();
-        so.setSql("SELECT COUNT(*) FROM " + tableName + criteria.whereConditions());
-        so.setParameters(criteria.getParameters());
+        so.setSql(countSql);
+        so.setParameters(criteria.getConditionParameters());
         return so;
     }
 
@@ -745,9 +752,16 @@ public class SqlAssembler {
      */
     public static <T> SqlProvider buildSelectCountLambdaCriteriaSql(LambdaQueryCriteria<T> lambdaCriteria, Class<?> clazz) {
         String tableName = TableParserUtils.getTableName(clazz);
+        String conditionSql = lambdaCriteria.whereGroupByHavingSql();
+        String countSql;
+        if (lambdaCriteria.hasGroupByOrHaving()) {
+            countSql = "SELECT COUNT(*) FROM (SELECT 1 FROM " + tableName + conditionSql + ") tiny_jdbc_count";
+        } else {
+            countSql = "SELECT COUNT(*) FROM " + tableName + conditionSql;
+        }
         SqlProvider so = new SqlProvider();
-        so.setSql("SELECT COUNT(*) FROM " + tableName + lambdaCriteria.whereConditions());
-        so.setParameters(lambdaCriteria.getParameters());
+        so.setSql(countSql);
+        so.setParameters(lambdaCriteria.getConditionParameters());
         return so;
     }
 

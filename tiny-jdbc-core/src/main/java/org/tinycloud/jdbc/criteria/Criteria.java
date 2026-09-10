@@ -119,12 +119,25 @@ public abstract class Criteria<T> {
     }
 
     /**
+     * 获取查询条件参数（WHERE 与 HAVING），不包含更新 SET 参数。
+     *
+     * @return 条件参数副本
+     */
+    public List<Object> getConditionParameters() {
+        return new ArrayList<>(this.whereParameters);
+    }
+
+    /**
+     * 是否包含 GROUP BY 或 HAVING。
+     *
+     * @return true=统计时需要包裹分组子查询
+     */
+    public boolean hasGroupByOrHaving() {
+        return !this.groupBys.isEmpty() || !this.havings.isEmpty();
+    }
+
+    /**
      * 根据条件生成对应查询部分的SQL片段
-     *
-     * <pre>
-     * 如： id,create_time
-     *
-     * <pre>
      *
      * @return 查询SQL片段
      */
@@ -217,6 +230,16 @@ public abstract class Criteria<T> {
             sql.append(" ").append(this.lastSqls.get(0));
         }
         return sql.toString();
+    }
+
+    /**
+     * 生成统计查询所需的条件 SQL：WHERE + GROUP BY + HAVING。
+     * 不包含 ORDER BY 与 last() 尾片段。
+     *
+     * @return 统计条件 SQL 片段
+     */
+    public String whereGroupByHavingSql() {
+        return this.whereConditions() + this.groupBySql() + this.havingSql();
     }
 
     /**
