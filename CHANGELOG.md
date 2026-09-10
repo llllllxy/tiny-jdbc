@@ -16,7 +16,7 @@
 | 结果类型映射 | `TableRowMapper` 改按目标属性类型精确取值，修复 `BLOB/CLOB`、Oracle 特殊类型、`primitive` 空值、枚举及 `java.time` 转换；新增「列 → 字段」映射 |
 | 代码生成器 | 按列精度精确映射 Java 类型；`IdType` 默认按主键自增自动推断；实体类注释模板修复 |
 | 破坏性变更 | `SqlGenerator` 重命名为 `SqlAssembler`（直接调用方需修正用名）；`nanoId` / `ulid` / `uuid` 主键字段类型要求 `String` |
-| 条件构造器 | `criteria` 补齐 `GROUP BY` / `HAVING`、聚合列表达式 `selectExpr`、`EXISTS` 子查询、`apply` 原始片段、同名 `in`/`notIn` 可变参数、`setField` 字段赋值、`like` 通配符转义 |
+| 条件构造器 | `criteria` 补齐 `GROUP BY` / `HAVING`、聚合列表达式 `selectExpr`、`EXISTS` 子查询、`apply` 原始片段、同名 `in`/`notIn` 可变参数、`setField` 字段赋值 |
 
 ### 新增特性
 
@@ -65,7 +65,6 @@
 - **`apply`（`待发布`）**：支持追加受信任的原始 SQL 条件片段（如 `apply("date(create_time) = ?", v)`、`apply("a = b")`），兜底字段间比较 / 函数条件。
 - **`in` / `notIn` 可变参数（`待发布`）**：新增 `Object...` 可变参数重载，与既有 `Collection` 版同名共存（对齐 MyBatis-Plus）；注意传裸 `null` 会因重载歧义编译失败，空值请传 `Collections.emptyList()`（空集合仍走“运行时应抛 `TinyJdbcException`”校验）。
 - **`setField`（`待发布`）**：`UpdateCriteria` / `LambdaUpdateCriteria` 支持字段对字段赋值（`setField("create_time", "update_time")` → `create_time = update_time`），取值以列引用写入 SQL、不入参数列表。
-- **`like` 通配符转义（`待发布`）**：`like` 家族新增 `boolean escape` 重载（如 `like(field, value, true)`），对值内的 `%` / `_` / `\` 转义并追加 `ESCAPE` 子句，避免值内通配符被当作模式匹配；默认行为不变（opt-in）。注意 `ESCAPE` 子句按 MySQL / H2 语义实现。
 
 ### 代码生成器增强
 

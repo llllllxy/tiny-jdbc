@@ -180,128 +180,74 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
     }
 
     public <R> Children like(String field, R value) {
-        return this.like(true, field, value, false);
+        return this.like(true, field, value);
     }
 
     public <R> Children like(boolean whether, String field, R value) {
-        return this.like(whether, field, value, false);
-    }
-
-    public <R> Children like(String field, R value, boolean escape) {
-        return this.like(true, field, value, escape);
-    }
-
-    public <R> Children like(boolean whether, String field, R value, boolean escape) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " LIKE ?"
-                    + (escape ? " ESCAPE '\\\\'" : "");
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " LIKE ?";
             this.conditions.add(condition);
-            this.whereParameters.add("%" + this.escapeLikeValue(value, escape) + "%");
+            this.whereParameters.add("%" + value + "%");
         });
     }
 
     public <R> Children notLike(String field, R value) {
-        return this.notLike(true, field, value, false);
+        return this.notLike(true, field, value);
     }
 
     public <R> Children notLike(boolean whether, String field, R value) {
-        return this.notLike(whether, field, value, false);
-    }
-
-    public <R> Children notLike(String field, R value, boolean escape) {
-        return this.notLike(true, field, value, escape);
-    }
-
-    public <R> Children notLike(boolean whether, String field, R value, boolean escape) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " NOT LIKE ?"
-                    + (escape ? " ESCAPE '\\\\'" : "");
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " NOT LIKE ?";
             this.conditions.add(condition);
-            this.whereParameters.add("%" + this.escapeLikeValue(value, escape) + "%");
+            this.whereParameters.add("%" + value + "%");
         });
     }
 
     public <R> Children leftLike(String field, R value) {
-        return this.leftLike(true, field, value, false);
+        return this.leftLike(true, field, value);
     }
 
     public <R> Children leftLike(boolean whether, String field, R value) {
-        return this.leftLike(whether, field, value, false);
-    }
-
-    public <R> Children leftLike(String field, R value, boolean escape) {
-        return this.leftLike(true, field, value, escape);
-    }
-
-    public <R> Children leftLike(boolean whether, String field, R value, boolean escape) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " LIKE ?"
-                    + (escape ? " ESCAPE '\\\\'" : "");
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " LIKE ?";
             this.conditions.add(condition);
-            this.whereParameters.add("%" + this.escapeLikeValue(value, escape));
+            this.whereParameters.add("%" + value);
         });
     }
 
     public <R> Children notLeftLike(String field, R value) {
-        return this.notLeftLike(true, field, value, false);
+        return this.notLeftLike(true, field, value);
     }
 
     public <R> Children notLeftLike(boolean whether, String field, R value) {
-        return this.notLeftLike(whether, field, value, false);
-    }
-
-    public <R> Children notLeftLike(String field, R value, boolean escape) {
-        return this.notLeftLike(true, field, value, escape);
-    }
-
-    public <R> Children notLeftLike(boolean whether, String field, R value, boolean escape) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " NOT LIKE ?"
-                    + (escape ? " ESCAPE '\\\\'" : "");
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " NOT LIKE ?";
             this.conditions.add(condition);
-            this.whereParameters.add("%" + this.escapeLikeValue(value, escape));
+            this.whereParameters.add("%" + value);
         });
     }
 
     public <R> Children rightLike(String field, R value) {
-        return this.rightLike(true, field, value, false);
+        return this.rightLike(true, field, value);
     }
 
     public <R> Children rightLike(boolean whether, String field, R value) {
-        return this.rightLike(whether, field, value, false);
-    }
-
-    public <R> Children rightLike(String field, R value, boolean escape) {
-        return this.rightLike(true, field, value, escape);
-    }
-
-    public <R> Children rightLike(boolean whether, String field, R value, boolean escape) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " LIKE ?"
-                    + (escape ? " ESCAPE '\\\\'" : "");
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " LIKE ?";
             this.conditions.add(condition);
-            this.whereParameters.add(this.escapeLikeValue(value, escape) + "%");
+            this.whereParameters.add(value + "%");
         });
     }
 
     public <R> Children notRightLike(String field, R value) {
-        return this.notRightLike(true, field, value, false);
+        return this.notRightLike(true, field, value);
     }
 
     public <R> Children notRightLike(boolean whether, String field, R value) {
-        return this.notRightLike(whether, field, value, false);
-    }
-
-    public <R> Children notRightLike(String field, R value, boolean escape) {
-        return this.notRightLike(true, field, value, escape);
-    }
-
-    public <R> Children notRightLike(boolean whether, String field, R value, boolean escape) {
         return this.whetherDo(whether, () -> {
-            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " NOT LIKE ?"
-                    + (escape ? " ESCAPE '\\\\'" : "");
+            String condition = this.getConditionPrefix() + this.checkedColumnRef(field) + " NOT LIKE ?";
             this.conditions.add(condition);
-            this.whereParameters.add(this.escapeLikeValue(value, escape) + "%");
+            this.whereParameters.add(value + "%");
         });
     }
 
@@ -514,21 +460,6 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
      * 子类返回一个自己的新对象
      */
     protected abstract Children instance();
-
-    /**
-     * 按需转义 LIKE 通配符（{@code %} / {@code _} / {@code \\}），避免值内的通配符被误当作模式匹配。
-     *
-     * @param value  LIKE 值
-     * @param escape 是否转义
-     * @return 转义后的字符串
-     */
-    protected String escapeLikeValue(Object value, boolean escape) {
-        String s = String.valueOf(value);
-        if (!escape) {
-            return s;
-        }
-        return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-    }
 
     /**
      * 函数化的做事

@@ -16,7 +16,6 @@ import java.util.Arrays;
  *   <li>{@code exists/notExists} 子查询条件</li>
  *   <li>{@code apply} 原始 SQL 片段条件</li>
  *   <li>{@code in/notIn} 可变参数重载</li>
- *   <li>{@code like} 通配符转义（opt-in，值内 {@code %}、{@code _} 转义并追加 {@code ESCAPE} 子句）</li>
  *   <li>{@code setField} 字段对字段赋值</li>
  * </ul>
  */
@@ -29,8 +28,8 @@ public class CriteriaExtendVerifyMain {
     public void testAll() {
         verifyStringInVarargs();
         verifyLambdaInVarargs();
-        verifyStringExistsApplyLike();
-        verifyLambdaExistsApplyLike();
+        verifyStringExistsApply();
+        verifyLambdaExistsApply();
         verifyUpdateSetField();
         verifySelectExpr();
         verifyLambdaSelectExpr();
@@ -60,35 +59,31 @@ public class CriteriaExtendVerifyMain {
     }
 
     /**
-     * 字符串版 exists + apply + like 转义：子查询原样包裹、apply 参数化、like 值内通配符转义。
+     * 字符串版 exists + apply：子查询原样包裹，apply 参数化。
      */
-    private static void verifyStringExistsApplyLike() {
+    private static void verifyStringExistsApply() {
         QueryCriteria<VerifyDemoEntity> criteria = new QueryCriteria<VerifyDemoEntity>()
                 .exists("select 1 from t_order o where o.user_id = create_user_id")
-                .apply("date(create_time) = ?", "2026-01-01")
-                .like("create_time", "a%b", true);
+                .apply("date(create_time) = ?", "2026-01-01");
 
         SqlProvider provider = SqlAssembler.buildSelectCriteriaSql(criteria, VerifyDemoEntity.class);
         assertTrue(provider.getSql().contains("EXISTS (select 1 from t_order o where o.user_id = create_user_id)"));
         assertTrue(provider.getSql().contains("date(create_time) = ?"));
-        assertTrue(provider.getSql().contains("create_time LIKE ? ESCAPE"));
-        assertEquals(Arrays.asList("2026-01-01", "%a\\%b%"), provider.getParameters());
+        assertEquals(Arrays.asList("2026-01-01"), provider.getParameters());
     }
 
     /**
-     * Lambda 版 exists + apply + like 转义（like 用 lambda 字段引用）。
+     * Lambda 版 exists + apply。
      */
-    private static void verifyLambdaExistsApplyLike() {
+    private static void verifyLambdaExistsApply() {
         LambdaQueryCriteria<VerifyDemoEntity> criteria = new LambdaQueryCriteria<VerifyDemoEntity>()
                 .exists("select 1 from t_order o where o.user_id = create_user_id")
-                .apply("date(create_time) = ?", "2026-01-01")
-                .like(VerifyDemoEntity::getCreateTime, "a%b", true);
+                .apply("date(create_time) = ?", "2026-01-01");
 
         SqlProvider provider = SqlAssembler.buildSelectLambdaCriteriaSql(criteria, VerifyDemoEntity.class);
         assertTrue(provider.getSql().contains("EXISTS (select 1 from t_order o where o.user_id = create_user_id)"));
         assertTrue(provider.getSql().contains("date(create_time) = ?"));
-        assertTrue(provider.getSql().contains("create_time LIKE ? ESCAPE"));
-        assertEquals(Arrays.asList("2026-01-01", "%a\\%b%"), provider.getParameters());
+        assertEquals(Arrays.asList("2026-01-01"), provider.getParameters());
     }
 
     /**
