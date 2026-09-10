@@ -1,5 +1,7 @@
 package org.tinycloud.jdbc.support;
 
+import java.lang.reflect.Field;
+
 import org.springframework.core.GenericTypeResolver;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -8,6 +10,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.NumberUtils;
 import org.tinycloud.jdbc.config.TinyJdbcRuntime;
 import org.tinycloud.jdbc.criteria.query.LambdaQueryCriteria;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
@@ -25,7 +28,6 @@ import org.tinycloud.jdbc.sql.SQL;
 import org.tinycloud.jdbc.util.ArrayUtils;
 import org.tinycloud.jdbc.util.CollectionUtils;
 import org.tinycloud.jdbc.util.TableRowMapper;
-import org.tinycloud.jdbc.util.tuple.Pair;
 
 import java.io.Serializable;
 import java.sql.PreparedStatement;
@@ -127,11 +129,11 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     }
 
     /**
-     * 私有工具方法：执行增删改操作，返回自增主键值
+     * 私有工具方法：执行增删改操作，返回自增主键执行结果
      */
-    private Pair<Integer, Long> doUpdateReturnAutoIncrement(String sql, Object... params) {
+    private AutoIncrementResult doUpdateReturnAutoIncrement(String sql, Object... params) {
         JdbcTemplate jdbcTemplate = this.getJdbcTemplate();
-        SqlRequest<Pair<Integer, Long>> request = new SqlRequest<>(sql, params, SqlType.UPDATE);
+        SqlRequest<AutoIncrementResult> request = new SqlRequest<>(sql, params, SqlType.UPDATE);
         return this.doSqlExecute(request, invocation -> {
             KeyHolder keyHolder = new GeneratedKeyHolder();
             int affectedRows = jdbcTemplate.update(con -> {
@@ -147,10 +149,9 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             if (keyHolder.getKey() == null) {
                 throw new TinyJdbcException("please check whether it is an autoincrement primary key");
             }
-            return new Pair<>(affectedRows, keyHolder.getKey().longValue());
+            return new AutoIncrementResult(affectedRows, (Number) keyHolder.getKey());
         });
     }
-
 
     /**
      * 私有工具方法：执行 DDL 语句（CREATE / ALTER / DROP / TRUNCATE 等）
@@ -440,6 +441,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public int insert(T entity, boolean ignoreNulls) {
         if (entity == null) {
             throw new TinyJdbcException("insert entity cannot be null");
@@ -450,14 +452,22 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             throw new TinyJdbcException("insert parameters cannot be null");
         }
         if (sqlProvider.getAutoIncrementPrimaryKeyField() != null) {
-            Pair<Integer, Long> pair = this.doUpdateReturnAutoIncrement(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
-            // 反射设置自增主键值
+            AutoIncrementResult result = this.doUpdateReturnAutoIncrement(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
+            // 反射设置自增主键值：按目标主键字段类型做数值转换（避免 Integer / int / Short 主键回写失败）
             try {
-                sqlProvider.getAutoIncrementPrimaryKeyField().set(entity, pair.getRight());
+                Field autoIncrementPrimaryKeyField = sqlProvider.getAutoIncrementPrimaryKeyField();
+                Object primaryKeyValue = result.getGeneratedKey();
+                if (primaryKeyValue instanceof Number) {
+                    Class<?> fieldType = ClassUtils.resolvePrimitiveIfNecessary(autoIncrementPrimaryKeyField.getType());
+                    if (Number.class.isAssignableFrom(fieldType)) {
+                        primaryKeyValue = NumberUtils.convertNumberToTargetClass((Number) primaryKeyValue, (Class<? extends Number>) fieldType);
+                    }
+                }
+                autoIncrementPrimaryKeyField.set(entity, primaryKeyValue);
             } catch (IllegalAccessException | IllegalArgumentException e) {
                 throw new TinyJdbcException("inject auto increment primary key failed", e);
             }
-            return pair.getLeft();
+            return result.getAffectedRows();
         }
         return this.insert(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
@@ -668,5 +678,26 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     public void truncate() {
         SqlProvider sqlProvider = SqlAssembler.buildTruncateSql(entityClass);
         this.execute(sqlProvider.getSql());
+    }
+
+    /**
+     * 执行自增主键 INSERT 的结果。
+     */
+    private static final class AutoIncrementResult {
+        private final int affectedRows;
+        private final Number generatedKey;
+
+        private AutoIncrementResult(int affectedRows, Number generatedKey) {
+            this.affectedRows = affectedRows;
+            this.generatedKey = generatedKey;
+        }
+
+        private int getAffectedRows() {
+            return affectedRows;
+        }
+
+        private Number getGeneratedKey() {
+            return generatedKey;
+        }
     }
 }
