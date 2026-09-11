@@ -149,7 +149,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             if (keyHolder.getKey() == null) {
                 throw new TinyJdbcException("please check whether it is an autoincrement primary key");
             }
-            return new AutoIncrementResult(affectedRows, (Number) keyHolder.getKey());
+            return new AutoIncrementResult(affectedRows, keyHolder.getKey());
         });
     }
 
@@ -453,15 +453,15 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         }
         if (sqlProvider.getAutoIncrementPrimaryKeyField() != null) {
             AutoIncrementResult result = this.doUpdateReturnAutoIncrement(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
-            // 反射设置自增主键值：按目标主键字段类型做数值转换（避免 Integer / int / Short 主键回写失败）
             try {
                 Field autoIncrementPrimaryKeyField = sqlProvider.getAutoIncrementPrimaryKeyField();
-                Object primaryKeyValue = result.getGeneratedKey();
-                if (primaryKeyValue instanceof Number) {
-                    Class<?> fieldType = ClassUtils.resolvePrimitiveIfNecessary(autoIncrementPrimaryKeyField.getType());
-                    if (Number.class.isAssignableFrom(fieldType)) {
-                        primaryKeyValue = NumberUtils.convertNumberToTargetClass((Number) primaryKeyValue, (Class<? extends Number>) fieldType);
-                    }
+                Number generatedKey = result.getGeneratedKey();
+                Number primaryKeyValue = generatedKey;
+                Class<?> fieldType = ClassUtils.resolvePrimitiveIfNecessary(autoIncrementPrimaryKeyField.getType());
+                // 生成键是驱动返回的原始数值类型，按实体主键字段类型转换后再回写，
+                // 避免 Integer / int / Short / BigDecimal 等主键类型回写失败
+                if (Number.class.isAssignableFrom(fieldType)) {
+                    primaryKeyValue = NumberUtils.convertNumberToTargetClass(generatedKey, (Class<? extends Number>) fieldType);
                 }
                 autoIncrementPrimaryKeyField.set(entity, primaryKeyValue);
             } catch (IllegalAccessException | IllegalArgumentException e) {
