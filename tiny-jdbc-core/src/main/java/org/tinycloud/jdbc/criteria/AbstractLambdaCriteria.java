@@ -443,9 +443,10 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             consumer.accept(instance);
             String nestedCondition = instance.children();
             if (nestedCondition.isEmpty()) {
+                this.nextIsOr = false;
                 return;
             }
-            String condition = " AND " + nestedCondition;
+            String condition = this.getConditionPrefix() + nestedCondition;
             this.conditions.add(condition);
             this.whereParameters.addAll(instance.whereParameters);
         });
@@ -466,10 +467,12 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
             consumer.accept(instance);
             String nestedCondition = instance.children();
             if (nestedCondition.isEmpty()) {
+                this.nextIsOr = false;
                 return;
             }
             String condition = " OR " + nestedCondition;
             this.conditions.add(condition);
+            this.nextIsOr = false;
             this.whereParameters.addAll(instance.whereParameters);
         });
     }
@@ -490,6 +493,9 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
     protected final Children whetherDo(boolean whether, DoSomething something) {
         if (whether) {
             something.doIt();
+        } else {
+            // 条件未添加时，待消费的 OR 不能泄漏到后续条件
+            this.nextIsOr = false;
         }
         return this.typedThis;
     }
