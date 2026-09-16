@@ -9,8 +9,9 @@ import org.tinycloud.jdbc.codegen.meta.TableMeta;
 import org.tinycloud.jdbc.codegen.util.TypeUtils;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -155,7 +156,7 @@ public class CodeGenerator {
 
         Template template = cfg.getTemplate("entity.ftl");
         File file = new File(outputDir, className + ".java");
-        try (Writer writer = new FileWriter(file)) {
+        try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
             template.process(model, writer);
         }
 
@@ -197,7 +198,7 @@ public class CodeGenerator {
 
         Template template = cfg.getTemplate("dao.ftl");
         File file = new File(outputDir, daoClassName + ".java");
-        try (Writer writer = new FileWriter(file)) {
+        try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
             template.process(model, writer);
         }
 

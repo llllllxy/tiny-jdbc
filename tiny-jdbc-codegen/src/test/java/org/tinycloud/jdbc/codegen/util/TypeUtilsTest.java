@@ -36,7 +36,7 @@ public class TypeUtilsTest {
     public void testBooleanAndFloatMappings() {
         assertEquals("Boolean", TypeUtils.getJavaType(Types.BOOLEAN, 1, 0));
         assertEquals("Boolean", TypeUtils.getJavaType(Types.BIT, 1, 0));
-        assertEquals("Float", TypeUtils.getJavaType(Types.FLOAT, 12, 2));
+        assertEquals("Double", TypeUtils.getJavaType(Types.FLOAT, 12, 2));
         assertEquals("Float", TypeUtils.getJavaType(Types.REAL, 12, 2));
         assertEquals("Double", TypeUtils.getJavaType(Types.DOUBLE, 22, 2));
     }

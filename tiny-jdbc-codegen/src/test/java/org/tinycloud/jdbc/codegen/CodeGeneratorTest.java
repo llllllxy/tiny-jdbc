@@ -13,6 +13,7 @@ import org.tinycloud.jdbc.codegen.meta.TableMeta;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Types;
@@ -136,7 +137,33 @@ public class CodeGeneratorTest {
         return new String(Files.readAllBytes(file.toPath()), "UTF-8");
     }
 
-    // ===== 默认 IdType（未设置）：自增主键 -> AUTO_INCREMENT =====
+    // ===== UTF-8 输出：中文表/列注释按 UTF-8 原始字节写入 =====
+    @Test
+    public void testGeneratedSourceUsesUtf8() throws Exception {
+        CodeGenerator generator = createGenerator(null);
+        invokeGenerate(generator, buildTable(true), true, false);
+
+        Path entityPath = tempDir.resolve("com/example/entity/TestTable.java");
+        byte[] bytes = Files.readAllBytes(entityPath);
+        String source = new String(bytes, StandardCharsets.UTF_8);
+        assertTrue("UTF-8 解码后应保留中文表注释", source.contains("测试表"));
+        assertTrue("UTF-8 解码后应保留中文列注释", source.contains("主键"));
+        assertTrue("生成内容必须是 UTF-8 编码", contains(bytes, "测试表".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    private boolean contains(byte[] source, byte[] target) {
+        for (int i = 0; i <= source.length - target.length; i++) {
+            int j = 0;
+            while (j < target.length && source[i + j] == target[j]) {
+                j++;
+            }
+            if (j == target.length) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Test
     public void testEntityDefaultIdTypeAutoIncrement() throws Exception {
         CodeGenerator generator = createGenerator(null);

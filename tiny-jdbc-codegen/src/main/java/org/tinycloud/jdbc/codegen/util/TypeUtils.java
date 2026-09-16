@@ -109,10 +109,10 @@ public class TypeUtils {
             case Types.BIGINT:
                 return "Long";
 
-            case Types.FLOAT:
             case Types.REAL:
                 return "Float";
 
+            case Types.FLOAT:
             case Types.DOUBLE:
                 return "Double";
 

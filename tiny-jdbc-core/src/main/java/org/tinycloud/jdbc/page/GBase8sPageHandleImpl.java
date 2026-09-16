@@ -21,8 +21,10 @@ public class GBase8sPageHandleImpl implements IPageHandle {
     public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         long offset = PageCheck.offset(pageNo, pageSize);
         long limit = pageSize;
-        // 这个sql的分页的是紧跟着SELECT的（SELECT SKIP ? FIRST ? * FROM user WHERE age > 18），所以暂时拼接，无法参数后置
-        StringBuilder sql = (new StringBuilder(oldSQL)).insert(6, " SKIP " + offset + " FIRST " + limit);
+        // GBase8s 的分页语法紧跟顶层 SELECT，无法使用后置参数。
+        int selectIndex = PageSqlUtils.findTopLevelSelect(oldSQL);
+        StringBuilder sql = new StringBuilder(oldSQL)
+                .insert(selectIndex + "SELECT".length(), " SKIP " + offset + " FIRST " + limit);
         return PagingSQLProvider.create(sql.toString());
     }
 

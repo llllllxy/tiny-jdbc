@@ -3,6 +3,8 @@ package org.tinycloud.jdbc.verify;
 import org.junit.Test;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.page.DB2PageHandleImpl;
+import org.tinycloud.jdbc.page.GBase8sPageHandleImpl;
+import org.tinycloud.jdbc.page.InforMixPageHandleImpl;
 import org.tinycloud.jdbc.page.MysqlPageHandleImpl;
 import org.tinycloud.jdbc.page.OffsetPage;
 import org.tinycloud.jdbc.page.Oracle12cPageHandleImpl;
@@ -27,7 +29,24 @@ import static org.junit.Assert.fail;
  */
 public class PageVerifyMain {
 
-    // 验证：DB2 使用 ROWNUMBER() OVER()（与 MyBatis-Plus / PageHelper 保持一致的写法）
+    @Test
+    public void testGBase8sPagingInsertsAfterTopLevelSelect() {
+        GBase8sPageHandleImpl handler = new GBase8sPageHandleImpl();
+        assertEquals("  /* leading */ SELECT SKIP 10 FIRST 5 * FROM t",
+                handler.handlerPagingSQL("  /* leading */ SELECT * FROM t", 3, 5).getSql());
+        assertEquals("WITH cte AS (SELECT * FROM t) SELECT SKIP 0 FIRST 10 * FROM cte",
+                handler.handlerPagingSQL("WITH cte AS (SELECT * FROM t) SELECT * FROM cte", 1, 10).getSql());
+    }
+
+    @Test
+    public void testInformixPagingInsertsAfterTopLevelSelect() {
+        InforMixPageHandleImpl handler = new InforMixPageHandleImpl();
+        assertEquals("-- leading\nSELECT SKIP 10 FIRST 5 * FROM t",
+                handler.handlerPagingSQL("-- leading\nSELECT * FROM t", 3, 5).getSql());
+        assertEquals("WITH cte AS (SELECT * FROM t) SELECT SKIP 0 FIRST 10 * FROM cte",
+                handler.handlerPagingSQL("WITH cte AS (SELECT * FROM t) SELECT * FROM cte", 1, 10).getSql());
+    }
+
     @Test
     public void testDb2PagingSqlUsesRowNumber() {
         DB2PageHandleImpl handler = new DB2PageHandleImpl();

@@ -1,8 +1,5 @@
 package org.tinycloud.jdbc.page;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * <p>
  * 分页查询适配器-InforMix
@@ -24,11 +21,12 @@ public class InforMixPageHandleImpl implements IPageHandle {
     public PagingSQLProvider handlerPagingSQL(String oldSQL, long pageNo, long pageSize) {
         long offset = PageCheck.offset(pageNo, pageSize);
         long limit = pageSize;
-        StringBuilder ret = new StringBuilder();
-        // 这个sql的分页的是紧跟着SELECT的（SELECT SKIP ? FIRST ? * FROM user WHERE age > 18），所以暂时拼接，无法参数后置
-        ret.append(String.format("select skip %s first %s ", offset + "", limit + ""));
-        ret.append(oldSQL.replaceFirst("(?i)select", ""));
-        return PagingSQLProvider.create(ret.toString());
+        // Informix 的分页语法紧跟顶层 SELECT，无法使用后置参数。
+        int selectIndex = PageSqlUtils.findTopLevelSelect(oldSQL);
+        String sql = new StringBuilder(oldSQL)
+                .insert(selectIndex + "SELECT".length(), " SKIP " + offset + " FIRST " + limit)
+                .toString();
+        return PagingSQLProvider.create(sql);
     }
 
     @Override

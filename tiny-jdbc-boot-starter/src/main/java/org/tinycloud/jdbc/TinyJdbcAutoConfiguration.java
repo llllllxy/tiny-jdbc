@@ -110,6 +110,7 @@ public class TinyJdbcAutoConfiguration {
      * @return JDBC 模板增强工具
      */
     @ConditionalOnBean({IPageHandle.class, JdbcTemplate.class, TinyJdbcRuntime.class})
+    @ConditionalOnMissingBean(JdbcTemplateHelper.class)
     @Bean
     public JdbcTemplateHelper jdbcTemplateHelper(IPageHandle pageHandle,
                                                  JdbcTemplate jdbcTemplate,
