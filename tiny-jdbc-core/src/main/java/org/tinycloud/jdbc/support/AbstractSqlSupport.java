@@ -584,10 +584,19 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     /**
      * 批量插入，显式指定执行模式。
      *
+     * <p>返回数组长度与集合长度一致，但元素语义随模式不同：</p>
+     * <ul>
+     *   <li>{@link BatchMode#JDBC_BATCH}：每个元素为对应实体的真实受影响行数；</li>
+     *   <li>{@link BatchMode#MULTI_VALUE}：单条多值 INSERT 只能取得语句级影响行数，
+     *       因此同一语句内各元素都等于该语句的 JDBC 影响行数，<b>不能</b>对数组求和，
+     *       也不能据此判断某一行是否插入成功；需要逐行结果时请改用
+     *       {@link BatchMode#JDBC_BATCH}。</li>
+     * </ul>
+     *
      * @param collection  待插入实体集合
      * @param ignoreNulls 是否忽略 null 字段
      * @param mode        执行模式
-     * @return 每个元素表示对应实体的受影响行数
+     * @return 受影响行数数组，元素语义见上述模式说明
      */
     public int[] batchInsert(Collection<T> collection, boolean ignoreNulls, BatchMode mode) {
         if (CollectionUtils.isEmpty(collection)) {
@@ -629,7 +638,7 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
      * 多值批量插入：把集合切块，每块生成单条 {@code INSERT ... VALUES (...),(...)}。
      *
      * <p>注意：批量模式下自增主键不回写实体（无法可靠按行映射）；返回数组的每个元素为该行所在
-     * 语句的受影响行数按行分摊（正常插入时为 1）。</p>
+     * 多值 INSERT 语句的 JDBC 影响行数，不能解读为真实逐行影响数。</p>
      */
     private int[] doBatchInsertMultiValue(Collection<T> collection, boolean ignoreNulls) {
         for (T t : collection) {
@@ -664,10 +673,8 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
             String stmt = sb.toString();
             SqlRequest<Integer> request = new SqlRequest<>(stmt, params.toArray(), SqlType.UPDATE);
             int affected = this.doSqlExecute(request, invocation -> this.getJdbcTemplate().update(invocation.getSql(), invocation.getArgs()));
-            int chunkRows = end - index;
-            int perRow = chunkRows == 0 ? 0 : affected / chunkRows;
             for (int k = index; k < end; k++) {
-                result[k] = perRow;
+                result[k] = affected;
             }
             index = end;
         }

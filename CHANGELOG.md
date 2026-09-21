@@ -36,6 +36,7 @@
 - **`rewriteBatchedStatements` 定位**：该参数属于 MySQL JDBC URL 配置，框架无法代码内强制。`JDBC_BATCH` 模式下建议连接串携带 `rewriteBatchedStatements=true` 才真正合并往返；`MULTI_VALUE` 模式不依赖该参数，天然减少往返。
 - **主键回写限制（`待发布`）**：批量写入下自增主键<b>不回写</b>到实体（多行 INSERT 的生成键无法可靠按行映射）；单条 `insert(entity)` 仍回写。非自增主键（如 `ASSIGN_ID` / `NANO_ID`）在批量前逐实体的 `IdGeneratorRouter` 生成并回写，再打包参数。
 - **列一致性约束**：`MULTI_VALUE` 要求集合内所有实体的可写列集一致。`ignoreNulls=true` 时以首个实体的非空列集为准，后续实体列集不一致将抛出明确异常；`ignoreNulls=false` 时 null 字段以 SQL `NULL` 占位保留。
+- **多值模式返回值语义（`待发布`）**：`MULTI_VALUE` 下 `batchInsert` 返回的是<b>语句级</b>影响行数，同一多值 `INSERT` 内各元素数值相同，不可对数组求和，也不能据此判断单行是否插入成功；需要真实逐行影响行数请使用 `JDBC_BATCH` 模式。
 
 ### 底层 API 调整（重命名）
 

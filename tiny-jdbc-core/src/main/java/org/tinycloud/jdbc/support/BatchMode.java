@@ -11,6 +11,9 @@ package org.tinycloud.jdbc.support;
  *       天然减少网络往返，不依赖 JDBC URL 参数。</li>
  * </ul>
  *
+ * <p>两者对 {@code batchInsert} 返回值的影响不同：{@link #JDBC_BATCH} 可返回真实逐行影响行数；
+ * {@link #MULTI_VALUE} 只有语句级影响行数，数组内同一语句的各元素数值相同，不可求和。</p>
+ *
  * @author liuxingyu01
  * @since 2026-09-01
  */
@@ -25,6 +28,9 @@ public enum BatchMode {
     /**
      * 多值批量（单条 SQL 含多个 VALUES 元组）。每语句行数受
      * {@code TinyJdbcRuntime#getBatchInsertSize()} 限制以控制占位符 / 包大小。
+     *
+     * <p>因单条语句无法按行归属影响行数，{@code batchInsert} 返回的数组元素为语句级影响行数，
+     * 不是逐行结果。</p>
      */
     MULTI_VALUE
 }

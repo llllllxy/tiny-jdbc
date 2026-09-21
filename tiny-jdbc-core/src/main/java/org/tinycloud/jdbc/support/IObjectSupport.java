@@ -148,11 +148,13 @@ public interface IObjectSupport<T, ID extends Serializable> {
      * <ol>
      *     <li>若希望包含 {@code null} 值字段，请调用 {@link #batchInsert(Collection, boolean)} 方法并传入 {@code false}。</li>
      *     <li>批量插入时，所有实例中非 {@code null} 的字段列必须一致，否则可能导致参数绑定错误或插入异常。</li>
-     *     <li>返回数组的长度与传入集合长度相同，每个元素表示对应实例的受影响行数。</li>
+     *     <li>返回数组的长度与传入集合长度相同。{@code JDBC_BATCH} 模式下每个元素是对应实例的真实受影响行数；
+     *         {@code MULTI_VALUE} 模式下为单条多值 INSERT 的语句级影响行数（同一语句内各元素相同），
+     *         需要逐行结果请改用 {@code JDBC_BATCH} 模式。</li>
      * </ol>
      *
      * @param collection 待插入的实例集合，不能为空或空集合
-     * @return 一个数组，其中每个元素表示对应实例的受影响行数
+     * @return 一个数组，元素语义见「注意事项」中的模式说明
      * @throws TinyJdbcException 当集合为空或其他批量执行异常时抛出
      */
     default int[] batchInsert(Collection<T> collection) {
@@ -169,7 +171,9 @@ public interface IObjectSupport<T, ID extends Serializable> {
      *
      * <h3>注意事项：</h3>
      * <ol>
-     *     <li>返回的数组长度与传入的实例集合长度相同，每个元素表示对应实例的受影响行数。</li>
+     *     <li>返回的数组长度与传入的实例集合长度相同。{@code JDBC_BATCH} 模式下每个元素是对应实例的真实受影响行数；
+     *         {@code MULTI_VALUE} 模式下为单条多值 INSERT 的语句级影响行数（同一语句内各元素相同），
+     *         需要逐行结果请改用 {@code JDBC_BATCH} 模式。</li>
      *     <li>当 {@code ignoreNulls} 为 {@code true} 时，会忽略实例中为 {@code null} 的字段。
      *         <ul>
      *             <li>此时批量插入会生成统一的 INSERT SQL，所有实例中非 {@code null} 的字段列必须一致，否则可能导致参数绑定错误或插入异常。</li>
@@ -180,7 +184,7 @@ public interface IObjectSupport<T, ID extends Serializable> {
      *
      * @param collection  待插入的实例集合，不能为空或空集合
      * @param ignoreNulls 是否忽略 {@code null} 字段，{@code true} 表示忽略，{@code false} 表示包含
-     * @return 一个数组，每个元素表示对应实例的受影响行数
+     * @return 一个数组，元素语义见「注意事项」中的模式说明
      * @throws TinyJdbcException 当集合为空或批量执行异常时抛出
      */
     int[] batchInsert(Collection<T> collection, boolean ignoreNulls);

@@ -28,6 +28,7 @@ public class BatchInsertVerifyMain {
         verifyBuildBatchInsertNullColumnMismatchThrows();
         verifyBuildBatchInsertIncludesNullWhenNotIgnore();
         verifyMultiValueExecutionAndChunking();
+        verifyMultiValueDoesNotFabricatePerRowCounts();
         verifyJdbcBatchExecution();
         verifyRuntimeDefaultMode();
         System.out.println("BatchInsertVerifyMain passed.");
@@ -112,8 +113,37 @@ public class BatchInsertVerifyMain {
         assertEquals(true, jdbc.updateSqls.get(0).contains("INSERT INTO t_batch_verify"), "sql should be an insert");
         assertEquals(true, jdbc.updateSqls.get(0).contains("(?,"), "first chunk should be multi-value");
         assertEquals(true, jdbc.updateSqls.get(2).contains("VALUES (?"), "last chunk single tuple");
-        // 每个元素分摊后的受影响行数应为 1（MySQL 返回值/行数）
-        assertEquals(1, result[0], "per-row affected should be 1");
+        // 多值模式返回语句级影响行数：切块 2/2/1 -> [2,2,2,2,1]
+        assertEquals(2, result[0], "first 2-row statement affected should be 2");
+        assertEquals(2, result[1], "rows in the same statement share the statement-level count");
+        assertEquals(2, result[2], "second 2-row statement affected should be 2");
+        assertEquals(1, result[4], "last single-row statement affected should be 1");
+    }
+
+    /**
+     * MULTI_VALUE 下语句级影响行数与行数不等时（如 ON DUPLICATE KEY UPDATE / 触发器），
+     * 不得用整块结果除以行数伪造逐行影响数，应原样返回语句级结果。
+     */
+    private static void verifyMultiValueDoesNotFabricatePerRowCounts() {
+        RecordingJdbcTemplate jdbc = new RecordingJdbcTemplate();
+        // 模拟 ON DUPLICATE KEY UPDATE：2 行语句返回 4
+        jdbc.affectedOverride = 4;
+        TestBatchSupport support = new TestBatchSupport(jdbc, multiValueRuntime());
+
+        List<BatchVerifyEntity> list = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            BatchVerifyEntity e = new BatchVerifyEntity();
+            e.setName("u" + i);
+            e.setAge(i);
+            e.setEmail("u" + i + "@x.com");
+            list.add(e);
+        }
+
+        int[] result = support.batchInsert(list, false);
+        assertEquals(2, result.length, "result length mismatch");
+        // 旧实现会除以行数得到伪造的 2，此处必须是语句级结果 4
+        assertEquals(4, result[0], "statement-level affected should be returned as-is");
+        assertEquals(4, result[1], "statement-level affected should be shared within the statement");
     }
 
     /**
@@ -190,10 +220,15 @@ public class BatchInsertVerifyMain {
         private final List<String> batchSqls = new ArrayList<>();
         private final List<List<Object[]>> batchArgsList = new ArrayList<>();
 
+        /**
+         * 覆盖 {@code update} 的返回值以模拟非均匀影响行数（如 ON DUPLICATE KEY UPDATE）；负值表示按行数返回。
+         */
+        private int affectedOverride = -1;
+
         @Override
         public int update(String sql, Object... args) {
             this.updateSqls.add(sql);
-            return tupleCount(sql, args);
+            return this.affectedOverride >= 0 ? this.affectedOverride : tupleCount(sql, args);
         }
 
         @Override

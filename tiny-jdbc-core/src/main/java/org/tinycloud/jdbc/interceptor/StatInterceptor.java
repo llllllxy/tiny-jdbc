@@ -9,10 +9,11 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 统计拦截器，用于统计SQL执行耗时
- * 1. 统计SQL执行耗时
- * 2. 打印原始SQL、参数、完整SQL和耗时
- * 3. 按配置打印SQL执行结果
- * 4. 开启后会有一定的性能影响，建议在开发环境开启，生产环境关闭
+ * 1. 统计SQL执行耗时（info 级别，仅输出耗时，不含 SQL 与参数）
+ * 2. 以 debug 级别打印原始SQL、参数、完整SQL
+ * 3. 按配置以 debug 级别打印SQL执行结果
+ * 4. 原始 SQL 与参数可能包含 token / 密码等敏感信息，故默认不输出，
+ *    仅在显式开启 debug 日志后可见；开启后会有一定的性能影响，建议在开发环境开启，生产环境关闭
  *
  * @author liuxingyu01
  * @since 2025-12-10 14:20
@@ -48,13 +49,13 @@ public class StatInterceptor implements SqlInterceptor {
     @Override
     public <R> R intercept(SqlRequest<R> request, SqlInterceptorChain<R> chain) {
         long startTime = System.nanoTime();
-        log.info("原始SQL：{}", request.getSql());
-        log.info("原始SQL参数：{}", Arrays.toString(request.getArgs()));
-        log.info("完整SQL：{}", SqlUtils.replaceSqlParams(request.getSql(), request.getArgs()));
+        log.debug("原始SQL：{}", request.getSql());
+        log.debug("原始SQL参数：{}", Arrays.toString(request.getArgs()));
+        log.debug("完整SQL：{}", SqlUtils.replaceSqlParams(request.getSql(), request.getArgs()));
         try {
             R result = chain.proceed(request);
             if (this.printResult) {
-                log.info("执行SQL结果：{}", result);
+                log.debug("执行SQL结果：{}", result);
             }
             return result;
         } catch (RuntimeException e) {

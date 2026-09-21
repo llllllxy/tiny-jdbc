@@ -53,7 +53,10 @@ public class DbTypeUtils {
         for (String methodName : methodNames) {
             try {
                 Method method = dataSource.getClass().getMethod(methodName);
-                return (String) method.invoke(dataSource);
+                String jdbcUrl = (String) method.invoke(dataSource);
+                if (StrUtils.isNotEmpty(jdbcUrl)) {
+                    return jdbcUrl;
+                }
             } catch (Exception e) {
                 // ignore
             }
