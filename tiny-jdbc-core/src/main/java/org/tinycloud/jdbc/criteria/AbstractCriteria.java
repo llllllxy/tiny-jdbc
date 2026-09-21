@@ -146,7 +146,8 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
     }
 
     public <R> Children in(boolean whether, String field, Object... values) {
-        return this.in(whether, field, Arrays.asList(values));
+        // (Object[]) null 会令 Arrays.asList 抛 NPE；且 whether=false 时不应先求值，统一交给 Collection 版校验
+        return this.in(whether, field, values == null ? null : Arrays.asList(values));
     }
 
     public <R> Children notIn(String field, Collection<R> values) {
@@ -176,7 +177,8 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
     }
 
     public <R> Children notIn(boolean whether, String field, Object... values) {
-        return this.notIn(whether, field, Arrays.asList(values));
+        // (Object[]) null 会令 Arrays.asList 抛 NPE；且 whether=false 时不应先求值，统一交给 Collection 版校验
+        return this.notIn(whether, field, values == null ? null : Arrays.asList(values));
     }
 
     public <R> Children like(String field, R value) {
@@ -398,10 +400,13 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
 
     /**
      * 追加一段<b>受信任</b>的原始 SQL 条件片段。
+     * <p>片段会被原样拼接，因此默认拒绝 {@code SELECT} / {@code UNION} 等语句级关键字与顶层
+     * {@code OR} / {@code AND}，避免片段改变查询语义（如 {@code 1=1 OR 1=1}）；
+     * 需要跨条件 OR 请改用 {@code or()} 系列方法。</p>
      */
     public Children apply(boolean whether, String applySql, Object... params) {
         return this.whetherDo(whether, () -> {
-            SqlIdentifierUtils.checkTailSql(applySql);
+            SqlIdentifierUtils.checkTailClause(applySql);
             String condition = this.getConditionPrefix() + applySql;
             this.conditions.add(condition);
             if (params != null) {
@@ -423,6 +428,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return this.whetherDo(whether, () -> {
             final Children instance = this.instance();
             consumer.accept(instance);
+            instance.checkNestedClauseSupported();
             String nestedCondition = instance.children();
             if (nestedCondition.isEmpty()) {
                 this.nextIsOr = false;
@@ -447,6 +453,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
         return this.whetherDo(whether, () -> {
             final Children instance = this.instance();
             consumer.accept(instance);
+            instance.checkNestedClauseSupported();
             String nestedCondition = instance.children();
             if (nestedCondition.isEmpty()) {
                 this.nextIsOr = false;
@@ -460,7 +467,10 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
     }
 
     /**
-     * 子类返回一个自己的新对象
+     * 子类返回一个自己的新对象（用于嵌套 {@code and/or} 条件块）。
+     *
+     * <p>本方法已由各具体条件构造器实现并返回自身类型；若继承具体构造器并希望嵌套块
+     * 保持子类类型与状态，需重写本方法返回子类实例，否则嵌套块会退化为父类型。</p>
      */
     protected abstract Children instance();
 

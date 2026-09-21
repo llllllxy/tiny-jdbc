@@ -354,4 +354,20 @@ public abstract class Criteria<T> {
             throw new TinyJdbcException("The values of IN/NOT IN condition cannot be null or empty, field: " + field);
         }
     }
+
+    /**
+     * 校验「嵌套条件块」没有使用只在顶层生效的子句。
+     *
+     * <p>嵌套 {@code and/or} 只会把子条件渲染成一对括号内的 WHERE 片段（{@link #children()}），
+     * 其中的 SELECT 列、GROUP BY、HAVING、ORDER BY、last 都不会被渲染；
+     * 而 HAVING 的参数已经进入 {@link #whereParameters}，父级复制后会造成占位符与参数错位。
+     * 故此处显式拒绝，避免生成静默错误的 SQL。</p>
+     */
+    protected void checkNestedClauseSupported() {
+        if (!this.selectFields.isEmpty() || !this.groupBys.isEmpty() || !this.havings.isEmpty()
+                || !this.orderBys.isEmpty() || !this.lastSqls.isEmpty()) {
+            throw new TinyJdbcException(
+                    "Nested and/or condition does not support selectExpr/groupBy/having/orderBy/last");
+        }
+    }
 }

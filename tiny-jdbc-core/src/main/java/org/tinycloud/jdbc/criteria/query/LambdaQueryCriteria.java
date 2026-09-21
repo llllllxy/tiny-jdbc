@@ -134,7 +134,9 @@ public class LambdaQueryCriteria<T> extends AbstractLambdaCriteria<T, LambdaQuer
      * <p>
      * <b>安全说明：</b>{@code last()} 的入参会被当作原始 SQL 尾部片段追加，不会被参数化。
      * 默认会做一次「尾部片段安全校验」，拒绝包含分号 / 引号 / 注释 / {@code --} / {@code #} 等
-     * 可能截断或拼接语句的内容。若确需追加不受限的原始 SQL，请用
+     * 可能截断语句的字符，并拒绝 {@code SELECT} / {@code UNION} 等语句级关键字与顶层
+     * {@code OR} / {@code AND}（防止追加结果集或绕过既有条件）。
+     * 若确需追加不受限的原始 SQL，请用
      * {@link #last(RawSql)} 显式授权（只应传入可信常量）。
      * </p>
      *
@@ -142,7 +144,7 @@ public class LambdaQueryCriteria<T> extends AbstractLambdaCriteria<T, LambdaQuer
      * @return 返回当前 LambdaQueryCriteria 对象，支持链式调用。
      */
     public final LambdaQueryCriteria<T> last(String lastSql) {
-        SqlIdentifierUtils.checkTailSql(lastSql);
+        SqlIdentifierUtils.checkTailClause(lastSql);
         this.lastSqls.clear();
         this.lastSqls.add(lastSql);
         return this;

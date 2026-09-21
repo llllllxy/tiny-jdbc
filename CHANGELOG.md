@@ -30,6 +30,8 @@
 
 - **标识符安全边界（`待发布`）**：新增 `SqlIdentifierUtils` 白名单校验器，对 SQL 构建器 / 条件构造器中的表名、列引用、别名、裸列名做默认严格校验，拒绝含空白、分号、引号、注释、括号、前导数字等非法标识符，阻断标识符拼接注入。`last(String)` 也默认做尾部片段安全校验（拒绝分号 / 引号 / 注释符）；新增受信任原始 SQL 标记 `RawSql`（`SQL.raw(...)` / `last(RawSql)`）作为显式授权出口，仅应传入可信常量。Lambda 列（`TypeFunction`，经实体元数据解析）与 `FuncBuilder` 表达式参数保持透明、不做校验。
 
+- **原始 SQL 片段加固（`待发布`）**：新增 `SqlIdentifierUtils.checkTailClause()`，在字符级校验之上拒绝 `SELECT` / `UNION` / `INSERT` 等语句级关键字与顶层 `OR` / `AND`，`last(String)` 与 `apply(String)` 已接入，避免 `last("LIMIT 1 UNION SELECT ...")`、`apply("1=1 OR 1=1")` 改变查询语义；`UPDATE` 刻意放行以兼容 `FOR UPDATE`。含子查询的 `exists` / `having` / `selectExpr` 保持原字符级校验，不受限的原始 SQL 仍请使用 `RawSql` 显式授权。
+
 ### 批量写入优化
 
 - **批量插入模式（`待发布`）**：新增 `BatchMode`（`JDBC_BATCH` / `MULTI_VALUE`）。`JDBC_BATCH` 为默认值，沿用 `JdbcTemplate.batchUpdate`；`MULTI_VALUE` 把集合切块后生成单条多值 `INSERT ... VALUES (...),(...)`，显著减少网络往返与解析开销。可通过 `tiny-jdbc.batch-insert-mode` / `tiny-jdbc.batch-insert-size` 配置，或调用 `batchInsert(collection, ignoreNulls, mode)` 显式指定。
@@ -57,6 +59,8 @@
 - **主键与字段校验（`775edc8` / `ca3aa8b`）**：`insertSql` 增加多 `@Id` 校验；`selectSql` 全字段 `exist=false` 时给出明确错误。
 - **自动填充列名解析（`250aac8`）**：修正 `strictUpdateFill` 注释，并支持按 `@Column` 解析更新列名。
 - **COUNT 查询条件提取（`待发布`）**：`selectCount` 不再复用 `whereSql()` 的排序与 `last()` 尾片段，改为仅取条件部分（`whereConditions()`）；避免生成 `SELECT COUNT(*) ... ORDER BY ...` 或 `FOR UPDATE` 等，在 PostgreSQL 等数据库上非法 / 语义错误的聚合查询。
+
+- **criteria 健壮性（`待发布`）**：`in` / `notIn` 可变参数收到 `(Object[]) null` 时不再抛 NPE，改为 `whether=true` 抛明确 `TinyJdbcException`、`whether=false` 直接跳过且不求值；嵌套 `and/or` 若使用 `selectExpr` / `groupBy` / `having` / `orderBy` / `last` 立即抛出 `TinyJdbcException`，避免 HAVING 参数进入参数列表却不被渲染造成的占位符与参数错位。
 
 ### 条件构造器增强（criteria）
 

@@ -342,6 +342,31 @@ public class SqlIdentifierVerifyMain {
         assertEquals("x\nDROP", RawSql.wrap("x\nDROP").sql());
     }
 
+    @Test public void testTailClauseRejectsStatementKeywords() {
+        // 合法：受限尾部子句与字段比较片段不受影响
+        assertValid(() -> SqlIdentifierUtils.checkTailClause("FOR UPDATE"), "FOR UPDATE should be valid");
+        assertValid(() -> SqlIdentifierUtils.checkTailClause("FOR UPDATE NOWAIT"), "FOR UPDATE NOWAIT should be valid");
+        assertValid(() -> SqlIdentifierUtils.checkTailClause("LIMIT 10 OFFSET 5"), "LIMIT/OFFSET should be valid");
+        assertValid(() -> SqlIdentifierUtils.checkTailClause("ORDER BY create_time DESC"), "ORDER BY should be valid");
+        assertValid(() -> SqlIdentifierUtils.checkTailClause("GROUP BY a"), "GROUP BY should be valid");
+        assertValid(() -> SqlIdentifierUtils.checkTailClause("a = b"), "column compare should be valid");
+        assertValid(() -> SqlIdentifierUtils.checkTailClause("date(create_time) = ?"), "function expr should be valid");
+
+        // 非法：语句级关键字 / 顶层布尔运算符
+        assertThrows(() -> SqlIdentifierUtils.checkTailClause("LIMIT 1 UNION SELECT * FROM tb_user"),
+                "UNION SELECT should be rejected");
+        assertThrows(() -> SqlIdentifierUtils.checkTailClause("1=1 OR 1=1"), "top-level OR should be rejected");
+        assertThrows(() -> SqlIdentifierUtils.checkTailClause("status = 1 AND 1=1"), "top-level AND should be rejected");
+        assertThrows(() -> SqlIdentifierUtils.checkTailClause("x INTO y"), "INTO should be rejected");
+        assertThrows(() -> SqlIdentifierUtils.checkTailClause("DROP TABLE tb_user"), "DROP should be rejected");
+
+        // last() 已接入严格校验；RawSql 仍可显式授权
+        assertThrows(() -> new QueryCriteria<VerifyDemoEntity>().last("LIMIT 1 UNION SELECT * FROM tb_user"),
+                "last with UNION SELECT should throw");
+        assertEquals(" LIMIT 1 UNION SELECT * FROM tb_user",
+                new QueryCriteria<VerifyDemoEntity>().last(RawSql.wrap("LIMIT 1 UNION SELECT * FROM tb_user")).whereSql());
+    }
+
     @Test public void testRawSqlFactory() {
         RawSql rawSql = SQL.raw("FOR UPDATE");
         assertEquals("FOR UPDATE", rawSql.sql());

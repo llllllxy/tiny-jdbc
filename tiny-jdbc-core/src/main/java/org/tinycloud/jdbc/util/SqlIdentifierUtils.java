@@ -46,6 +46,18 @@ public class SqlIdentifierUtils {
      */
     private static final Pattern ALIAS_PATTERN = Pattern.compile("^" + ATOM + "$");
 
+    /**
+     * 原始 SQL 片段中不允许出现的「语句级关键字」与「顶层布尔运算符」。
+     * <p>这类词一旦出现在被原样拼接的片段中即可改变查询语义：{@code UNION SELECT} 追加结果集、
+     * {@code OR 1=1} 绕过既有条件。合法的尾部子句（{@code FOR UPDATE}、{@code LIMIT n}、
+     * {@code ORDER BY x}）与字段比较片段不会包含它们。</p>
+     * <p>注意 {@code UPDATE} 刻意不在列表中，以兼容 {@code FOR UPDATE}。</p>
+     */
+    private static final Pattern TAIL_CLAUSE_FORBIDDEN_KEYWORD_PATTERN = Pattern.compile(
+            "\\b(SELECT|UNION|INTERSECT|EXCEPT|INSERT|DELETE|MERGE|DROP|ALTER|CREATE|TRUNCATE"
+                    + "|EXEC|EXECUTE|GRANT|REVOKE|CALL|INTO|OR|AND)\\b",
+            Pattern.CASE_INSENSITIVE);
+
     private SqlIdentifierUtils() {
     }
 
@@ -127,6 +139,26 @@ public class SqlIdentifierUtils {
                 || lower.contains("/*")
                 || lower.contains("*/")) {
             throw new TinyJdbcException("Illegal SQL tail fragment (contains breaking characters): '" + tailSql + "'");
+        }
+    }
+
+    /**
+     * 校验 {@code last()} / {@code apply()} 追加的「原始 SQL 片段」是否安全。
+     * <p>在 {@link #checkTailSql(String)} 的字符级校验之上，额外拒绝语句级关键字
+     * （{@code SELECT} / {@code UNION} / {@code INSERT} 等）与顶层布尔运算符（{@code OR} / {@code AND}）：
+     * 这些片段会被原样拼接到查询中，一旦出现即可追加结果集或绕过既有条件。</p>
+     * <p>合法的尾部子句（{@code FOR UPDATE}、{@code LIMIT n}、{@code OFFSET n}、{@code ORDER BY x}）
+     * 与字段比较片段（{@code a = b}、{@code date(create_time) = ?}）不受影响。</p>
+     * <p>含子查询的表达式（如 {@code exists(...)}）不应使用本方法，因为其子查询必然包含 {@code SELECT}。</p>
+     * <p>若确需不受限的原始 SQL，请使用 {@code RawSql.wrap(...)} 显式授权。</p>
+     *
+     * @param fragment 原始 SQL 片段
+     */
+    public static void checkTailClause(String fragment) {
+        checkTailSql(fragment);
+        if (TAIL_CLAUSE_FORBIDDEN_KEYWORD_PATTERN.matcher(fragment).find()) {
+            throw new TinyJdbcException(
+                    "Illegal SQL fragment (contains statement keyword or top-level boolean operator): '" + fragment + "'");
         }
     }
 }
