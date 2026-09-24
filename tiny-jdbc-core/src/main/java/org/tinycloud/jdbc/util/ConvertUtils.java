@@ -55,42 +55,79 @@ public class ConvertUtils {
             if (value instanceof Number) {
                 return ((Number) value).intValue();
             }
-            return Integer.parseInt(value.toString());
+            try {
+                return Integer.parseInt(value.toString());
+            } catch (NumberFormatException e) {
+                if (ignoreConvertError) return null;
+                throw e;
+            }
         } else if (targetClass == Long.class || targetClass == long.class) {
             if (value instanceof Number) {
                 return ((Number) value).longValue();
             }
-            return Long.parseLong(value.toString());
+            try {
+                return Long.parseLong(value.toString());
+            } catch (NumberFormatException e) {
+                if (ignoreConvertError) return null;
+                throw e;
+            }
         } else if (targetClass == Double.class || targetClass == double.class) {
             if (value instanceof Number) {
                 return ((Number) value).doubleValue();
             }
-            return Double.parseDouble(value.toString());
+            try {
+                return Double.parseDouble(value.toString());
+            } catch (NumberFormatException e) {
+                if (ignoreConvertError) return null;
+                throw e;
+            }
         } else if (targetClass == Float.class || targetClass == float.class) {
             if (value instanceof Number) {
                 return ((Number) value).floatValue();
             }
-            return Float.parseFloat(value.toString());
+            try {
+                return Float.parseFloat(value.toString());
+            } catch (NumberFormatException e) {
+                if (ignoreConvertError) return null;
+                throw e;
+            }
         } else if (targetClass == Boolean.class || targetClass == boolean.class) {
             String v = value.toString().toLowerCase();
             if ("1".equals(v) || "true".equals(v)) {
                 return Boolean.TRUE;
             } else if ("0".equals(v) || "false".equals(v)) {
                 return Boolean.FALSE;
+            } else if (ignoreConvertError) {
+                return null;
             } else {
                 throw new IllegalArgumentException("Can not parse to boolean type of value: \"" + value + "\"");
             }
         } else if (targetClass == BigDecimal.class) {
-            return new BigDecimal(value.toString());
+            try {
+                return new BigDecimal(value.toString());
+            } catch (NumberFormatException e) {
+                if (ignoreConvertError) return null;
+                throw e;
+            }
         } else if (targetClass == BigInteger.class) {
-            return new BigInteger(value.toString());
+            try {
+                return new BigInteger(value.toString());
+            } catch (NumberFormatException e) {
+                if (ignoreConvertError) return null;
+                throw e;
+            }
         } else if (targetClass == byte[].class) {
             return value.toString().getBytes();
         } else if (targetClass == Short.class || targetClass == short.class) {
             if (value instanceof Number) {
                 return ((Number) value).shortValue();
             }
-            return Short.parseShort(value.toString());
+            try {
+                return Short.parseShort(value.toString());
+            } catch (NumberFormatException e) {
+                if (ignoreConvertError) return null;
+                throw e;
+            }
         }
         if (ignoreConvertError) {
             return null;
@@ -107,8 +144,14 @@ public class ConvertUtils {
      * @return 默认值
      */
     public static Object getPrimitiveDefaultValue(Class<?> paraClass) {
-        if (paraClass == int.class || paraClass == long.class || paraClass == float.class || paraClass == double.class) {
-            return 0;
+        if (paraClass == int.class) {
+            return (int) 0;
+        } else if (paraClass == long.class) {
+            return (long) 0;
+        } else if (paraClass == float.class) {
+            return (float) 0;
+        } else if (paraClass == double.class) {
+            return (double) 0;
         } else if (paraClass == boolean.class) {
             return Boolean.FALSE;
         } else if (paraClass == short.class) {

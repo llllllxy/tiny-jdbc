@@ -1,6 +1,8 @@
 package org.tinycloud.jdbc.util;
 
+import org.tinycloud.jdbc.exception.TinyJdbcException;
 import java.util.*;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -63,7 +65,13 @@ public final class TableNameParser {
      * @param sql 需要解析的 SQL 语句
      */
     public TableNameParser(String sql) {
+        if (sql == null) {
+            throw new TinyJdbcException("SQL cannot be null for TableNameParser");
+        }
         tokens = fetchAllTokens(sql);
+        if (tokens.isEmpty()) {
+            throw new TinyJdbcException("SQL must contain at least one token: " + sql);
+        }
     }
 
     /**
@@ -75,6 +83,9 @@ public final class TableNameParser {
      * @param visitor 访问者
      */
     public void accept(TableNameVisitor visitor) {
+        if (tokens.isEmpty()) {
+            return;
+        }
         int index = 0;
         String first = tokens.get(index).getValue();
         if (isOracleSpecialDelete(first, tokens, index)) {
@@ -88,7 +99,7 @@ public final class TableNameParser {
                     processFromToken(tokens, index, visitor);
                 } else if (isOnDuplicateKeyUpdate(current, index)) {
                     index = skipDuplicateKeyUpdateIndex(index);
-                } else if (concerned.contains(current.toLowerCase())) {
+                } else if (concerned.contains(current.toLowerCase(Locale.ROOT))) {
                     if (hasMoreTokens(tokens, index)) {
                         SqlToken next = tokens.get(index++);
                         visitNameToken(next, visitor);
@@ -187,6 +198,9 @@ public final class TableNameParser {
     }
 
     private static void processFromToken(List<SqlToken> tokens, int index, TableNameVisitor visitor) {
+        if (index >= tokens.size()) {
+            return;
+        }
         SqlToken sqlToken = tokens.get(index++);
         visitNameToken(sqlToken, visitor);
 
@@ -244,7 +258,7 @@ public final class TableNameParser {
     }
 
     private static void visitNameToken(SqlToken token, TableNameVisitor visitor) {
-        String value = token.getValue().toLowerCase();
+        String value = token.getValue().toLowerCase(Locale.ROOT);
         if (!ignored.contains(value)) {
             visitor.visit(token);
         }
@@ -260,7 +274,7 @@ public final class TableNameParser {
         Map<String, String> tableMap = new HashMap<>();
         accept(token -> {
             String name = token.getValue();
-            tableMap.putIfAbsent(name.toLowerCase(), name);
+            tableMap.putIfAbsent(name.toLowerCase(Locale.ROOT), name);
         });
         return new HashSet<>(tableMap.values());
     }

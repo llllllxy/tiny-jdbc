@@ -79,33 +79,33 @@ public class ArrayUtils {
             return null;
         }
 
-        // 计算总长度并找到第一个非null数组
+        // 计算总长度并找到第一个非null数组的索引
         int totalLength = 0;
-        T[] firstNonEmptyArray = null;
+        int firstNonEmptyIndex = -1;
 
-        for (T[] array : arrays) {
-            if (array != null) {
-                totalLength += array.length;
-                if (firstNonEmptyArray == null) {
-                    firstNonEmptyArray = array;
+        for (int i = 0; i < arrays.length; i++) {
+            if (arrays[i] != null) {
+                totalLength += arrays[i].length;
+                if (firstNonEmptyIndex == -1) {
+                    firstNonEmptyIndex = i;
                 }
             }
         }
 
         // 所有数组都为null或空数组的情况
-        if (firstNonEmptyArray == null) {
+        if (firstNonEmptyIndex == -1) {
             return null;
         }
 
         // 初始化结果数组
-        T[] result = Arrays.copyOf(firstNonEmptyArray, totalLength);
-        int currentPosition = firstNonEmptyArray.length;
+        T[] result = Arrays.copyOf(arrays[firstNonEmptyIndex], totalLength);
+        int currentPosition = arrays[firstNonEmptyIndex].length;
 
         // 复制后续数组元素
         for (int i = 0; i < arrays.length; i++) {
             T[] array = arrays[i];
             // 跳过第一个非空数组（已作为初始数组）和null数组
-            if (array == firstNonEmptyArray || array == null) {
+            if (i == firstNonEmptyIndex || array == null) {
                 continue;
             }
             System.arraycopy(array, 0, result, currentPosition, array.length);

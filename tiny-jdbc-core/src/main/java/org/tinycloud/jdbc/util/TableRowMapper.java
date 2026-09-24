@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -67,7 +68,7 @@ public class TableRowMapper<T> implements RowMapper<T> {
             if (column == null) {
                 column = metaData.getColumnName(i);
             }
-            Field field = column == null ? null : this.columnToField.get(column.toLowerCase());
+            Field field = column == null ? null : this.columnToField.get(column.toLowerCase(Locale.ROOT));
             if (field == null) {
                 continue;
             }

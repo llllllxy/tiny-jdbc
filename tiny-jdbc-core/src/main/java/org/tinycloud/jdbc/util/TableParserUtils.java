@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -205,7 +206,13 @@ public class TableParserUtils {
             fieldToColumn.put(field.getName(), column);
 
             if (exist) {
-                columnToField.put(column.toLowerCase(), field);
+                String lowerColumn = column.toLowerCase(Locale.ROOT);
+                Field existingField = columnToField.get(lowerColumn);
+                if (existingField != null) {
+                    throw new TinyJdbcException("Duplicate column '" + column + "' in class " + clazz.getName()
+                            + ": both '" + existingField.getName() + "' and '" + field.getName() + "' map to the same column.");
+                }
+                columnToField.put(lowerColumn, field);
                 persistentFieldNames.add(field.getName());
                 columns.add(column);
                 if (idAnnotation != null) {
@@ -219,5 +226,14 @@ public class TableParserUtils {
         }
         return new TableInfo(clazz, tableName, primaryKeyColumn, allFields, fieldToColumn, columnToField,
                 fieldToField, persistentFieldNames, columns);
+    }
+
+    /**
+     * 清除 TableInfo 缓存。
+     *
+     * <p>当实体类被重新部署或类加载器被回收时，调用本方法避免强键导致的 Metaspace 泄漏。</p>
+     */
+    public static void clearCache() {
+        tableInfoCache.clear();
     }
 }

@@ -62,6 +62,16 @@
 
 - **criteria 健壮性（`待发布`）**：`in` / `notIn` 可变参数收到 `(Object[]) null` 时不再抛 NPE，改为 `whether=true` 抛明确 `TinyJdbcException`、`whether=false` 直接跳过且不求值；嵌套 `and/or` 若使用 `selectExpr` / `groupBy` / `having` / `orderBy` / `last` 立即抛出 `TinyJdbcException`，避免 HAVING 参数进入参数列表却不被渲染造成的占位符与参数错位。
 
+### 工具类健壮性
+
+- **`SqlIdentifierUtils.checkTailSql` 括号配对**：新增括号深度统计校验，`(` / `)` 不配对直接抛 `TinyJdbcException`，堵住 `exists("subq) OR (1=1")` 可用不配对括号 + `OR` 绕过的注入路径。`last` / `apply` 保持关键字级加固 + 括号配对双重防护；`exists` / `selectExpr` / `having` 受括号配对保护，不含关键字级拦截。`RawSql` 不受限授权机制不变。
+- **`getPrimitiveDefaultValue` 类型修正**：`int/long/float/double` 统一返回 `Integer 0` 的缺陷已修复，现分别返回 `0`、`0L`、`0F`、`0D`。
+- **`ignoreConvertError` 异常拦截补齐**：`parse*`、`BigDecimal`、`BigInteger` 与 Boolean 解析分支统一改为 try-catch，异常时按 `ignoreConvertError` 返回 `null`，与"忽略转换错误"声明一致。
+- **`TableNameParser` 空输入保护**：null SQL 抛 `TinyJdbcException`；空 tokens 在 `accept()` 中直接返回；`processFromToken` 增加 index 越界检查。
+- **`TableParserUtils.clearCache()`**：新增公共 `clearCache()` 清理入口，与 `ReflectUtils` 对齐；两者均无自动淘汰（无 `ClassValue`/弱键），热部署时需手动调用。
+- **`Locale.ROOT` 替换**：`TableInfo.getFieldByColumn`、`TableRowMapper.mapRow`、`TableParserUtils.buildColumnToField`、`TableNameParser` 内三处 `toLowerCase()` 改为 `toLowerCase(Locale.ROOT)`，修复土耳其等 locale 下 `I/İ` 映射错位。
+- **重复列名检测**：`TableParserUtils` 构建列映射时检测 `columnToField` 已存在同列名映射，抛 `TinyJdbcException("Duplicate column '...'")`，替代原先的静默覆盖。
+- **`ArrayUtils.mergeMultipleArrays` 引用跳过修复**：改为按索引跳过首次出现，同一实例重复出现时正常复制。
 ### 条件构造器增强（criteria）
 
 - **`groupBy` / `having`（`待发布`）**：`QueryCriteria` / `LambdaQueryCriteria` 支持 `GROUP BY` 与 `HAVING`，拼接顺序为 `WHERE ... GROUP BY ... HAVING ... ORDER BY`；`having(String, Object...)` 参数化绑定，默认做尾部片段安全校验。

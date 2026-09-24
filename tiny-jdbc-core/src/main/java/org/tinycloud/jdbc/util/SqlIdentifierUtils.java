@@ -140,6 +140,21 @@ public class SqlIdentifierUtils {
                 || lower.contains("*/")) {
             throw new TinyJdbcException("Illegal SQL tail fragment (contains breaking characters): '" + tailSql + "'");
         }
+        // 已拒绝引号/注释，括号不必区分字面量内的匹配
+        int depth = 0;
+        for (int i = 0; i < tailSql.length(); i++) {
+            char c = tailSql.charAt(i);
+            if (c == '(') {
+                depth++;
+            } else if (c == ')') {
+                if (depth-- <= 0) {
+                    throw new TinyJdbcException("Illegal SQL tail fragment (unmatched parenthesis): '" + tailSql + "'");
+                }
+            }
+        }
+        if (depth != 0) {
+            throw new TinyJdbcException("Illegal SQL tail fragment (unmatched parenthesis): '" + tailSql + "'");
+        }
     }
 
     /**

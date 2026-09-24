@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -145,7 +146,7 @@ public final class TableInfo {
      * 列名(忽略大小写) → 字段；仅有效字段，不存在返回 null。
      */
     public Field getFieldByColumn(String columnName) {
-        return columnName == null ? null : columnToField.get(columnName.toLowerCase());
+        return columnName == null ? null : columnToField.get(columnName.toLowerCase(Locale.ROOT));
     }
 
     /**
