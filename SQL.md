@@ -2,7 +2,13 @@
 
 `SQL` 用于以链式方式构建参数化的 `SELECT`、`INSERT`、`UPDATE` 和 `DELETE` 语句。构建完成后可调用 `toSql()` 获取 SQL，调用 `getParameters()` 获取与 `?` 占位符顺序一致的参数；也可以直接交给 `BaseDao` / `JdbcTemplateHelper` / `AbstractSqlSupport` 执行。
 
-> 值参数会使用 `?` 绑定；表名、列名以及 `FuncBuilder.col(...)` / `FuncExpr.of(...)` 中的字符串属于 SQL 结构，必须来自受信任的代码，不能直接使用前端输入。
+> 值参数会使用 `?` 绑定；表名、列名、别名以及 `FuncBuilder.col(...)` 中的字符串属于 SQL 结构，必须来自受信任的代码，不能直接使用前端输入。
+
+> **字符串参数的两种语义（重要）**：本构建器把「列引用」与「自由表达式」显式区分开——
+> - **列引用**：直接传 `String`，框架按标识符白名单校验（如 `"u.name"`、`"u.*"`）；
+> - **自由表达式**：必须用 `RawSql.wrap("...")` 显式授权（如 `"price * qty"`、`"age < 18"`、`"&"`）。
+>
+> 因此 `count("a + b")`、`caseWhen("age < 18", ...)` 这类写法现在会抛 `TinyJdbcException`，需改为 `FuncBuilder.count(FuncBuilder.raw(RawSql.wrap("a + b")))` / `RawSql.wrap("age < 18")`。详见 [11.3 SQL 注入防护与信任边界](#113-sql-注入防护与信任边界)。
 
 > **关于 SQL 函数表达式**：推荐使用 `FuncBuilder` / `FuncExpr`（见 [4.2 函数表达式](#42-函数表达式funcbuilder)）。旧的 `Expression` 类**已移除**，其能力已合并到 `FuncBuilder`（`count/sum/avg/max/min/coalesce/ifNull/caseWhen` 等），新代码请直接使用 `FuncBuilder` / `FuncExpr`。
 
@@ -37,7 +43,7 @@ List<User> users = userDao.select(query);
 
 > **这套 API 的三个核心约定**（先理解它，后面就顺了）：
 >
-> 1. **值是参数、结构是原样**。数据 / 数字 / 字符串常量 → 交给 `?` 预编译绑定（值参数）；表名、列名、函数名、裸 SQL 片段 → **原样拼进 SQL，必须来自受信任代码**。这条贯穿所有方法。
+> 1. **值是参数、结构是原样**。数据 / 数字 / 字符串常量 → 交给 `?` 预编译绑定（值参数）；表名、列名、函数名、操作符等 SQL 结构 → **原样拼进 SQL**，但会先过白名单校验。确需拼接受限片段时用 `RawSql` 显式授权。这条贯穿所有方法。
 > 2. **条件写进回调**。`where(...)` / `having(...)` 接收一个 `Consumer<ConditionGroup>`，在 `w -> w.eq(...).ge(...)` 里组织条件，而不是把 `=` / `>` 直接挂在链上。条件多、要 `OR` 分组、要嵌套时更清晰。
 > 3. **列和值要分清**。列名 / 表达式用裸 `String`（如 `"age"`）或 `FuncBuilder.col(...)`；字符串常量用 `lit(...)`，数字直接传值（如 `w.eq("age", 18)`、`lit(", ")`）。"写进 SQL 的列"和"拼成参数的值"从类型上就分开，不再手写引号。
 
@@ -45,12 +51,14 @@ List<User> users = userDao.select(query);
 
 | 参数位置 | 你可以传 | 含义 / 渲染 |
 | --- | --- | --- |
-| 列名 | 裸 `String`（如 `"name"`） | 原样拼为列名 |
+| 列名 | 裸 `String`（如 `"name"`） | 按标识符白名单校验后拼为列名 |
 | 列名 | `TypeFunction`（如 `User::getName`） | 解析为列名（兼容 `@Column` 改名） |
 | 列 / 表达式 | `FuncBuilder.col(...)` | 包成 `FuncExpr`，当作"列" |
 | 字符串常量 | `lit("...")` | 参数化 `?` |
 | 数字 / 布尔 | 直接传 `18` / `true` | 参数化 `?` |
-| 裸 SQL 片段 | `FuncBuilder.raw(...)` / `FuncExpr.of(...)` | 原样拼（可含函数/操作符） |
+| 操作符（自定义） | 裸 `String`（如 `"="`、`">="`、`"NOT LIKE"`） | 必须命中操作符白名单 |
+| 操作符 / 自由表达式 | `RawSql.wrap(...)` | **跳过白名单，原样拼**（即受信任片段） |
+| 自由表达式 | `FuncBuilder.raw(RawSql.wrap(...))` / `FuncExpr.of(RawSql.wrap(...))` | 原样拼（可含函数/操作符） |
 | 子查询 | `SQL<?>` | 生成 `(SELECT ...)`，参数按序并入 |
 
 ---
@@ -201,11 +209,16 @@ SQL<?> replace = SQL.table("t_user")
 | `isNull` / `isNotNull` | `IS NULL` / `IS NOT NULL` | `w.isNull("deleted_at")` |
 | `in` / `notIn`（子查询） | `IN (SELECT ...)` | `w.in("id", subSql)` |
 | `exists` / `notExists` | `EXISTS (SELECT ...)` | `w.exists(subSql)` |
-| `and("col", opt, value)` | 自定义操作符 | `w.and("a.id", "=", 1)` / `w.and(User::getAge, ">", 18)` |
+| `and("col", opt, value)` | 自定义操作符（需命中白名单） | `w.and("a.id", "=", 1)` / `w.and(User::getAge, ">", 18)` |
+| `and("col", RawSql.wrap(opt), value)` | 白名单外的方言操作符 | `w.and("a.flag", RawSql.wrap("&"), 1)` |
 | `or()` | 下一个条件改为 `OR` 连接 | `w.eq("a",1).or().eq("b",2)` |
-| `and(c)` / `or(c)` / `group(c)` | 括号分组 | `w.group(g -> g.eq("a",1).or().eq("b",2))` |
+| `and(c)` / `or(c)` / `group(c)` | 括号分组（空块自动跳过） | `w.group(g -> g.eq("a",1).or().eq("b",2))` |
 
-`in/notIn` 接收任意非空 `Collection`，包括 `List`、`Set` 和队列。若需稳定的参数输出顺序，使用 `List` 或 `LinkedHashSet`。
+`in/notIn` 接收任意非空 `Collection`，包括 `List`、`Set` 和队列。若需稳定的参数输出顺序，使用 `List` 或 `LinkedHashSet`。集合会在构建时**快照**，之后再改动原集合不会影响已生成的条件。
+
+> **`null` 值比较**：`eq(col, null)` / `notEq(col, null)`（以及 `and(col, "=", null)` / `and(col, "!=", null)`）会自动归一为 `IS NULL` / `IS NOT NULL`，且**不产生参数**。其它操作符（如 `>`）配 `null` 无意义，会直接抛 `TinyJdbcException`——请改用 `isNull` / `isNotNull`。
+>
+> **空条件组**：`and(c)` / `or(c)` / `group(c)` 传入的回调若没产生任何条件，该嵌套块会被整体跳过，不会渲染出非法的 `()`。
 
 ```java
 Collection<Long> ids = new LinkedHashSet<>(Arrays.asList(1L, 2L, 3L));
@@ -346,10 +359,19 @@ SQL<?> report = SQL.table("t_order")
 
 **参数约定**（与 `FuncBuilder` 各工厂方法一致）：
 
-- `String` → **裸 SQL**（列名 / 表达式），原样拼接，**不加引号**；
+- `String` → **列引用**，按标识符白名单校验后原样拼接，**不加引号**（如 `"u.name"`、`"u.*"`）。……此前这里接受任意「裸 SQL 表达式」，现已收紧；自由表达式请改用 `FuncBuilder.raw(RawSql.wrap("..."))`；
 - `TypeFunction`（如 `User::getAge`）→ 解析为对应列名；
 - `FuncExpr` → 已组合的表达式（`col()` / `lit()` / 其它函数的结果）；
+- `RawSql` → 显式授权的原始片段，原样拼接（见 `FuncBuilder.raw(RawSql)`）；
 - `lit(Object)` / 值参数 → **值字面量**，参数化（`?` + 绑定参数）。
+
+> 函数名同样受校验：`func("COALESCE", ...)` 合法，`func("COUNT) OR (1=1", ...)` 会抛异常。别名 `as(alias)` 也会按标识符校验。
+
+```java
+// 自由表达式（含运算符）必须显式授权：
+FuncBuilder.raw(RawSql.wrap("price * qty")).as("total");   // SELECT price * qty AS total
+FuncBuilder.sum(FuncBuilder.raw(RawSql.wrap("a || '-' || b")));
+```
 
 ```java
 import static org.tinycloud.jdbc.sql.FuncBuilder.*;
@@ -403,22 +425,24 @@ SQL.table("t").select(FuncBuilder.func("COALESCE", FuncBuilder.col("a"), FuncBui
 
 ### 4.3 CASE WHEN
 
-`FuncBuilder.caseWhen()` 返回一个构建器，`when(condition, result)` / `otherwise(result)` 均遵循同样的参数约定（条件/结果用 `String` 裸表达式或 `lit(...)` 值字面量），最后 `build().as(alias)`。只有一个条件的简单场景可用 `caseWhen(condition, then, otherwise)` 三参快捷版：
+`FuncBuilder.caseWhen()` 返回一个构建器，`when(condition, result)` / `otherwise(result)` 均遵循同样的参数约定，最后 `build().as(alias)`。只有一个条件的简单场景可用 `caseWhen(condition, then, otherwise)` 三参快捷版。
+
+> **注意**：`condition` 是「表达式位」。像 `"age < 18"` 这种多 token 表达式**必须**用 `RawSql.wrap(...)` 显式授权；单个列名（如 `"status"`）仍可直接传 `String`。结果值请用 `lit(...)`（参数化），否则会被当成列引用。
 
 ```java
 // CASE WHEN age < 18 THEN ? ELSE ? END
 SQL.table("t_user")
-        .select(FuncBuilder.caseWhen("age < 18", FuncBuilder.lit("未成年"), FuncBuilder.lit("成年")).as("age_group"));
+        .select(FuncBuilder.caseWhen(RawSql.wrap("age < 18"), FuncBuilder.lit("未成年"), FuncBuilder.lit("成年")).as("age_group"));
 ```
 
-多条件仍用构建器（条件用 `String`、其它字面量）：
+多条件仍用构建器（条件用 `RawSql.wrap(...)` 包表达式、其它用 `lit(...)` 字面量）：
 
 ```java
 SQL<?> sql = SQL.table("t_user")
         .select(FuncBuilder.col("id"), FuncBuilder.col("name"),
                 FuncBuilder.caseWhen()
-                        .when("age < 18", FuncBuilder.lit("未成年"))
-                        .when("age >= 18 AND age < 60", FuncBuilder.lit("成年"))
+                        .when(RawSql.wrap("age < 18"), FuncBuilder.lit("未成年"))
+                        .when(RawSql.wrap("age >= 18 AND age < 60"), FuncBuilder.lit("成年"))
                         .otherwise(FuncBuilder.lit("老年"))
                         .build().as("age_group"))
         .limit(10);
@@ -470,7 +494,9 @@ SQL<?> query = SQL.table("tb_user")
 // WHERE is_active = ?
 ```
 
-`on(field1, field2)` 表示两个字段相等（右侧为字段引用，不参数化）；`on(field1, opt, value)` 表示带操作符、右侧为值（参数化）。
+`on(field1, field2)` 表示两个字段相等（右侧为字段引用，不参数化）；`on(field1, opt, value)` 表示带操作符、右侧为值（参数化）。`opt` 需命中操作符白名单，白名单外的方言运算符用 `on(field1, RawSql.wrap(opt), value)`。
+
+> **非 `CROSS JOIN` 必须至少有一个 ON 条件**：`leftJoin("u", "u")` 而不调 `on(...)` 会在渲染时报错（此前会生成 `LEFT JOIN u u` 这类非法 SQL）。确实需要无 `ON` 的连接请用 `crossJoin`。
 
 连接条件也支持**实体方法引用（Lambda）**，`on` / `and` / `andIfAbsent` / `onIfAbsent` 都提供 `TypeFunction` 重载；并且 **JOIN 的表名可直接传实体类**（`leftJoin(Role.class, "r", ...)`），表名由 `@Table` 注解解析，`LEFT / RIGHT / INNER / CROSS` 四种连接都有相同的 `Class` 重载：
 
@@ -667,9 +693,63 @@ List<User> users = userDao.select(query);
 - `UPDATE` 至少需要一个 `set(...)`，并且必须有 `where(...)`；`DELETE` 必须有 `where(...)`。
 - `IN/NOT IN` 不接受 `null` 或空集合；子查询条件要求子查询非空。
 - `SELECT` 的 `JOIN` 只在 `SELECT` / `UPDATE` 中合法，`DELETE` 不支持 `JOIN`。
-- 表名、列名、排序字段和原始表达式文本（`FuncBuilder.col(...)` / `FuncExpr.of(...)` / `FuncBuilder.raw(...)` 中的字符串）不属于值参数，不要直接信任外部输入。
+- 表名、列名、别名、函数名、操作符和原始表达式文本（`FuncBuilder.col(...)` / `FuncExpr.of(...)` / `FuncBuilder.raw(...)` 中的字符串）不属于值参数，不要直接信任外部输入——它们都会经过校验（见 [11.3 SQL 注入防护与信任边界](#113-sql-注入防护与信任边界)）。
 - 聚合函数：使用 `FuncBuilder` 的静态方法创建聚合表达式，用 `.as("alias")` 设置结果列名；`count` 默认别名为小写 `total`。
 - 旧 `Expression` 类**已移除**，其能力（`count/sum/avg/max/min/coalesce/ifNull/caseWhen`）已合并到 `FuncBuilder`，请使用 `FuncBuilder` / `FuncExpr`。
+
+### 11.1 limit / offset
+
+`limit(int)` 与 `offset(int)` 只接受非负整数，负数会抛 `TinyJdbcException`（`limit(0)` 合法）。二者仅适用于 `SELECT`。
+
+### 11.2 UNION 管道完整性
+
+`union` / `unionAll` 会拒绝：与自身合并、同一片段重复入队、以及把已属于另一条 UNION 管道的片段合并进来。这些操作此前会导致渲染死循环或交叉引用。
+
+```java
+SQL<?> a = SQL.table("t").select();
+a.union(a);                        // ❌ TinyJdbcException：不能与自身合并
+SQL<?> b = SQL.table("u").select();
+a.union(b);
+a.union(b);                        // ❌ 已在同一管道中
+```
+
+### 11.3 SQL 注入防护与信任边界
+
+标识符与原始片段**无法用 `?` 参数化**（`?` 只能绑定值），所以只能靠校验。本构建器把校验收敛成三个入口，而不是在每个方法里各写一遍：
+
+| 闸门 | 强制位置 | 作用 |
+| --- | --- | --- |
+| ① 操作符白名单 | `SimpleCondition` / `SubQueryCondition` 构造器 | 所有操作符最终都汇入这里，因此 `where` / `having` / `JOIN ON` / 子查询一次性全覆盖 |
+| ② 标识符校验 | `SqlIdentifierUtils` | 表名、列名、别名、函数名；被 `SQL.table(table, alias)`、`select` / `orderBy`、`FuncExpr.as`、`FuncExpr.call` 等复用 |
+| ③ 原始片段信任模型 | `RawSql` / `FuncExpr.fragment` | 区分「调用方字符串」（校验）与「框架自建片段」（受信），受信出口必须显式书写 |
+
+**操作符白名单**（输入会先规范化：去首尾空白、折叠内部空白、按 `Locale.ROOT` 转大写）：
+
+- 比较类：`=`、`<>`、`!=`、`>`、`<`、`>=`、`<=`、`<=>`、`LIKE`、`NOT LIKE`、`REGEXP`、`NOT REGEXP`、`RLIKE`、`NOT RLIKE`、`SOUNDS LIKE`
+- 子查询类：`IN`、`NOT IN`、`EXISTS`、`NOT EXISTS`，以及上述比较符
+
+```java
+w.and("a.id", "=", 1);          // ✅ 白名单内
+w.and("a.id", "= 1 OR 1=1", 1); // ❌ TinyJdbcException: Illegal SQL comparison operator
+w.and("a.flag", RawSql.wrap("&"), 1);  // ✅ 显式授权方言运算符
+```
+
+**`RawSql` 的正确心智模型**：它不改变「这个字符串会原样进 SQL」的事实，它只是把「我确认这段文本可信」写成代码。因此**绝不要** `RawSql.wrap(用户输入)`：
+
+```java
+// ❌ 完全不解决问题，只是把警告关掉了
+w.and("a.id", RawSql.wrap(userInput), 1);
+
+// ✅ 外部输入只能作为值
+w.and("a.id", "=", userInput);
+```
+
+还可以顺手规避的两类问题：
+
+- `GROUP_CONCAT` 的 `SEPARATOR` 只接受字符串字面量（不能用 `?`），框架会按「单引号包裹 + `'` / `\` 双写转义」渲染，分隔符无法逃逸出字面量；同时 `SEPARATOR` 前不输出逗号（写成 `GROUP_CONCAT(name SEPARATOR ',')` 而非 `GROUP_CONCAT(name, SEPARATOR ',')`）；
+- `EXISTS` / `NOT EXISTS` 不接受列，`IN` / `NOT IN` 必须带列，构造时即校验。
+
+> **未连库验证声明**：`GROUP_CONCAT ... SEPARATOR '...'` 的转义规则、以及各方言对 `<=>`、`RLIKE`、`SOUNDS LIKE` 的支持差异，本仓库的 core 单测**只断言生成的 SQL 文本与参数列表，未在真实数据库上执行**。切换数据库前请按目标方言确认。
 
 ---
 
@@ -775,10 +855,12 @@ List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, params.toArray()
 
 > 多数函数都提供 `FuncExpr` 重载，可嵌套（如 `year(now())`）。任意函数也可用通用入口 `func(name, args...)` 组合。
 
+> **字符串参数的约定**：`String` 参数按**列引用**校验（`"u.name"`、`"u.*"`）；自由表达式（含运算符 / 空格 / 括号）需用 `FuncBuilder.raw(RawSql.wrap("..."))` 显式授权。函数名与别名同样受标识符校验。`groupConcat(field, separator)` 的 `separator` 会渲染为转义后的字符串字面量，即 `GROUP_CONCAT(name SEPARATOR ',')`——注意 `SEPARATOR` 前**没有逗号**（MySQL/MariaDB 语法为 `GROUP_CONCAT([DISTINCT] expr [,expr ...] [ORDER BY ...] [SEPARATOR str_val])`，逗号表示「按行拼接多个表达式」），且 `SEPARATOR` 不接受 `?` 占位符。
+
 - **聚合**：`count`、`countDistinct`、`sum`、`avg`、`max`、`min`、`groupConcat`、`groupConcatDistinct`
 - **字符串**：`concat`、`concat_ws`、`length`、`charLength`、`substring`、`upper`、`lower`、`ltrim`、`rtrim`、`trim`、`left`、`right`、`locate`、`instr`、`replace`、`findInSet`、`position`、`elt`、`insert`
 - **数值**：`abs`、`ceil`、`floor`、`round`、`mod`、`truncate`、`rand`
 - **日期**：`now`、`curdate`、`curtime`、`dateFormat`、`format`、`year`、`month`、`day`、`hour`、`minute`、`second`、`week`、`weekday`、`dayname`、`monthname`、`date`、`dateAdd`、`dateSub`、`strToDate`、`unixTimeStamp`、`fromUnixTime`
 - **条件**：`ifNull`、`coalesce`、`nullIf`、`caseWhen`（构建器 + `caseWhen(cond, then, otherwise)` 三参版）、`_if`
 - **JSON**：`jsonExtract`、`jsonUnquote`、`jsonContains`、`jsonSet`、`jsonRemove`、`jsonObject`、`jsonArray`
-- **其它**：`col`（列引用）、`lit`（值字面量）、`of`（`FuncExpr.of`，裸 SQL 表达式）、`distinct`、`func`（通用函数调用）
+- **其它**：`col`（列引用）、`lit`（值字面量）、`raw`（`FuncBuilder.raw(RawSql.wrap(...))`，受信任的原始表达式）、`of`（`FuncExpr.of(RawSql.wrap(...))`，受信任的原始表达式）、`distinct`、`func`（通用函数调用）

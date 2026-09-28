@@ -2,6 +2,86 @@
 
 本文件依据 Git 标签、版本发布提交及对应代码差异整理。每个版本均给出可回溯的发布锚点；标记为“升级必读”的版本包含已确认的 API 或包路径迁移。
 
+## 2.0.3（未发布）
+
+> 升级路径：2.0.2 → 2.0.3 ｜ 主题：SQL 构造 DSL 安全加固（AUDIT_REPORT.md 第三章 15 条）
+
+### 类型概览
+
+| 维度 | 内容 |
+|------|------|
+| 破坏性变更 | 操作符白名单、`FuncBuilder` 字符串参数按列引用校验、`FuncExpr.of(String)` 收紧、`eq(col, null)` 归一为 `IS NULL`、非 CROSS JOIN 强制 ON |
+| 安全加固 | 收敛为三个校验闸门（操作符白名单 / 标识符校验 / 原始片段信任模型），同时关闭审计未点名的约 40 个同类注入点 |
+| 稳定性修复 | 空条件组、UNION 自引用、IN 集合快照、`GROUP_CONCAT` 分隔符、`limit`/`offset` 负数 |
+| 新增 API | `SqlOperatorUtils`、`RawSql` 版本的操作符重载、`FuncBuilder.raw(RawSql)`、`FuncExpr.of(RawSql)`、`SqlIdentifierUtils.checkFunctionName` |
+| 测试 | 新增 `SqlDslSecurityVerifyMain`（23 项）；core 全量 202 项通过 |
+
+### ⚠️ 破坏性变更（升级必读）
+
+本章节的共同主题是：**字符串参数不再被默认为「受信 SQL」**。此前多个入口把调用方传入的字符串原样拼进 SQL，这既是注入面，也让「列名」与「自由表达式」两种语义混在一起。现在二者被显式区分：
+
+| 语义 | 用法 |
+|------|------|
+| 列引用（受校验） | 直接传 `String`，如 `col("u.name")`、`and("a.id", "=", 1)` |
+| 自由表达式（不受限） | 用 `RawSql.wrap("...")` 显式授权，如 `FuncBuilder.raw(RawSql.wrap("price * qty"))` |
+
+- **操作符白名单（`SimpleCondition` / `SubQueryCondition` / `Join.on|and` / `ConditionGroup.and` / `SQL.on`）**：操作符不再原样拼接，只接受白名单内的运算符。比较类白名单：`=`、`<>`、`!=`、`>`、`<`、`>=`、`<=`、`<=>`、`LIKE`、`NOT LIKE`、`REGEXP`、`NOT REGEXP`、`RLIKE`、`NOT RLIKE`、`SOUNDS LIKE`；子查询类：`IN`、`NOT IN`、`EXISTS`、`NOT EXISTS` 及上述比较符。输入会先规范化（去首尾空白、折叠内部空白、`Locale.ROOT` 转大写）后再渲染，因此**生成的 SQL 中操作符一律为大写**（`and("a", "like", …)` 现在输出 `a LIKE ?` 而非 `a like ?`；`"not  like"` 这类多空格写法会被修正为 `NOT LIKE`，此前会拼出非法 SQL）。白名单外的方言运算符需改用新增的 `RawSql` 重载：`and("a.flag", RawSql.wrap("&"), 1)`。
+- **⚠️ 新增 `RawSql` 重载带来的编译期歧义**：由于 `and/on` 同时存在 `(String, String, Object)` 与 `(String, RawSql, Object)`，把**字面量 `null`** 作为操作符传入（`and("a", null, 1)`）会因两个重载都无法确定而编译失败。这种写法本身无意义（此前会拼出 `a null ?`），但升级时若遇到该编译错误，请显式转型：`and("a", (String) null, 1)`，或改用 `isNull` / `isNotNull`。
+- **`FuncBuilder` 字符串参数按列引用校验**：`col` / `count` / `sum` / `avg` / `max` / `min` / `upper` / `dateFormat` / `distinct` / `concat` … 等约 40 个方法的 `String` 参数此前直接原样拼接，现一律按列引用白名单校验。`count("a + b")` 这类自由表达式会抛 `TinyJdbcException`，需改为 `FuncBuilder.count(FuncBuilder.raw(RawSql.wrap("a + b")))`。
+- **`caseWhen` / `_if` 等「表达式位」不再接受裸字符串**：`FuncBuilder.caseWhen("status = 1", ...)`、`FuncBuilder._if("1=1", ...)` 这类写法（`String` 曾被文档描述为「裸 SQL」）现会报错，需改为 `RawSql.wrap("status = 1")`，或传入 `FuncExpr` / `FuncBuilder.col(...)`。这是本次最容易踩到的一条。
+- **`FuncExpr.of(String)` 弃用并收紧**：只接受列引用，自由表达式改用新增的 `FuncExpr.of(RawSql)`。方法已标 `@Deprecated`，计划在 2.1.0 移除。
+- **`eq(col, null)` / `notEq(col, null)` 归一为 `IS NULL` / `IS NOT NULL`**：此前生成 `= ?` 并绑定 `null`（三值逻辑恒不匹配），现直接产出 `IS NULL` / `IS NOT NULL` 且**不再产生参数**，SQL 文本与参数个数都会变化。通用入口 `and(col, "=", null)`、`and(col, "!=", null)` 同样归一；其它运算符（如 `> null`）无意义，直接抛异常。
+- **非 `CROSS JOIN` 必须至少有一个 ON 条件**：`leftJoin("u", "u")` 而不调 `on(...)` 会在渲染期报错（此前生成 `LEFT JOIN u u` 这种非法 SQL），需要「无 ON」请改用 `crossJoin`。
+- **`limit` / `offset` 拒绝负数**（此前生成 `LIMIT -1` 非法 SQL）；`limit(0)` 仍然合法。
+- **`GROUP_CONCAT` 分隔符输出变化**：`groupConcat(field, separator)` 由原样拼接 `GROUP_CONCAT(name, SEPARATOR ,)` 改为 `GROUP_CONCAT(name SEPARATOR ',')`。这里一并修掉两个问题：分隔符未加引号（不可执行），以及 `SEPARATOR` 前多了一个逗号——按 MySQL/MariaDB 语法 `GROUP_CONCAT([DISTINCT] expr [,expr ...] [ORDER BY ...] [SEPARATOR str_val])`，`SEPARATOR` 前**没有**逗号（逗号表示「按行拼接多个表达式」，是另一种用法）。SQL 文本变化，但旧文本本身无法执行。
+- **UNION 自引用 / 重复 / 跨管道合并改为报错**：`a.union(a)`、同一片段重复入队、把已属于另一条管道的片段合并进来，此前会导致渲染死循环或交叉引用，现直接抛异常。
+- **`FuncExpr.getParameters()` 返回只读视图**：此前返回内部可变 `List`，调用方可借此改动表达式状态；现在修改会抛 `UnsupportedOperationException`。
+- **`InCondition` 构造时对集合做快照**：构建后调用方再增删原集合不再影响已生成的条件（此前会造成占位符数量与参数列表不一致）。
+
+### 安全加固
+
+- **闸门①：操作符白名单（新增 `util/SqlOperatorUtils`）**：所有操作符最终都汇入 `SimpleCondition` / `SubQueryCondition` 两个构造器，白名单在这两处统一强制，因此 `Join.on|and`（4 个方法）、`ConditionGroup.and|andIfAbsent`（6 个方法）、`SQL.on` 一次性全覆盖。`Join` 的 ON 条件已重构为直接复用 `SimpleCondition`，与 WHERE 条件共享同一套操作符与空值语义。
+- **闸门②：标识符校验**：`SQL.table(table, alias)` 补上 `checkAlias`（此前只校验表名）；`FuncExpr.as(alias)` 由「仅判空」改为 `checkAlias`；`SubQueryCondition` 补齐子查询非空、操作符白名单，以及「`EXISTS`/`NOT EXISTS` 不得带列、`IN` 必须带列」的组合校验。
+- **闸门③：原始片段信任模型**：`FuncExpr` 内部拆分为两条路径——`raw(String)` 按列引用校验（覆盖全部调用方字符串），新增包内可见的 `fragment(String)` 承载框架自建片段（`NOW()`、`DISTINCT col`、`INTERVAL n DAY`、整型字面量等），审计未点名的约 40 个 `FuncBuilder` 参数位由此一并收口。函数名经新增的 `SqlIdentifierUtils.checkFunctionName` 校验，拒绝 `"COUNT) OR (1=1"` 之类输入。
+- **受信出口显式化**：新增 `FuncBuilder.raw(RawSql)` 与 `FuncExpr.of(RawSql)`；`RawSql` 版本的操作符重载使「确需白名单外运算符」有明确、可搜索的表达方式，而不是放宽白名单。
+
+### 稳定性修复
+
+- **空条件组不再渲染成 `()`**：`and` / `or` / `group` 传入空 `Consumer` 时跳过该嵌套块（不再产生非法 `()` 或悬空连接符），`GroupElement.toSql()` 与 `ConditionGroup.toSql()` 同时做防御性跳过。
+- **UNION 管道完整性**：拒绝自引用、重复入队与跨管道合并。
+- **`InCondition` 集合快照**：修复构建后外部改动集合导致占位符与参数不一致。
+- **`GROUP_CONCAT` 分隔符按值转义**：分隔符被单引号包裹并双写转义 `'` / `\`，注入尝试无法逃逸字面量。
+
+### 升级检查清单
+
+- [ ] 全局搜索 `.and(`、`.on(`、`Join` 相关调用，确认自定义操作符都在白名单内；否则改用 `RawSql.wrap(...)` 重载。
+- [ ] 全局搜索 `FuncBuilder.col(` / `count(` / `sum(` 等，确认字符串参数是列引用；自由表达式改用 `FuncBuilder.raw(RawSql.wrap(...))`。
+- [ ] 全局搜索 `caseWhen(` / `_if(`，字符串条件改用 `RawSql.wrap(...)` 或 `FuncFactory`/`FuncExpr` 表达式。
+- [ ] 全局搜索 `FuncExpr.of(`，改列为 `FuncExpr.of(RawSql.wrap(...))`（自由表达式）或 `FuncBuilder.col(...)`（列引用）。
+- [ ] 复核依赖 `eq(col, null)` 生成 `= ?` 或依赖其参数个数的代码（如手工拼装参数数组、参数下标断言）。
+- [ ] 复核无 ON 的 `leftJoin` / `rightJoin` / `innerJoin` 调用，改用 `crossJoin` 或补上 ON。
+- [ ] 若断言了 `GROUP_CONCAT(... SEPARATOR x)` 的 SQL 文本，需按新的字面量形式更新。
+
+### 兼容性说明
+
+| 用户侧能力 | 兼容性 |
+|------------|--------|
+| 基于 `BaseDao` 的常规 CRUD 调用 | ✅ 完全兼容 |
+| `criteria` 条件构造器 | ✅ 完全兼容 |
+| 分页 / 主键生成 / 代码生成器 | ✅ 完全兼容 |
+| `SQL` 构造器：表名、列名、别名、排序、分组、插入、更新 | ✅ 兼容（校验更严，合法标识符不受影响） |
+| `FuncBuilder` 传列名的既有用法 | ✅ 兼容 |
+| 自定义操作符（白名单内） | ✅ 兼容 |
+| 自定义操作符（白名单外） | ⚠️ 需改用 `RawSql` 重载 |
+| `FuncBuilder` 传自由表达式的用法 | ⚠️ 需改用 `FuncBuilder.raw(RawSql.wrap(...))` |
+| `caseWhen` / `_if` 传裸字符串条件 | ⚠️ 需改用 `RawSql.wrap(...)` |
+| `FuncExpr.of(String)` 传自由表达式 | ⚠️ 需改用 `FuncExpr.of(RawSql)`；方法已弃用 |
+| `eq(col, null)` 依赖 `= ?` 语义或参数个数 | ⚠️ 行为变更，现为 `IS NULL` 且无参数 |
+| 无 ON 的非 CROSS JOIN | ❌ 不再允许，改用 `crossJoin` |
+| `groupConcat` 分隔符的 SQL 文本 | ⚠️ 文本变化（`GROUP_CONCAT(name SEPARATOR ',')`），旧文本无法执行 |
+
+---
+
 ## 2.0.2
 
 > 发布日期：2026-09-08 ｜ 发布提交：`ab518531` ｜ 升级路径：2.0.1 → 2.0.2
