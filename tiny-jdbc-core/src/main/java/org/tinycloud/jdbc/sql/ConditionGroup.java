@@ -31,14 +31,19 @@ public class ConditionGroup<T> {
     public ConditionGroup<T> and(Consumer<ConditionGroup<T>> subGroup) {
         ConditionGroup<T> group = new ConditionGroup<>();
         subGroup.accept(group);
-        this.elements.add(new GroupElement(JoinType.AND, group));
+        // 空嵌套块会渲染成 "()"，是非法 SQL，直接跳过（同时不改变连接符状态）
+        if (!group.isEmpty()) {
+            this.elements.add(new GroupElement(JoinType.AND, group));
+        }
         return this;
     }
 
     public ConditionGroup<T> or(Consumer<ConditionGroup<T>> subGroup) {
         ConditionGroup<T> group = new ConditionGroup<>();
         subGroup.accept(group);
-        this.elements.add(new GroupElement(JoinType.OR, group));
+        if (!group.isEmpty()) {
+            this.elements.add(new GroupElement(JoinType.OR, group));
+        }
         return this;
     }
 
@@ -46,7 +51,9 @@ public class ConditionGroup<T> {
     public ConditionGroup<T> group(Consumer<ConditionGroup<T>> subGroup) {
         ConditionGroup<T> group = new ConditionGroup<>();
         subGroup.accept(group);
-        this.elements.add(new GroupElement(this.defaultJoinType, group));
+        if (!group.isEmpty()) {
+            this.elements.add(new GroupElement(this.defaultJoinType, group));
+        }
         return this;
     }
 
@@ -278,6 +285,24 @@ public class ConditionGroup<T> {
         return this;
     }
 
+    /**
+     * 自定义操作符的等值条件，并用 {@link RawSql} 显式授权操作符（跳过白名单）。
+     * <p>用于白名单之外的方言运算符，例如 {@code and("a.flag", RawSql.wrap("&"), 1)}。</p>
+     */
+    public ConditionGroup<T> and(String column, RawSql opt, Object value) {
+        this.elements.add(new SimpleCondition(column, opt, value, this.defaultJoinType));
+        return this;
+    }
+
+    /**
+     * 自定义操作符的等值条件（Lambda 列），并用 {@link RawSql} 显式授权操作符（跳过白名单）。
+     */
+    public <R> ConditionGroup<T> and(TypeFunction<T, R> field, RawSql opt, Object value) {
+        String columnName = LambdaUtils.getLambdaColumnName(field);
+        this.elements.add(new SimpleCondition(columnName, opt, value, this.defaultJoinType));
+        return this;
+    }
+
     public ConditionGroup<T> isNull(String column) {
         this.elements.add(new NullCondition(column, true, this.defaultJoinType));
         return this;
@@ -315,14 +340,19 @@ public class ConditionGroup<T> {
     }
 
     public String toSql() {
-        if (this.elements.isEmpty()) {
-            return "";
-        }
         StringBuilder sql = new StringBuilder();
-        sql.append(this.elements.get(0).toSql());
-        for (int i = 1; i < this.elements.size(); i++) {
-            sql.append(" ").append(this.elements.get(i).getJoinType().getSql()).append(" ");
-            sql.append(this.elements.get(i).toSql());
+        boolean first = true;
+        for (ConditionElement element : this.elements) {
+            String elementSql = element.toSql();
+            // 渲染为空的元素（空嵌套块）必须跳过，否则会产出 "()" 或悬空连接符
+            if (elementSql == null || elementSql.isEmpty()) {
+                continue;
+            }
+            if (!first) {
+                sql.append(" ").append(element.getJoinType().getSql()).append(" ");
+            }
+            sql.append(elementSql);
+            first = false;
         }
         return sql.toString();
     }

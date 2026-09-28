@@ -106,6 +106,23 @@ public class SqlIdentifierUtils {
     }
 
     /**
+     * 校验「函数名」是否合法。
+     * <p>
+     * 函数名会被原样拼接到 {@code NAME(...)} 中，无法用 {@code ?} 参数化，
+     * 因此只允许单个标识符原子（{@code COUNT}、{@code GROUP_CONCAT}、{@code JSON_EXTRACT}）。
+     * 形如 {@code "x) OR (1=1"} 的输入会被拒绝。
+     * </p>
+     *
+     * @param functionName 函数名
+     */
+    public static void checkFunctionName(String functionName) {
+        if (functionName == null || functionName.trim().isEmpty() || !ALIAS_PATTERN.matcher(functionName).matches()) {
+            throw new TinyJdbcException("Illegal SQL function name: '" + functionName
+                    + "'. A function name must be a single identifier.");
+        }
+    }
+
+    /**
      * 校验 {@code last()} 追加的「尾部 SQL 片段」是否安全。
      * <p>
      * {@code last()} 用于追加 {@code FOR UPDATE}、{@code GROUP BY ...}、{@code LIMIT n} 等

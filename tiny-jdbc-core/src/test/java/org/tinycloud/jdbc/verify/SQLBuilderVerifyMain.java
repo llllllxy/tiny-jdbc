@@ -3,6 +3,7 @@ package org.tinycloud.jdbc.verify;
 import org.junit.Test;
 import org.tinycloud.jdbc.sql.FieldReference;
 import org.tinycloud.jdbc.sql.FuncBuilder;
+import org.tinycloud.jdbc.sql.RawSql;
 import org.tinycloud.jdbc.sql.SQL;
 
 import java.util.Arrays;
@@ -308,12 +309,13 @@ public class SQLBuilderVerifyMain {
     }
 
     // 验证：CASE WHEN/ELSE 分支表达式及参数的构建
+    // 注：WHEN 条件属于「表达式位」，String 一律按列引用校验；自由表达式需用 RawSql 显式授权
     @Test
     public void testCaseWhen() {
         SQL<?> cs = SQL.table("tb_order").select(
                 FuncBuilder.caseWhen()
-                        .when("status = 1", FuncBuilder.lit("active"))
-                        .when("status = 2", FuncBuilder.lit("pending"))
+                        .when(RawSql.wrap("status = 1"), FuncBuilder.lit("active"))
+                        .when(RawSql.wrap("status = 2"), FuncBuilder.lit("pending"))
                         .otherwise(FuncBuilder.lit("unknown"))
                         .build().as("status_desc"));
         assertEquals("SELECT CASE WHEN status = 1 THEN ? WHEN status = 2 THEN ? ELSE ? END AS status_desc FROM tb_order", cs.toSql());
@@ -583,19 +585,21 @@ public class SQLBuilderVerifyMain {
     }
 
     // 验证：IF(条件, 真值, 假值) 三参函数的构建
+    // 注：条件属于「表达式位」，String 一律按列引用校验；自由表达式需用 RawSql 显式授权
     @Test
     public void testIfThreeArg() {
-        SQL<?> sq = SQL.table("t").select(FuncBuilder._if("1=1", FuncBuilder.lit("a"), FuncBuilder.lit("b")).as("x"));
+        SQL<?> sq = SQL.table("t").select(FuncBuilder._if(RawSql.wrap("1=1"), FuncBuilder.lit("a"), FuncBuilder.lit("b")).as("x"));
         assertEquals("SELECT IF(1=1, ?, ?) AS x FROM t", sq.toSql());
         assertEquals("a", sq.getParameters().get(0));
         assertEquals("b", sq.getParameters().get(1));
     }
 
     // 验证：CASE WHEN 简化重载的构建
+    // 注：条件属于「表达式位」，String 一律按列引用校验；自由表达式需用 RawSql 显式授权
     @Test
     public void testCaseWhenShortcut() {
         SQL<?> sq = SQL.table("t").select(
-                FuncBuilder.caseWhen("salary > 10000", FuncBuilder.lit("high"), FuncBuilder.lit("normal")).as("level"));
+                FuncBuilder.caseWhen(RawSql.wrap("salary > 10000"), FuncBuilder.lit("high"), FuncBuilder.lit("normal")).as("level"));
         assertEquals("SELECT CASE WHEN salary > 10000 THEN ? ELSE ? END AS level FROM t", sq.toSql());
         assertEquals("high", sq.getParameters().get(0));
         assertEquals("normal", sq.getParameters().get(1));
@@ -718,10 +722,13 @@ public class SQLBuilderVerifyMain {
     }
 
     // 验证：GROUP_CONCAT 带分隔符的构建
+    // 注：MySQL/MariaDB 语法为 GROUP_CONCAT(expr SEPARATOR str_val)，SEPARATOR 前没有逗号；
+    //     且 SEPARATOR 只接受字符串字面量（不能用 ?），因此分隔符被渲染为转义后的字面量。
+    //     旧实现产出 "GROUP_CONCAT(name, SEPARATOR ,)"，多了逗号且未加引号，无法执行。
     @Test
     public void testGroupConcatWithSeparator() {
         SQL<?> sq = SQL.table("t").select(FuncBuilder.groupConcat("name", ",").as("n"));
-        assertEquals("SELECT GROUP_CONCAT(name, SEPARATOR ,) AS n FROM t", sq.toSql());
+        assertEquals("SELECT GROUP_CONCAT(name SEPARATOR ',') AS n FROM t", sq.toSql());
     }
 
     // 验证：CONCAT_WS 分隔符拼串函数的构建

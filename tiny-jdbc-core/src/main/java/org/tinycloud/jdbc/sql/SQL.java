@@ -73,6 +73,9 @@ public class SQL<T> {
 
     private SQL(String table, String alias) {
         SqlIdentifierUtils.checkTableName(table);
+        if (alias != null && !alias.trim().isEmpty()) {
+            SqlIdentifierUtils.checkAlias(alias);
+        }
         this.table = table;
         this.tableAlias = alias;
     }
@@ -314,6 +317,14 @@ public class SQL<T> {
         return this;
     }
 
+    /**
+     * 为最后一个 JOIN 添加带操作符的 ON 条件，并用 {@link RawSql} 显式授权操作符（跳过白名单）。
+     */
+    public SQL<T> on(String field1, RawSql opt, Object value) {
+        lastJoin().on(field1, opt, value);
+        return this;
+    }
+
     private Join lastJoin() {
         if (this.joins.isEmpty()) {
             throw new TinyJdbcException("No JOIN to add ON condition to.");
@@ -401,6 +412,9 @@ public class SQL<T> {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The LIMIT clause can only be used in SELECT statements.");
         }
+        if (limit < 0) {
+            throw new TinyJdbcException("The LIMIT value cannot be negative: " + limit);
+        }
         this.limit = limit;
         return this;
     }
@@ -408,6 +422,9 @@ public class SQL<T> {
     public SQL<T> offset(int offset) {
         if (this.operation != Operation.SELECT) {
             throw new TinyJdbcException("The OFFSET clause can only be used in SELECT statements.");
+        }
+        if (offset < 0) {
+            throw new TinyJdbcException("The OFFSET value cannot be negative: " + offset);
         }
         this.offset = offset;
         return this;
@@ -677,6 +694,9 @@ public class SQL<T> {
         if (next == null) {
             throw new TinyJdbcException("union()/unionAll() requires a non-null SQL segment.");
         }
+        if (next == this) {
+            throw new TinyJdbcException("union()/unionAll() cannot merge an SQL segment with itself.");
+        }
         List<SQL<?>> pipeline;
         if (this.unionParts == null) {
             pipeline = new ArrayList<>();
@@ -684,6 +704,16 @@ public class SQL<T> {
             this.unionParts = pipeline;
         } else {
             pipeline = this.unionParts;
+        }
+        // 已在同一管道的片段再次加入会形成重复遍历 / 自引用，渲染时死循环或 ConcurrentModification
+        if (pipeline.contains(next)) {
+            throw new TinyJdbcException(
+                    "union()/unionAll() cannot merge an SQL segment that is already part of this UNION pipeline.");
+        }
+        // 目标片段已属于另一条管道时合并会产生交叉引用，同样拒绝
+        if (next.unionParts != null && next.unionParts != pipeline) {
+            throw new TinyJdbcException(
+                    "union()/unionAll() cannot merge an SQL segment that already belongs to another UNION pipeline.");
         }
         next.unionType = type;
         next.unionParts = pipeline;

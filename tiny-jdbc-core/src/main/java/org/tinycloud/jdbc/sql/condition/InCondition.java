@@ -30,7 +30,8 @@ public class InCondition implements ConditionElement {
         }
         SqlIdentifierUtils.checkColumnRef(column);
         this.column = column;
-        this.values = values;
+        // 构造时快照：否则构建后调用方增删集合会让占位符数量与参数列表不一致
+        this.values = new ArrayList<>(values);
         this.subQuery = null;
         this.joinType = joinType;
         this.isNot = isNot;

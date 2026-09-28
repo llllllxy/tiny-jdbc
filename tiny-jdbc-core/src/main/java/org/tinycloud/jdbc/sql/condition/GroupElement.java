@@ -24,7 +24,9 @@ public class GroupElement implements ConditionElement {
 
     @Override
     public String toSql() {
-        return "(" + group.toSql() + ")";
+        String inner = group.toSql();
+        // 空组不渲染括号，避免生成非法的 "()"（父级 ConditionGroup 也会跳过空元素）
+        return inner.isEmpty() ? "" : "(" + inner + ")";
     }
 
     @Override

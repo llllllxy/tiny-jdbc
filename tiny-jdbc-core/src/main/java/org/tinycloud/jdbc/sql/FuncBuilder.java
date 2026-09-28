@@ -1,7 +1,9 @@
 package org.tinycloud.jdbc.sql;
 
 import org.tinycloud.jdbc.criteria.TypeFunction;
+import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.util.LambdaUtils;
+import org.tinycloud.jdbc.util.SqlIdentifierUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,11 +63,11 @@ public final class FuncBuilder {
     }
 
     public static FuncExpr countDistinct(String field) {
-        return FuncExpr.call("COUNT", FuncExpr.raw("DISTINCT " + field));
+        return FuncExpr.call("COUNT", distinct(field));
     }
 
     public static <T, R> FuncExpr countDistinct(TypeFunction<T, R> function) {
-        return FuncExpr.call("COUNT", FuncExpr.raw("DISTINCT " + LambdaUtils.getLambdaColumnName(function)));
+        return FuncExpr.call("COUNT", distinct(function));
     }
 
     public static FuncExpr sum(String field) {
@@ -124,12 +126,33 @@ public final class FuncBuilder {
         return FuncExpr.call("GROUP_CONCAT", FuncExpr.raw(LambdaUtils.getLambdaColumnName(function)));
     }
 
+    /**
+     * 带自定义分隔符的 GROUP_CONCAT：{@code GROUP_CONCAT(field SEPARATOR 'x')}。
+     * <p>
+     * MySQL / MariaDB 的完整语法为
+     * {@code GROUP_CONCAT([DISTINCT] expr [,expr ...] [ORDER BY ...] [SEPARATOR str_val])}：
+     * {@code SEPARATOR} 之前<b>没有逗号</b>——逗号表示「按行拼接多个表达式」，是另一种用法。
+     * 因此这里不能复用 {@link FuncExpr#call}（它按逗号连接参数），而是整体拼成一个受信片段。
+     * </p>
+     * <p>
+     * {@code SEPARATOR} 也只接受字符串字面量、不能用 {@code ?} 占位符，
+     * 所以分隔符按值转义后渲染为字面量。
+     * </p>
+     * <p>
+     * 原实现在 {@code SEPARATOR} 前多了一个逗号，且分隔符未加引号，两者叠加导致
+     * 连 {@code groupConcat("name", ",")} 都无法执行。
+     * </p>
+     *
+     * @param field     列引用
+     * @param separator 分隔符（转义后作为字面量）
+     */
     public static FuncExpr groupConcat(String field, String separator) {
-        return FuncExpr.call("GROUP_CONCAT", FuncExpr.raw(field), FuncExpr.raw("SEPARATOR " + separator));
+        SqlIdentifierUtils.checkColumnRef(field);
+        return FuncExpr.fragment("GROUP_CONCAT(" + field + " " + separatorClause(separator) + ")");
     }
 
     public static FuncExpr groupConcatDistinct(String field) {
-        return FuncExpr.call("GROUP_CONCAT", FuncExpr.raw("DISTINCT " + field));
+        return FuncExpr.call("GROUP_CONCAT", distinct(field));
     }
 
     // ------ 字符串 ------
@@ -251,15 +274,15 @@ public final class FuncBuilder {
     // ------ 日期 ------
 
     public static FuncExpr now() {
-        return FuncExpr.raw("NOW()");
+        return FuncExpr.fragment("NOW()");
     }
 
     public static FuncExpr curdate() {
-        return FuncExpr.raw("CURDATE()");
+        return FuncExpr.fragment("CURDATE()");
     }
 
     public static FuncExpr curtime() {
-        return FuncExpr.raw("CURTIME()");
+        return FuncExpr.fragment("CURTIME()");
     }
 
     public static FuncExpr dateFormat(String field, String format) {
@@ -279,7 +302,7 @@ public final class FuncBuilder {
     }
 
     public static FuncExpr dateAdd(String field, int days) {
-        return FuncExpr.call("DATE_ADD", FuncExpr.raw(field), FuncExpr.raw("INTERVAL " + days + " DAY"));
+        return FuncExpr.call("DATE_ADD", FuncExpr.raw(field), intervalFragment(days));
     }
 
     // ------ 条件 ------
@@ -304,12 +327,19 @@ public final class FuncBuilder {
         return FuncExpr.call("NULLIF", FuncExpr.raw(field), FuncExpr.value(value));
     }
 
+    /**
+     * 生成 {@code DISTINCT 列} 片段。列名按列引用白名单校验。
+     */
     public static FuncExpr distinct(String field) {
-        return FuncExpr.raw("DISTINCT " + field);
+        SqlIdentifierUtils.checkColumnRef(field);
+        return FuncExpr.fragment("DISTINCT " + field);
     }
 
+    /**
+     * 生成 {@code DISTINCT 列} 片段。Lambda 列名由实体注解解析而来，属受信来源。
+     */
     public static <T, R> FuncExpr distinct(TypeFunction<T, R> function) {
-        return FuncExpr.raw("DISTINCT " + LambdaUtils.getLambdaColumnName(function));
+        return FuncExpr.fragment("DISTINCT " + LambdaUtils.getLambdaColumnName(function));
     }
 
     // ------ CASE WHEN ------
@@ -378,9 +408,29 @@ public final class FuncBuilder {
 
     /**
      * 通用函数调用：name(arg1, arg2, ...)，支持任意嵌套（参数可为 col / lit / 其它函数结果）。
+     * <p>函数名会被原样拼接到 {@code NAME(...)} 中，因此按标识符白名单校验。</p>
      */
     public static FuncExpr func(String name, FuncExpr... args) {
         return FuncExpr.call(name, args);
+    }
+
+    /**
+     * 用 {@link RawSql} 显式授权「不受限的原始表达式」。
+     * <p>
+     * 框架默认对 {@code col(..)} / {@code count(..)} / {@code sum(..)} 等方法的字符串参数
+     * 按<b>列引用</b>校验，因此 {@code "price * qty"}、{@code "a || '-' || b"} 这类自由表达式
+     * 会被拒绝。确需使用时通过本方法显式表达信任：
+     * {@code FuncBuilder.raw(RawSql.wrap("price * qty"))}。
+     * </p>
+     *
+     * @param expression 受信任的原始 SQL 片段
+     * @return FuncExpr 对象
+     */
+    public static FuncExpr raw(RawSql expression) {
+        if (expression == null) {
+            throw new TinyJdbcException("RawSql expression cannot be null.");
+        }
+        return FuncExpr.fragment(expression.sql());
     }
 
     // ------ 缺失函数补齐：字符串 / 数值 / 日期 / 条件 / JSON / 其它 ------
@@ -389,21 +439,26 @@ public final class FuncBuilder {
         return func("FIND_IN_SET", FuncExpr.raw(find), FuncExpr.raw(str));
     }
 
+    /**
+     * {@code POSITION(sub IN str)}。两个参数都是列引用，按列引用白名单校验。
+     */
     public static FuncExpr position(String sub, String str) {
-        return FuncExpr.raw("POSITION(" + sub + " IN " + str + ")");
+        SqlIdentifierUtils.checkColumnRef(sub);
+        SqlIdentifierUtils.checkColumnRef(str);
+        return FuncExpr.fragment("POSITION(" + sub + " IN " + str + ")");
     }
 
     public static FuncExpr elt(int index, String... fields) {
-        return func("ELT", merge(new FuncExpr[]{FuncExpr.raw(String.valueOf(index))}, toRawArray(fields)));
+        return func("ELT", merge(new FuncExpr[]{FuncExpr.fragment(String.valueOf(index))}, toRawArray(fields)));
     }
 
     public static FuncExpr insert(String str, int pos, int len, String replacement) {
-        return func("INSERT", FuncExpr.raw(str), FuncExpr.raw(String.valueOf(pos)),
-                FuncExpr.raw(String.valueOf(len)), FuncExpr.raw(replacement));
+        return func("INSERT", FuncExpr.raw(str), FuncExpr.fragment(String.valueOf(pos)),
+                FuncExpr.fragment(String.valueOf(len)), FuncExpr.raw(replacement));
     }
 
     public static FuncExpr truncate(String field, int decimals) {
-        return func("TRUNCATE", FuncExpr.raw(field), FuncExpr.raw(String.valueOf(decimals)));
+        return func("TRUNCATE", FuncExpr.raw(field), FuncExpr.fragment(String.valueOf(decimals)));
     }
 
     public static FuncExpr rand() {
@@ -411,11 +466,11 @@ public final class FuncBuilder {
     }
 
     public static FuncExpr dateSub(String field, int days) {
-        return FuncExpr.call("DATE_SUB", FuncExpr.raw(field), FuncExpr.raw("INTERVAL " + days + " DAY"));
+        return FuncExpr.call("DATE_SUB", FuncExpr.raw(field), intervalFragment(days));
     }
 
     public static FuncExpr format(String field, int decimals) {
-        return func("FORMAT", FuncExpr.raw(field), FuncExpr.raw(String.valueOf(decimals)));
+        return func("FORMAT", FuncExpr.raw(field), FuncExpr.fragment(String.valueOf(decimals)));
     }
 
     public static FuncExpr strToDate(String field, String format) {
@@ -515,7 +570,7 @@ public final class FuncBuilder {
     public static FuncExpr ceil(FuncExpr expr) { return FuncExpr.call("CEIL", expr); }
     public static FuncExpr floor(FuncExpr expr) { return FuncExpr.call("FLOOR", expr); }
     public static FuncExpr dateFormat(FuncExpr expr, String format) { return func("DATE_FORMAT", expr, FuncExpr.value(format)); }
-    public static FuncExpr substring(FuncExpr expr, int start) { return func("SUBSTRING", expr, FuncExpr.raw(String.valueOf(start))); }
+    public static FuncExpr substring(FuncExpr expr, int start) { return func("SUBSTRING", expr, FuncExpr.fragment(String.valueOf(start))); }
 
     // ------ TypeFunction（Lambda）重载：列名自动取自实体 @Column，编译期防错 ------
 
@@ -712,9 +767,33 @@ public final class FuncBuilder {
 
     // ------ 辅助 ------
 
+    /**
+     * 把天数渲染为受信的 MySQL 日期区间片段：{@code INTERVAL n DAY}。
+     */
+    private static FuncExpr intervalFragment(int days) {
+        return FuncExpr.fragment("INTERVAL " + days + " DAY");
+    }
+
+    /**
+     * 把 GROUP_CONCAT 的分隔符渲染为受信的 {@code SEPARATOR '...'} 子句。
+     * <p>
+     * MySQL 的 {@code SEPARATOR} 只接受字符串字面量、不能用 {@code ?} 参数化，
+     * 因此按「单引号包裹 + 反斜杠/单引号转义」处理。
+     * </p>
+     */
+    private static String separatorClause(String separator) {
+        if (separator == null) {
+            throw new TinyJdbcException("GROUP_CONCAT separator cannot be null.");
+        }
+        return "SEPARATOR '" + separator.replace("\\", "\\\\").replace("'", "''") + "'";
+    }
+
     private static FuncExpr toExpr(Object value) {
         if (value instanceof FuncExpr) {
             return (FuncExpr) value;
+        }
+        if (value instanceof RawSql) {
+            return raw((RawSql) value);
         }
         if (value instanceof TypeFunction) {
             return FuncExpr.raw(LambdaUtils.getLambdaColumnName((TypeFunction<?, ?>) value));
