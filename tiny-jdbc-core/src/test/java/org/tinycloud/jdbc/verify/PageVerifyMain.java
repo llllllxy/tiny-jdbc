@@ -137,6 +137,18 @@ public class PageVerifyMain {
         }
     }
 
+    // 验证：DB2 分页在 offset 未溢出但 offset+pageSize 溢出时被拒绝，而不是静默生成负的 pageEnd
+    // pageNo = 2^62, pageSize = 2：offset = 2^63-2 未溢出，pageEnd = 2^63 溢出
+    @Test
+    public void testDb2PageEndOverflowThrows() {
+        try {
+            new DB2PageHandleImpl().handlerPagingSQL("SELECT * FROM t", 4611686018427387904L, 2L);
+            fail("Expected TinyJdbcException for DB2 pageEnd overflow");
+        } catch (TinyJdbcException e) {
+            assertTrue(e.getMessage().contains("overflow"));
+        }
+    }
+
     // 验证：正常的 offset / pageEnd 计算正确
     @Test
     public void testOffsetAndPageEndComputedCorrectly() {
