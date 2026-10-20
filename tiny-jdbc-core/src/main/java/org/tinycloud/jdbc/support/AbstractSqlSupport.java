@@ -355,11 +355,12 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     }
 
     @Override
-    public List<T> selectByIds(List<ID> ids) {
+    public List<T> selectByIds(Collection<? extends ID> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             throw new TinyJdbcException("selectByIds ids cannot be null or empty");
         }
-        SqlProvider sqlProvider = SqlAssembler.buildSelectByIdsSql(entityClass, new ArrayList<>(ids));
+        // Set 等无序集合的迭代顺序与插入顺序不同，生成的参数顺序随之变化（IN 语义不依赖顺序）
+        SqlProvider sqlProvider = SqlAssembler.buildSelectByIdsSql(entityClass, new ArrayList<Object>(ids));
         return this.select(sqlProvider.getSql(), sqlProvider.getParameters().toArray());
     }
 
@@ -565,11 +566,12 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
     }
 
     @Override
-    public int deleteByIds(List<ID> ids) {
+    public int deleteByIds(Collection<? extends ID> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             throw new TinyJdbcException("deleteByIds ids cannot be null or empty");
         }
-        SqlProvider sqlProvider = SqlAssembler.buildDeleteByIdsSql(entityClass, new ArrayList<>(ids));
+        // Set 等无序集合的迭代顺序与插入顺序不同，生成的参数顺序随之变化（IN 语义不依赖顺序）
+        SqlProvider sqlProvider = SqlAssembler.buildDeleteByIdsSql(entityClass, new ArrayList<Object>(ids));
         if (CollectionUtils.isEmpty(sqlProvider.getParameters())) {
             throw new TinyJdbcException("deleteById parameters cannot be null");
         }

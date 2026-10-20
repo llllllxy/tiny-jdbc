@@ -108,12 +108,16 @@ public interface IObjectSupport<T, ID extends Serializable> {
     int deleteById(ID id);
 
     /**
-     * 根据ID列表进行批量删除
+     * 根据ID集合进行批量删除。
+     * <p>
+     * 采用 {@code Collection<? extends ID>} 而非 {@code Collection<ID>}：前者允许传入
+     * 元素类型为主键类型子类型的集合（如主键声明为 {@code Serializable} 时传入 {@code Set<Long>}）。
+     * </p>
      *
-     * @param ids 主键id列表
+     * @param ids 主键id集合，任意 {@link Collection} 实现（如 {@code List}、{@code Set}），不能为 null 或空
      * @return int 删除数量
      */
-    int deleteByIds(List<ID> ids);
+    int deleteByIds(Collection<? extends ID> ids);
 
     /**
      * 根据ID列表进行批量删除
@@ -126,8 +130,7 @@ public interface IObjectSupport<T, ID extends Serializable> {
         if (ArrayUtils.isEmpty(id)) {
             throw new TinyJdbcException("deleteByIds ids cannot be null or empty");
         }
-        List<ID> ids = Arrays.asList(id);
-        return this.deleteByIds(ids);
+        return this.deleteByIds(Arrays.asList(id));
     }
 
     /**
@@ -198,12 +201,16 @@ public interface IObjectSupport<T, ID extends Serializable> {
     T selectById(ID id);
 
     /**
-     * 根据ID列表进行批量查询
+     * 根据ID集合进行批量查询。
+     * <p>
+     * 采用 {@code Collection<? extends ID>} 而非 {@code Collection<ID>}：前者允许传入
+     * 元素类型为主键类型子类型的集合（如主键声明为 {@code Serializable} 时传入 {@code Set<Long>}）。
+     * </p>
      *
-     * @param ids 主键id列表
+     * @param ids 主键id集合，任意 {@link Collection} 实现（如 {@code List}、{@code Set}），不能为 null 或空
      * @return List<T> 实例列表
      */
-    List<T> selectByIds(List<ID> ids);
+    List<T> selectByIds(Collection<? extends ID> ids);
 
     /**
      * 根据ID列表进行批量查询
@@ -216,8 +223,7 @@ public interface IObjectSupport<T, ID extends Serializable> {
         if (ArrayUtils.isEmpty(id)) {
             throw new TinyJdbcException("selectByIds ids cannot be null or empty");
         }
-        List<ID> ids = Arrays.asList(id);
-        return this.selectByIds(ids);
+        return this.selectByIds(Arrays.asList(id));
     }
 
     /**

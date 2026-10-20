@@ -290,7 +290,7 @@ public class UploadFile implements Serializable {
 | `Page<F> paginate(String sql, Class<F> clazz, Page<F> page, Object... params);` | 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的Class传入的自定义类型      |
 | `Page<T> paginate(String sql, Page<T> page, Object... params);`                 | 根据给定的sql语句和参数，执行分页查询，返回Page对象，类型使用的是xxxDao的类型         |
 | `T selectById(ID id);`                                                          | 根据主键ID值，查询数据并返回一个实体类对象，类型使用的是xxxDao的类型                |
-| `List<T> selectByIds(List<ID> ids);`                                            | 根据主键 ID 列表查询实体对象列表                                      |
+| `List<T> selectByIds(Collection<? extends ID> ids);`                            | 根据主键 ID 集合查询实体对象列表，可传 `List` / `Set` 等任意集合         |
 | `List<T> selectByIds(ID... ids);`                                               | 根据可变参数主键 ID 查询实体对象列表                                    |
 | `List<T> select(T entity);`                                                     | 实体类里面非null的属性作为查询条件，查询数据库并返回实体类对象列表，类型使用的是xxxDao的类型   |
 | `List<T> select(QueryCriteria<T> criteria);`                                    | 根据查询构造器查询，返回多条，类型使用的是xxxDao的类型                        |
@@ -339,7 +339,7 @@ public class UploadFile implements Serializable {
 | ----------------------------------------------- | --------------------------------------------- |
 | `int delete(String sql, Object... params);`     | 根据提供的SQL语句和提供的参数，执行删除                         |
 | `int deleteById(ID id);`                        | 根据主键ID进行删除，类型使用的是xxxDao<T, ID>的类型             |
-| `int deleteByIds(List<ID> ids);`                | 根据主键ID列表进行删除，类型使用的是xxxDao<T, ID>的类型           |
+| `int deleteByIds(Collection<? extends ID> ids);` | 根据主键ID集合进行删除，可传 `List` / `Set` 等任意集合，类型使用的是xxxDao<T, ID>的类型 |
 | `int deleteByIds(ID... ids);`                   | 根据主键ID可变参数列表进行删除，类型使用的是xxxDao<T, ID>的类型       |
 | `int delete(T entity);`                         | 根据entity里的属性值进行删除，entity里不为null的属性，将作为where参数 |
 | `int delete(UpdateCriteria<T> criteria);`       | 根据条件构造器，将作为where参数                            |

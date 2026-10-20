@@ -10,11 +10,11 @@
 
 | 维度 | 内容 |
 |------|------|
-| 破坏性变更 | 操作符白名单、`FuncBuilder` 字符串参数按列引用校验、`FuncExpr.of(String)` 收紧、`eq(col, null)` 归一为 `IS NULL`、非 CROSS JOIN 强制 ON、**移除 `IdUtils`** |
+| 破坏性变更 | 操作符白名单、`FuncBuilder` 字符串参数按列引用校验、`FuncExpr.of(String)` 收紧、`eq(col, null)` 归一为 `IS NULL`、非 CROSS JOIN 强制 ON、**移除 `IdUtils`**、**`selectByIds`/`deleteByIds` 入参改为 `Collection<? extends ID>`** |
 | 安全加固 | 收敛为三个校验闸门（操作符白名单 / 标识符校验 / 原始片段信任模型），同时关闭审计未点名的约 40 个同类注入点 |
 | 稳定性修复 | 空条件组、UNION 自引用、IN 集合快照、`GROUP_CONCAT` 分隔符、`limit`/`offset` 负数、`IdGeneratorInterface` 默认方法空上下文 NPE |
 | 新增 API | `SqlOperatorUtils`、`RawSql` 版本的操作符重载、`FuncBuilder.raw(RawSql)`、`FuncExpr.of(RawSql)`、`SqlIdentifierUtils.checkFunctionName` |
-| 测试 | 新增 `SqlDslSecurityVerifyMain`（23 项）、`IdGeneratorVerifyMain` 补充 7 项（空上下文与生成器入口回归）；core 全量 209 项通过 |
+| 测试 | 新增 `SqlDslSecurityVerifyMain`（23 项）、`IdGeneratorVerifyMain` 补充 7 项（空上下文与生成器入口回归）、新增 `ByIdsCollectionVerifyMain`（4 项）；core 全量 213 项通过 |
 
 ### ⚠️ 破坏性变更（升级必读）
 
@@ -37,6 +37,15 @@
 - **UNION 自引用 / 重复 / 跨管道合并改为报错**：`a.union(a)`、同一片段重复入队、把已属于另一条管道的片段合并进来，此前会导致渲染死循环或交叉引用，现直接抛异常。
 - **`FuncExpr.getParameters()` 返回只读视图**：此前返回内部可变 `List`，调用方可借此改动表达式状态；现在修改会抛 `UnsupportedOperationException`。
 - **`InCondition` 构造时对集合做快照**：构建后调用方再增删原集合不再影响已生成的条件（此前会造成占位符数量与参数列表不一致）。
+- **⚠️ `selectByIds` / `deleteByIds` 入参由 `List<ID>` 改为 `Collection<? extends ID>`**：`IObjectSupport` 的两个方法与 `AbstractSqlSupport` 的对应实现同步修改，调用方可直接传入 `List`、`Set` 或任意 `Collection` 实现，无需再手工转换。
+  - **为什么用 `? extends ID` 而不是 `Collection<ID>`**：泛型是不变型，`Collection<ID>` 在主键声明为 `Serializable`（代码生成器无法推断具体类型时的常见结果）时**仍然无法接受 `Set<Long>`**（`Collection<Long>` 不是 `Collection<Serializable>`）。只有 `Collection<? extends ID>` 才能同时接受 `Set<Long>` 与 `Set<Serializable>`。若仅把 `List` 换成 `Collection` 而不加通配符，等于付出了破坏兼容的代价却没解决实际问题。
+  - **迁移影响**：
+    - 直接调用方（`dao.selectByIds(list)` 等）：**源码兼容**，`List<ID>` 实参可自动匹配 `Collection<? extends ID>`，无需改动。
+    - 已编译的调用方：**二进制不兼容**，方法描述符变化会导致升级后 `NoSuchMethodError`，需重新编译。
+    - 直接实现 `IObjectSupport` 的第三方类：**源码不兼容**，必须把 `List<ID>` 改为 `Collection<? extends ID>`，否则编译失败。项目内唯一实现是 `AbstractSqlSupport`，已同步修改。
+    - 覆写了 `selectByIds(List<ID>)` / `deleteByIds(List<ID>)` 的自定义 DAO：原 `@Override` 失效，会退化为重载而非覆写，**可能静默调用父类实现**，升级时必须检查。
+  - **行为变化**：`Set` 等无序集合的迭代顺序与插入顺序不同，生成的 SQL 参数顺序会随之变化（`IN` 语义不依赖顺序，结果集不变）。若日志比对或语句缓存依赖 SQL 文本，需注意差异。
+  - 可变参数重载 `selectByIds(ID...)` / `deleteByIds(ID...)` 保持不变，行为与签名均未调整。
 - **⚠️ 移除 `IdUtils`（`2.0.3` 立即移除）**：`org.tinycloud.jdbc.id.IdUtils` 整体删除，**未经过弃用过渡期**。移除原因有两条：一是它与 `TinyJdbcRuntime` 各自持有一份 `SnowflakeId` 实例，而节点标识（workerId / datacenterId）由「MAC + 进程号」推导，同进程内两份实例必然得到相同节点标识，**会生成重复 ID**；二是它的 `objectId()` / `simpleUUID()` / `randomUUID()` 只是 JDK 与 `ObjectId` 的一行封装，无独立价值。替代写法见下方「替代方案」。
   - **替代方案**：
     - `IdUtils.nextId()` / `nextLongId()` / `getInstance()` → 注入 `TinyJdbcRuntime`，调用 `getSnowflakeId().nextId()`（与框架内部共用同一实例，也顺带消除了重复 ID 风险）。
@@ -71,6 +80,7 @@
 - [ ] 复核依赖 `eq(col, null)` 生成 `= ?` 或依赖其参数个数的代码（如手工拼装参数数组、参数下标断言）。
 - [ ] 复核无 ON 的 `leftJoin` / `rightJoin` / `innerJoin` 调用，改用 `crossJoin` 或补上 ON。
 - [ ] 若断言了 `GROUP_CONCAT(... SEPARATOR x)` 的 SQL 文本，需按新的字面量形式更新。
+- [ ] **全局搜索 `selectByIds(` / `deleteByIds(`**，确认是否有自定义 DAO 覆写了 `List<ID>` 版本；若存在需改为 `Collection<? extends ID>`，否则覆写会失效。
 - [ ] **全局搜索 `IdUtils`**，按「移除 `IdUtils`」章节的替代方案逐个替换：雪花 ID 改为注入 `TinyJdbcRuntime`，`objectId()` 改为 `ObjectId.nextId()`，`simpleUUID()` / `randomUUID()` 改为 JDK `UUID`。
 
 ### 兼容性说明
@@ -91,6 +101,10 @@
 | 无 ON 的非 CROSS JOIN | ❌ 不再允许，改用 `crossJoin` |
 | `groupConcat` 分隔符的 SQL 文本 | ⚠️ 文本变化（`GROUP_CONCAT(name SEPARATOR ',')`），旧文本无法执行 |
 | 直接调用 `IdUtils.*` | ❌ 类已移除，见「移除 `IdUtils`」章节的替代方案 |
+| 调用 `selectByIds` / `deleteByIds`（传 List） | ✅ 源码兼容；⚠️ 需重新编译（二进制不兼容） |
+| 调用 `selectByIds` / `deleteByIds`（传 Set 等集合） | ✅ 新增能力 |
+| 直接实现 `IObjectSupport` 的第三方类 | ❌ 需把 `List<ID>` 改为 `Collection<? extends ID>` |
+| 覆写 `selectByIds(List<ID>)` 的自定义 DAO | ⚠️ `@Override` 失效，可能静默调用父类实现 |
 | `IdGeneratorInterface` 自定义实现（仅实现 `nextId(Object)`） | ✅ 兼容，默认方法会正确降级 |
 
 ---
