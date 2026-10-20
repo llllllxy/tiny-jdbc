@@ -8,6 +8,14 @@ import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.id.IdContext;
 import org.tinycloud.jdbc.id.IdGeneratorInterface;
 import org.tinycloud.jdbc.id.IdGeneratorRouter;
+import org.tinycloud.jdbc.id.ObjectId;
+import org.tinycloud.jdbc.id.SnowflakeId;
+import org.tinycloud.jdbc.id.generator.NanoIdGenerator;
+import org.tinycloud.jdbc.id.generator.ObjectIdGenerator;
+import org.tinycloud.jdbc.id.generator.SequenceGenerator;
+import org.tinycloud.jdbc.id.generator.SnowflakeIdGenerator;
+import org.tinycloud.jdbc.id.generator.UlidGenerator;
+import org.tinycloud.jdbc.id.generator.UuidGenerator;
 import org.tinycloud.jdbc.util.DbType;
 
 import java.lang.reflect.Field;
@@ -181,6 +189,77 @@ public class IdGeneratorVerifyMain {
         } catch (TinyJdbcException e) {
             // ok
         }
+    }
+
+    @Test
+    public void testDefaultNextIdToleratesNullContext() {
+        // 回归：默认方法收到 null context 时应降级为空实体，而不是在 context.getObj() 处抛 NPE。
+        // 该缺陷曾导致 IdUtils 的雪花 / UUID / ObjectId 方法全部失效（2.0.2 回归）。
+        IdGeneratorInterface generator = entity -> "ok";
+        assertEquals("ok", generator.nextId((IdContext) null));
+        assertEquals("ok", generator.nextId((Object) null));
+    }
+
+    @Test
+    public void testDefaultNextIdPassesEntity() {
+        // 默认方法收到非空 context 时，应把实体原样透传给旧签名 nextId(Object)
+        IdGeneratorInterface generator = entity -> entity;
+        Object entity = new Object();
+        assertTrue(generator.nextId(IdContext.builder().obj(entity).build()) == entity);
+    }
+
+    @Test
+    public void testSequenceGeneratorRejectsNullContext() {
+        // 回归：SequenceGenerator 覆盖了 nextId(IdContext)，不经过默认方法的兜底，
+        // 必须在 context 为空时抛业务异常而不是 NPE
+        try {
+            new SequenceGenerator().nextId((IdContext) null);
+            fail("expected TinyJdbcException for null IdContext");
+        } catch (TinyJdbcException e) {
+            assertTrue(e.getMessage().contains("IdContext is required"));
+        }
+    }
+
+    @Test
+    public void testSequenceGeneratorRejectsNullJdbcTemplate() {
+        IdContext ctx = IdContext.builder().sequenceSql("SELECT NEXT VALUE FOR seq_demo").build();
+        try {
+            new SequenceGenerator().nextId(ctx);
+            fail("expected TinyJdbcException for null JdbcTemplate");
+        } catch (TinyJdbcException e) {
+            assertTrue(e.getMessage().contains("JdbcTemplate is required"));
+        }
+    }
+
+    @Test
+    public void testBuiltinGeneratorsWithoutContext() {
+        // 验证内置生成器均可通过旧签名 nextId(Object) 正常生成（IdUtils 移除后的推荐用法）
+        assertTrue(((String) new UuidGenerator().nextId((Object) null)).matches("^[0-9a-f]{32}$"));
+        assertTrue(((String) new ObjectIdGenerator().nextId((Object) null)).matches("^[0-9a-f]{24}$"));
+        assertEquals(21, ((String) new NanoIdGenerator().nextId((Object) null)).length());
+        assertEquals(26, ((String) new UlidGenerator().nextId((Object) null)).length());
+        // 雪花生成器需要 SnowflakeId 实例，验证其忽略实体、正常产出正数
+        SnowflakeId snowflakeId = new SnowflakeId(1L, 1L);
+        Object id = new SnowflakeIdGenerator(snowflakeId).nextId((Object) null);
+        assertTrue(((Long) id) > 0L);
+    }
+
+    @Test
+    public void testObjectIdStaticEntry() {
+        // IdUtils.objectId() 移除后的替代入口
+        String objectId = ObjectId.nextId();
+        assertEquals(24, objectId.length());
+        assertTrue(objectId.matches("^[0-9a-f]{24}$"));
+    }
+
+    @Test
+    public void testRuntimeSnowflakeSharedInstance() {
+        // 验证 TinyJdbcRuntime 暴露的 SnowflakeId 是同一实例，是手工获取雪花 ID 的正确入口
+        TinyJdbcRuntime runtime = newRuntime(null);
+        assertTrue(runtime.getSnowflakeId() == runtime.getSnowflakeId());
+        long first = runtime.getSnowflakeId().nextId();
+        long second = runtime.getSnowflakeId().nextId();
+        assertTrue("snowflake id should increase", second > first);
     }
 
     private IdContext ctx(Object obj, Field field, Class<?> fieldType, IdType idType) {

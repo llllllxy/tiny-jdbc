@@ -11,7 +11,7 @@ import org.tinycloud.jdbc.id.IdGeneratorInterface;
  * <p>
  *     通过 {@link IdContext} 携带的 {@code sequenceSql} 与 {@code jdbcTemplate} 执行数据库序列查询，
  *     得到下一个序列值。与前几个生成器不同，它需要实体/字段上下文（序列脚本、字段类型、JdbcTemplate），
- *     因此覆盖 {@link IdGeneratorInterface#nextId(IdContext)}。
+ *     因此覆盖 {@link IdGeneratorInterface#nextId(IdContext)}；上下文缺失时直接抛异常，不做隐式降级。
  * </p>
  *
  * @author liuxingyu01
@@ -25,6 +25,9 @@ public class SequenceGenerator implements IdGeneratorInterface {
 
     @Override
     public Object nextId(IdContext context) {
+        if (context == null) {
+            throw new TinyJdbcException("IdContext is required for SEQUENCE id generation.");
+        }
         if (context.getJdbcTemplate() == null) {
             throw new TinyJdbcException("JdbcTemplate is required for SEQUENCE id generation.");
         }

@@ -10,11 +10,11 @@
 
 | 维度 | 内容 |
 |------|------|
-| 破坏性变更 | 操作符白名单、`FuncBuilder` 字符串参数按列引用校验、`FuncExpr.of(String)` 收紧、`eq(col, null)` 归一为 `IS NULL`、非 CROSS JOIN 强制 ON |
+| 破坏性变更 | 操作符白名单、`FuncBuilder` 字符串参数按列引用校验、`FuncExpr.of(String)` 收紧、`eq(col, null)` 归一为 `IS NULL`、非 CROSS JOIN 强制 ON、**移除 `IdUtils`** |
 | 安全加固 | 收敛为三个校验闸门（操作符白名单 / 标识符校验 / 原始片段信任模型），同时关闭审计未点名的约 40 个同类注入点 |
-| 稳定性修复 | 空条件组、UNION 自引用、IN 集合快照、`GROUP_CONCAT` 分隔符、`limit`/`offset` 负数 |
+| 稳定性修复 | 空条件组、UNION 自引用、IN 集合快照、`GROUP_CONCAT` 分隔符、`limit`/`offset` 负数、`IdGeneratorInterface` 默认方法空上下文 NPE |
 | 新增 API | `SqlOperatorUtils`、`RawSql` 版本的操作符重载、`FuncBuilder.raw(RawSql)`、`FuncExpr.of(RawSql)`、`SqlIdentifierUtils.checkFunctionName` |
-| 测试 | 新增 `SqlDslSecurityVerifyMain`（23 项）；core 全量 202 项通过 |
+| 测试 | 新增 `SqlDslSecurityVerifyMain`（23 项）、`IdGeneratorVerifyMain` 补充 7 项（空上下文与生成器入口回归）；core 全量 209 项通过 |
 
 ### ⚠️ 破坏性变更（升级必读）
 
@@ -37,6 +37,14 @@
 - **UNION 自引用 / 重复 / 跨管道合并改为报错**：`a.union(a)`、同一片段重复入队、把已属于另一条管道的片段合并进来，此前会导致渲染死循环或交叉引用，现直接抛异常。
 - **`FuncExpr.getParameters()` 返回只读视图**：此前返回内部可变 `List`，调用方可借此改动表达式状态；现在修改会抛 `UnsupportedOperationException`。
 - **`InCondition` 构造时对集合做快照**：构建后调用方再增删原集合不再影响已生成的条件（此前会造成占位符数量与参数列表不一致）。
+- **⚠️ 移除 `IdUtils`（`2.0.3` 立即移除）**：`org.tinycloud.jdbc.id.IdUtils` 整体删除，**未经过弃用过渡期**。移除原因有两条：一是它与 `TinyJdbcRuntime` 各自持有一份 `SnowflakeId` 实例，而节点标识（workerId / datacenterId）由「MAC + 进程号」推导，同进程内两份实例必然得到相同节点标识，**会生成重复 ID**；二是它的 `objectId()` / `simpleUUID()` / `randomUUID()` 只是 JDK 与 `ObjectId` 的一行封装，无独立价值。替代写法见下方「替代方案」。
+  - **替代方案**：
+    - `IdUtils.nextId()` / `nextLongId()` / `getInstance()` → 注入 `TinyJdbcRuntime`，调用 `getSnowflakeId().nextId()`（与框架内部共用同一实例，也顺带消除了重复 ID 风险）。
+    - `IdUtils.objectId()` → `ObjectId.nextId()`（`public static`，返回 24 位 `String`）。
+    - `IdUtils.simpleUUID()` → `UUID.randomUUID().toString().replace("-", "")`（32 位）。
+    - `IdUtils.randomUUID()` → `UUID.randomUUID().toString()`（36 位）。
+  - **非 Spring 场景**：`TinyJdbcRuntime` 构造器需要 7～9 个参数，不宜由工具类调用方自行创建。若确实需要在无 Spring 环境下获取雪花 ID，请自行持有 `new SnowflakeId(workerId, datacenterId)` 并显式指定节点标识，不要依赖自动推导，否则与其他实例存在撞号风险。
+  - README 已新增「手工获取各类 ID」章节（第 9 章），给出全部替代示例。
 
 ### 安全加固
 
@@ -51,6 +59,8 @@
 - **UNION 管道完整性**：拒绝自引用、重复入队与跨管道合并。
 - **`InCondition` 集合快照**：修复构建后外部改动集合导致占位符与参数不一致。
 - **`GROUP_CONCAT` 分隔符按值转义**：分隔符被单引号包裹并双写转义 `'` / `\`，注入尝试无法逃逸字面量。
+- **`IdGeneratorInterface` 默认方法空上下文 NPE（2.0.2 引入的回归）**：`IdGeneratorInterface` 新增 `nextId(IdContext)` 默认方法后，调用方写 `nextId(null)` 时 `IdContext` 比 `Object` 更具体，重载解析会选中该默认方法并触发 `context.getObj()` 的 NPE。该缺陷曾导致 `IdUtils` 的 `nextId()` / `nextLongId()` / `simpleUUID()` / `objectId()` 全部失效。修复内容：默认方法对 `null` context 降级为空实体，`SequenceGenerator.nextId(IdContext)` 补上 `null` 上下文校验（缺失时抛 `TinyJdbcException` 而非 NPE）。`IdUtils` 本身已在本次版本移除，不再涉及。
+  - **版本订正**：该缺陷由 `9b794ce` 引入，`9b794ce` 已包含在 `v2.0.2` 标签内，因此**实际受影响版本为 2.0.2**，而非此前记录的「2.0.3 待发布」。2.0.3 为修复版本。
 
 ### 升级检查清单
 
@@ -61,6 +71,7 @@
 - [ ] 复核依赖 `eq(col, null)` 生成 `= ?` 或依赖其参数个数的代码（如手工拼装参数数组、参数下标断言）。
 - [ ] 复核无 ON 的 `leftJoin` / `rightJoin` / `innerJoin` 调用，改用 `crossJoin` 或补上 ON。
 - [ ] 若断言了 `GROUP_CONCAT(... SEPARATOR x)` 的 SQL 文本，需按新的字面量形式更新。
+- [ ] **全局搜索 `IdUtils`**，按「移除 `IdUtils`」章节的替代方案逐个替换：雪花 ID 改为注入 `TinyJdbcRuntime`，`objectId()` 改为 `ObjectId.nextId()`，`simpleUUID()` / `randomUUID()` 改为 JDK `UUID`。
 
 ### 兼容性说明
 
@@ -79,6 +90,8 @@
 | `eq(col, null)` 依赖 `= ?` 语义或参数个数 | ⚠️ 行为变更，现为 `IS NULL` 且无参数 |
 | 无 ON 的非 CROSS JOIN | ❌ 不再允许，改用 `crossJoin` |
 | `groupConcat` 分隔符的 SQL 文本 | ⚠️ 文本变化（`GROUP_CONCAT(name SEPARATOR ',')`），旧文本无法执行 |
+| 直接调用 `IdUtils.*` | ❌ 类已移除，见「移除 `IdUtils`」章节的替代方案 |
+| `IdGeneratorInterface` 自定义实现（仅实现 `nextId(Object)`） | ✅ 兼容，默认方法会正确降级 |
 
 ---
 

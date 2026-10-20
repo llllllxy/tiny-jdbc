@@ -13,7 +13,7 @@
 - [BaseDao CRUD 接口](#4basedao-crud接口说明)：实体、原生 SQL 与分页操作。
 - [条件构造器](#5条件构造器criteria)：`QueryCriteria` 与 `UpdateCriteria` 的使用方式。
 - [SQL 构建器指南](SQL.md)：参数化 SQL、表达式、分组与分页。
-- [自动填充](#12字段自动填充metaobjecthandler)、[拦截器](#10拦截器机制)、[SQL 日志](#15sql日志打印分析)。
+- [自动填充](#13字段自动填充metaobjecthandler)、[拦截器](#11拦截器机制)、[SQL 日志](#16sql日志打印分析)。
 
 ### 优势
 
@@ -605,7 +605,103 @@ public SnowflakeConfigInterface snowflakeConfigInterface() {
 }
 ```
 
-## 9、无Entity实体类操作
+## 9、手工获取各类 ID
+
+框架在插入时为 `@Id` 自动生成主键，业务代码若需要在其他地方单独取 ID，请按下文方式获取。
+
+> ⚠️ 雪花 ID 请**始终使用注入的 `TinyJdbcRuntime`**，不要自行 `new SnowflakeId(...)`。
+> 节点标识（workerId / datacenterId）由「MAC + 进程号」推导，同一进程内两份实例会得到相同节点标识，
+> 因而会生成**重复 ID**。注入 `TinyJdbcRuntime` 可保证与框架内部使用同一个实例。
+
+### 9.1 雪花 ID
+
+`TinyJdbcAutoConfiguration` 已将 `TinyJdbcRuntime` 注册为 Bean，直接注入即可：
+
+```java
+@Service
+public class OrderService {
+
+    private final TinyJdbcRuntime tinyJdbcRuntime;
+
+    // 构造器注入（推荐）
+    public OrderService(TinyJdbcRuntime tinyJdbcRuntime) {
+        this.tinyJdbcRuntime = tinyJdbcRuntime;
+    }
+
+    public String createOrderNo() {
+        // 与 @Id(IdType.ASSIGN_ID) 内部使用同一个 SnowflakeId 实例
+        long id = this.tinyJdbcRuntime.getSnowflakeId().nextId();
+        return String.valueOf(id);
+    }
+}
+```
+
+字段注入方式（不推荐，仅作兼容说明）：
+
+```java
+@Autowired
+private TinyJdbcRuntime tinyJdbcRuntime;
+```
+
+### 9.2 ObjectId
+
+`ObjectId.nextId()` 是 `public static` 方法，直接调用即可，返回 24 位十六进制字符串：
+
+```java
+import org.tinycloud.jdbc.id.ObjectId;
+
+String objectId = ObjectId.nextId();   // 例如：6ad6c4af80eb6203c6c06cd3
+```
+
+> 也可通过 `new ObjectIdGenerator().nextId((Object) null)` 获取，但注意入参必须显式转型为 `Object`，
+> 否则 `null` 字面量会被重载解析选中 `nextId(IdContext)` 而抛出 NPE。推荐直接用 `ObjectId.nextId()`。
+
+### 9.3 UUID
+
+`UuidGenerator` 生成的是**去掉连字符的 32 位**字符串；若需要标准带连字符的 36 位 UUID，直接用 JDK 即可：
+
+```java
+import org.tinycloud.jdbc.id.generator.UuidGenerator;
+
+// 32 位、无连字符，与 @Id(IdType.UUID) 生成的格式一致
+String simpleUuid = (String) new UuidGenerator().nextId((Object) null);
+
+// 36 位、带连字符，JDK 原生
+String uuid = UUID.randomUUID().toString();
+
+// 32 位、无连字符，JDK 原生（不依赖生成器）
+String uuidWithoutHyphen = UUID.randomUUID().toString().replace("-", "");
+```
+
+> 同理，`new UuidGenerator().nextId(...)` 的入参必须显式转型为 `Object`；JDK 原生写法无此约束，可按需选择。
+
+### 9.4 其他内置生成器
+
+其余内置生成器同样是 `public` 类，均可直接实例化调用：
+
+```java
+import org.tinycloud.jdbc.id.generator.NanoIdGenerator;
+import org.tinycloud.jdbc.id.generator.UlidGenerator;
+
+// 21 位 url-safe 字符串
+String nanoId = (String) new NanoIdGenerator().nextId((Object) null);
+
+// 26 位、按字典序可排序
+String ulid = (String) new UlidGenerator().nextId((Object) null);
+```
+
+### 9.5 小结
+
+| ID 类型 | 推荐获取方式 | 返回 |
+|---------|--------------|------|
+| 雪花 ID | 注入 `TinyJdbcRuntime` → `getSnowflakeId().nextId()` | `long` |
+| ObjectId | `ObjectId.nextId()` | 24 位 `String` |
+| UUID（32 位） | `UUID.randomUUID().toString().replace("-", "")` | 32 位 `String` |
+| UUID（36 位） | `UUID.randomUUID().toString()` | 36 位 `String` |
+| NanoId | `new NanoIdGenerator().nextId((Object) null)` | 21 位 `String` |
+| ULID | `new UlidGenerator().nextId((Object) null)` | 26 位 `String` |
+
+## 10、无Entity实体类操作
 
 Tiny-Jdbc 提供了 `JdbcTemplateHelper` 工具类，支持无实体类映射场景下的灵活数据操作。适用于：
 
@@ -664,7 +760,7 @@ public class OtherDao {
 }
 ```
 
-## 10、拦截器机制
+## 11、拦截器机制
 
 提供了环绕式拦截器机制，用于在执行 SQL 语句前后进行自定义操作。拦截器可在调用 `chain.proceed(request)` 前通过 `request.setStatement(sql, args)` 同时改写 SQL 和参数，也可在调用后观察执行结果。
 
@@ -691,7 +787,7 @@ public class StatInterceptor implements SqlInterceptor {
 }
 ```
 
-## 11、代码生成器
+## 12、代码生成器
 
 ### tiny-jdbc-codegen
 
@@ -767,7 +863,7 @@ public class CodegenApplication {
 - 实体类：`xxx/entity/*.java`
 - DAO 类：`xxx/dao/*Dao.java`
 
-## 12、字段自动填充（MetaObjectHandler）
+## 13、字段自动填充（MetaObjectHandler）
 
 字段自动填充用于统一处理审计字段（如创建人、创建时间、更新人、更新时间）。
 
@@ -937,7 +1033,7 @@ public class DemoEntity {
 - 更新填充：默认“有值就覆盖”
 - 当你在 `UpdateCriteria/LambdaUpdateCriteria` 中已手动设置某个更新字段时，示例实现不会重复覆盖该字段
 
-## 13、一些使用示例
+## 14、一些使用示例
 
 1. 创建 ProjectInfoDao
 
@@ -1165,13 +1261,13 @@ UpdateCriteria<TProjectInfo> criteria = new UpdateCriteria<>().eq("id", 1L);
 int result = baseDao.delete(criteria);
 ```
 
-## 14、安全使用说明
+## 15、安全使用说明
 
 值参数会以预编译参数绑定；表名、列名、排序字段、`last(...)` 片段和 `FuncExpr.of(String)` 等 SQL 结构不会自动参数化。
 
 使用 `QueryCriteria`、`UpdateCriteria` 或 SQL 构建器时，应避免直接使用前端传入的字段名或 SQL 片段，防止`SQL注入`的风险。确有动态排序等需求时，应通过白名单映射外部字段；必要时可使用 `SqlInjectUtils` 做额外校验，但白名单仍是首选方案。
 
-## 15、SQL日志打印分析
+## 16、SQL日志打印分析
 
 **该功能依赖 p6spy 组件，需进行配置后方可使用**
 
@@ -1433,11 +1529,11 @@ logMessageFormat=org.tinycloud.jdbc.p6spy.P6SpyLogger
 #outagedetectioninterval=30
 ```
 
-## 16、许可证
+## 17、许可证
 
 [Apache License 2.0](https://github.com/llllllxy/tiny-jdbc/blob/master/LICENSE) 免费用于个人和商业，请放心使用
 
-## 17、免责声明
+## 18、免责声明
 
 本项目为开源项目，仅供学习、研究、交流和参考使用。项目开发者及贡献者不对因使用本项目而产生的任何直接或间接损失承担责任。
 
