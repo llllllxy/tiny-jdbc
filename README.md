@@ -10,6 +10,7 @@
 ### 文档导航
 
 - [快速开始](#2快速开始)：引入依赖、基础配置、实体与 DAO 定义。
+- [多数据源与分页方言边界](#多数据源与分页方言边界)：路由 DataSource、事务内切库限制与方言识别规则。
 - [BaseDao CRUD 接口](#4basedao-crud接口说明)：实体、原生 SQL 与分页操作。
 - [条件构造器](#5条件构造器criteria)：`QueryCriteria` 与 `UpdateCriteria` 的使用方式。
 - [SQL 构建器指南](SQL.md)：参数化 SQL、表达式、分组与分页。
@@ -23,7 +24,7 @@
 里封装了大量的通用方法，配合强大灵活的条件构造器（Criteria）和SQL构造器（SQL），基本能满足各类使用需求。
 - **支持 Lambda 形式调用**：条件构造器（Criteria）和SQL构造器（SQL）支持Lambda形式调用，编译期语法增强，无需再担心字段写错，提高代码的安全性和可维护性
 - **支持主键自动生成**：内含多种主键生成策略，包括自增主键、UUID、雪花ID、NanoId、ULID 等，同时也支持自定义 ID 生成策略，满足不同业务场景下的主键生成需求。
-- **支持多种数据库分页方言**：包括 MySQL、ORACLE、DB2、PostgreSql 等多种常用数据库，无需额外配置，框架会自动识别数据库类型并采用相应的分页方言，大大简化了分页查询的开发工作。
+- **支持多种数据库分页方言**：包括 MySQL、ORACLE、DB2、PostgreSql 等多种常用数据库，单库场景下无需额外配置，框架会自动识别数据库类型并采用相应的分页方言；多数据源场景的配置与方言识别规则见「多数据源与分页方言边界」。
 - **同时支持 SpringBoot2 和 SpringBoot3**
 
 ### 支持数据库
@@ -51,9 +52,10 @@
 tiny-jdbc:
   # 是否打印 banner，默认 true
   banner: true
-  # 分页器适配类型，可不配置，不配置的话会自动获取
+  # 分页方言对应的数据库类型，静态指定；未配置时仅在启动时自动识别一次
   db-type: mysql
-  # 是否使用运行时数据库类型，默认值为 false，设置为 true 时，会在运行时根据多数据源自动识别对应的分页处理器
+  # 是否在每次分页时按当前数据源重新识别分页方言，默认 false
+  # 各数据源方言不同时需设为 true；配置与识别规则见下方「多数据源与分页方言边界」
   open-runtime-db-type: false
   # 是否开启sql统计，默认false
   sql-stat-enabled: false
@@ -71,6 +73,29 @@ tiny-jdbc:
 - `tiny-jdbc.sql-stat-result-enabled`：是否打印 SQL 的执行结果，默认 `false`；仅在 `sql-stat-enabled: true` 时生效。
 
 建议生产环境保持 `sql-stat-result-enabled: false`。查询结果可能很大，也可能包含手机号、身份证号等敏感字段；开启后仅建议用于短时间排查问题。
+
+#### 多数据源与分页方言边界
+
+推荐把 Spring `AbstractRoutingDataSource`（或等价路由 `DataSource`）注册为唯一 / `@Primary` 的 `DataSource` Bean：`JdbcTemplate` 对内部切库无感，`@ConditionalOnSingleCandidate(DataSource.class)` 正常生效。若多个顶层 `DataSource` Bean 且无 `@Primary`，Boot 与 tiny-jdbc 自动配置都会退避，需自行装配 `JdbcTemplate`、`TinyJdbcRuntime`、`IPageHandle`、`JdbcTemplateHelper`。
+
+##### 两个配置项的分工
+
+| 配置 | 行为 |
+| --- | --- |
+| `open-runtime-db-type: false`（默认） | 启动时创建一个 `IPageHandle` 全局复用（`db-type` 优先，未配置则识别一次）；适合单库或各库方言相同。 |
+| `open-runtime-db-type: true` | 每次分页重新识别并新建 `IPageHandle`，无缓存；适合各库方言不同。 |
+
+识别依据：反射 `getUrl()` / `getJdbcUrl()`；路由 DataSource 无此方法时取当前路由库连接的 `getMetaData().getURL()`，按 **JDBC URL 前缀**匹配 `DbType`（非 `getDatabaseProductName()`）。
+
+##### 方言不匹配的几种配置场景
+
+① 默认模式 + 各库方言不同：方言不随路由变化（与事务无关）；② 动态识别失败静默回退 `tiny-jdbc.db-type`，兜底不符即错配，未配置则抛 `TinyJdbcException`；③ 相同 URL 前缀的异构库（如 `jdbc:postgresql://` 连 PG 与 openGauss）归为同一 `DbType`；④ `OTHER`、`SQLSERVER_2005`、`SYBASE`、`HIVE2` 等不支持分页，显式抛异常。建议显式配置 `db-type`、开启动态识别或注册自定义 `IPageHandle`。
+
+##### 其它注意事项
+
+- 框架不创建事务边界、不参与数据源切换；路由 key 需在进入事务前设置，事务内切换无效（Spring 通用约束，与框架无关）。
+- 多数据源 + 未配置 `db-type` + 默认模式：启动期在无路由上下文时取连接，未设 `defaultTargetDataSource` 可能启动失败；有默认库则固定其方言。
+- 动态模式每次分页额外借还一次连接（事务内连接已绑定，不会真正借还），识别结果无缓存；分页 count 与数据查询为两条 SQL，快照一致性由业务事务与隔离级别决定（分页框架共性）。
 
 ### 定义Entity实体类
 
