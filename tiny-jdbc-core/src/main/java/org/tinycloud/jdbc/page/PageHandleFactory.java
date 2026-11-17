@@ -35,8 +35,8 @@ public class PageHandleFactory {
         if (dbType == null) {
             throw new TinyJdbcException("Could not identify the database type. Please specify tiny-jdbc.db-type in the configuration.");
         }
-        if (logger.isInfoEnabled()) {
-            logger.info("Tiny-Jdbc dynamic dbType: {}", dbType.getName());
+        if (logger.isDebugEnabled()) {
+            logger.debug("Tiny-Jdbc dynamic dbType: {}", dbType.getName());
         }
         return createPageHandleByDbType(dbType);
     }
