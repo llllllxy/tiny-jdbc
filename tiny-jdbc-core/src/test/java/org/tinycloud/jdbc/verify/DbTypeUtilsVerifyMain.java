@@ -33,13 +33,17 @@ public class DbTypeUtilsVerifyMain {
     }
 
     /**
-     * URL 解析：主流数据库前缀应映射到对应 DbType。
+     * URL 解析：主流数据库前缀应映射到对应 DbType；SQL Server 真实 URL 固定落到不支持分页的 SQLSERVER_2005。
      */
     private static void verifyParsesDbTypeFromUrl() {
         assertEquals(DbType.MYSQL, DbTypeUtils.parseDbType("jdbc:mysql://127.0.0.1:3306/t"));
         assertEquals(DbType.ORACLE, DbTypeUtils.parseDbType("jdbc:oracle:thin:@127.0.0.1:1521:orcl"));
         assertEquals(DbType.DB2, DbTypeUtils.parseDbType("jdbc:db2://127.0.0.1:50000/t"));
         assertEquals(DbType.POSTGRE_SQL, DbTypeUtils.parseDbType("jdbc:postgresql://127.0.0.1:5432/t"));
+        assertEquals(DbType.SQLSERVER_2005,
+                DbTypeUtils.parseDbType("jdbc:sqlserver://127.0.0.1:1433;databaseName=t"));
+        assertEquals(DbType.SQLSERVER,
+                DbTypeUtils.parseDbType("jdbc:sqlserver2012://127.0.0.1:1433;databaseName=t"));
     }
 
     /**
