@@ -405,8 +405,9 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (criteria == null) {
             throw new TinyJdbcException("paginate criteria cannot be null");
         }
-        SqlProvider sqlProvider = SqlAssembler.buildSelectCriteriaSql(criteria, entityClass);
-        return this.paginate(sqlProvider.getSql(), page, sqlProvider.getParameters().toArray());
+        return this.paginateByCriteria(
+                SqlAssembler.buildSelectCountCriteriaSql(criteria, entityClass),
+                SqlAssembler.buildSelectCriteriaSql(criteria, entityClass), page, rowMapper);
     }
 
     @Override
@@ -414,8 +415,9 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         if (lambdaCriteria == null) {
             throw new TinyJdbcException("paginate lambdaCriteria cannot be null");
         }
-        SqlProvider sqlProvider = SqlAssembler.buildSelectLambdaCriteriaSql(lambdaCriteria, entityClass);
-        return this.paginate(sqlProvider.getSql(), page, sqlProvider.getParameters().toArray());
+        return this.paginateByCriteria(
+                SqlAssembler.buildSelectCountLambdaCriteriaSql(lambdaCriteria, entityClass),
+                SqlAssembler.buildSelectLambdaCriteriaSql(lambdaCriteria, entityClass), page, rowMapper);
     }
 
     @Override
@@ -583,6 +585,12 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         return this.batchInsert(collection, ignoreNulls, this.getTinyJdbcRuntime().getBatchMode());
     }
 
+    @Override
+    public void truncate() {
+        SqlProvider sqlProvider = SqlAssembler.buildTruncateSql(entityClass);
+        this.execute(sqlProvider.getSql());
+    }
+
     /**
      * 批量插入，显式指定执行模式。
      *
@@ -683,10 +691,24 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
         return result;
     }
 
-    @Override
-    public void truncate() {
-        SqlProvider sqlProvider = SqlAssembler.buildTruncateSql(entityClass);
-        this.execute(sqlProvider.getSql());
+    /**
+     * 条件构造器分页：count 与数据查询分别取自条件构造器，避免把 ORDER BY / last()
+     * 带进 COUNT 子查询。分页片段仍由 {@link IPageHandle} 追加。
+     */
+    private <F> Page<F> paginateByCriteria(SqlProvider countProvider, SqlProvider dataProvider,
+                                           Page<F> page, RowMapper<F> mapper) {
+        PageCheck.check(page);
+        Long count = this.doQueryForObject(countProvider.getSql(), Long.class, countProvider.getParameters().toArray());
+        List<F> records;
+        if (count != null && count > 0L) {
+            PageHandleResult handleResult = getPageHandle().handle(dataProvider.getSql(), page.getPageNum(), page.getPageSize());
+            records = this.doQuery(handleResult.getPageSql(), mapper, ArrayUtils.mergeArrays(dataProvider.getParameters().toArray(), handleResult.getParameters()));
+        } else {
+            records = new ArrayList<>();
+        }
+        page.setRecords(records);
+        page.setTotal(count);
+        return page;
     }
 
     /**
