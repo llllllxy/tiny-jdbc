@@ -87,7 +87,14 @@ public class DatabaseMeta {
         List<ColumnMeta> columns = new ArrayList<>();
         Map<String, ColumnMeta> columnMap = new LinkedHashMap<>();
 
-        try (ResultSet rs = metaData.getColumns(catalog, schema, tableName, "%")) {
+        String escape = metaData.getSearchStringEscape();
+        if (escape == null || escape.isEmpty()) {
+            escape = "\\";
+        }
+        String tableNamePattern = tableName.replace(escape, escape + escape)
+                .replace("_", escape + "_")
+                .replace("%", escape + "%");
+        try (ResultSet rs = metaData.getColumns(catalog, schema, tableNamePattern, "%")) {
             while (rs.next()) {
                 ColumnMeta columnMeta = new ColumnMeta();
                 columnMeta.setColumnName(rs.getString("COLUMN_NAME"));

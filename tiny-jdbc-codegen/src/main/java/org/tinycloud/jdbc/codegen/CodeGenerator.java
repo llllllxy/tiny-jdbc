@@ -188,13 +188,18 @@ public class CodeGenerator {
         model.put("author", config.getAuthor());
 
         String idType = "Void";
+        Set<String> imports = new LinkedHashSet<>();
         List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
         if (!primaryKeys.isEmpty()) {
             ColumnMeta pk = primaryKeys.get(0);
             String fullJavaType = TypeUtils.getJavaType(pk.getDataType(), pk.getColumnSize(), pk.getDecimalDigits());
             idType = TypeUtils.getSimpleJavaType(fullJavaType);
+            if (TypeUtils.needImport(fullJavaType)) {
+                imports.add(fullJavaType);
+            }
         }
         model.put("idType", idType);
+        model.put("imports", imports);
 
         Template template = cfg.getTemplate("dao.ftl");
         File file = new File(outputDir, daoClassName + ".java");

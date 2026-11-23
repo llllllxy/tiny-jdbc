@@ -42,4 +42,18 @@ public class ${className} {
     private ${column.javaType} ${column.fieldName};
 
 </#list>
+
+<#-- 未启用 Lombok 时生成访问器，保证实体仍可被 ORM 读写 -->
+<#if !enableLombok>
+<#list columns as column>
+    public ${column.javaType} get${column.fieldName?cap_first}() {
+        return this.${column.fieldName};
+    }
+
+    public void set${column.fieldName?cap_first}(${column.javaType} ${column.fieldName}) {
+        this.${column.fieldName} = ${column.fieldName};
+    }
+
+</#list>
+</#if>
 }

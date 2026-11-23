@@ -59,7 +59,12 @@ public class CodeGeneratorTest {
     }
 
     private CodeGenerator createGenerator(IdType idType) throws Exception {
-        StrategyConfig.Builder strategyBuilder = StrategyConfig.builder().includeTables("test_table");
+        return createGenerator(idType, true);
+    }
+
+    private CodeGenerator createGenerator(IdType idType, boolean enableLombok) throws Exception {
+        StrategyConfig.Builder strategyBuilder = StrategyConfig.builder().includeTables("test_table")
+                .enableLombok(enableLombok);
         if (idType != null) {
             strategyBuilder.idType(idType);
         }
@@ -180,6 +185,30 @@ public class CodeGeneratorTest {
         // DAO 主键泛型应使用简单类型 Long
         String dao = readFile("com/example/dao/TestTableDao.java");
         assertTrue("DAO 主键泛型应为 Long", dao.contains("extends BaseDao<TestTable, Long>"));
+    }
+
+    @Test
+    public void testDaoImportsPrimaryKeyType() throws Exception {
+        TableMeta table = buildTable(true);
+        table.getColumns().get(0).setDataType(Types.DATE);
+        CodeGenerator generator = createGenerator(null);
+        invokeGenerate(generator, table, false, true);
+
+        String dao = readFile("com/example/dao/TestTableDao.java");
+        assertTrue("DAO 应导入主键类型 LocalDate", dao.contains("import java.time.LocalDate;"));
+        assertTrue("DAO 主键泛型应为 LocalDate", dao.contains("extends BaseDao<TestTable, LocalDate>"));
+    }
+
+    @Test
+    public void testEntityWithoutLombokGeneratesAccessors() throws Exception {
+        CodeGenerator generator = createGenerator(null, false);
+        invokeGenerate(generator, buildTable(true), true, false);
+
+        String entity = readFile("com/example/entity/TestTable.java");
+        assertFalse("关闭 Lombok 时不应输出 @Data", entity.contains("@Data"));
+        assertTrue("应生成 getter", entity.contains("public Long getId()"));
+        assertTrue("应生成 setter", entity.contains("public void setId(Long id)"));
+        assertTrue("应生成日期字段 getter", entity.contains("public LocalDate getCreateTime()"));
     }
 
     // ===== 默认 IdType（未设置）：非自增主键 -> INPUT =====
