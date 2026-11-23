@@ -437,6 +437,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
             String condition = this.getConditionPrefix() + nestedCondition;
             this.conditions.add(condition);
             this.whereParameters.addAll(instance.whereParameters);
+            this.havingParameters.addAll(instance.havingParameters);
         });
     }
 
@@ -463,6 +464,7 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
             this.conditions.add(condition);
             this.nextIsOr = false;
             this.whereParameters.addAll(instance.whereParameters);
+            this.havingParameters.addAll(instance.havingParameters);
         });
     }
 

@@ -35,9 +35,15 @@ public abstract class Criteria<T> {
     protected final List<String> conditions;
 
     /**
-     * 查询条件-值
+     * 查询条件-值（仅 WHERE 条件，不含 HAVING）
      */
     protected final List<Object> whereParameters;
+
+    /**
+     * HAVING 条件-值。与 whereParameters 分开存储，保证参数顺序与 SQL 渲染顺序
+     * （WHERE → GROUP BY → HAVING）一致，不受 having() 与 eq() 调用先后影响。
+     */
+    protected final List<Object> havingParameters;
 
     /**
      * 更新字段和值（按插入顺序保存，重复字段会被覆盖）
@@ -74,6 +80,7 @@ public abstract class Criteria<T> {
         this.conditions = new ArrayList<>();
         this.orderBys = new ArrayList<>();
         this.whereParameters = new ArrayList<>();
+        this.havingParameters = new ArrayList<>();
         this.lastSqls = new ArrayList<>();
         this.groupBys = new ArrayList<>();
         this.havings = new ArrayList<>();
@@ -114,17 +121,28 @@ public abstract class Criteria<T> {
                 parameters.add(updateValue);
             }
         }
-        parameters.addAll(this.whereParameters);
+        parameters.addAll(this.conditionParameters());
         return parameters;
     }
 
     /**
      * 获取查询条件参数（WHERE 与 HAVING），不包含更新 SET 参数。
+     * 顺序与 SQL 渲染顺序一致：WHERE 参数在前，HAVING 参数在后。
      *
      * @return 条件参数副本
      */
     public List<Object> getConditionParameters() {
-        return new ArrayList<>(this.whereParameters);
+        return this.conditionParameters();
+    }
+
+    /**
+     * 按 SQL 渲染顺序（WHERE → HAVING）合并条件参数，返回副本。
+     */
+    private List<Object> conditionParameters() {
+        List<Object> parameters = new ArrayList<>(this.whereParameters.size() + this.havingParameters.size());
+        parameters.addAll(this.whereParameters);
+        parameters.addAll(this.havingParameters);
+        return parameters;
     }
 
     /**
@@ -270,7 +288,8 @@ public abstract class Criteria<T> {
     }
 
     /**
-     * 追加一个 HAVING 条件及其参数。参数会被追加到条件参数列表，按「WHERE ... HAVING ...」顺序绑定。
+     * 追加一个 HAVING 条件及其参数。参数进入独立的 HAVING 参数列表，
+     * 由 {@link #conditionParameters()} 按「WHERE ... HAVING ...」顺序合并。
      *
      * @param expression HAVING 表达式（含 {@code ?} 占位符，如 {@code "count(*) > ?"}）
      * @param params     绑定到 {@code ?} 的参数
@@ -278,7 +297,7 @@ public abstract class Criteria<T> {
     protected final void addHaving(String expression, Object... params) {
         this.havings.add(expression);
         if (params != null) {
-            Collections.addAll(this.whereParameters, params);
+            Collections.addAll(this.havingParameters, params);
         }
     }
 
