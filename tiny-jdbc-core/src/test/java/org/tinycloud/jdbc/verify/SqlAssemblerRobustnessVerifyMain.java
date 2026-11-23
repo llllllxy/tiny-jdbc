@@ -6,6 +6,8 @@ import org.tinycloud.jdbc.annotation.Id;
 import org.tinycloud.jdbc.annotation.IdType;
 import org.tinycloud.jdbc.annotation.Table;
 import org.tinycloud.jdbc.criteria.query.QueryCriteria;
+import org.tinycloud.jdbc.criteria.update.LambdaUpdateCriteria;
+import org.tinycloud.jdbc.criteria.update.UpdateCriteria;
 import org.tinycloud.jdbc.exception.TinyJdbcException;
 import org.tinycloud.jdbc.support.BatchInsertSql;
 import org.tinycloud.jdbc.support.SqlAssembler;
@@ -28,6 +30,7 @@ public class SqlAssemblerRobustnessVerifyMain {
         verifyNullBatchCollectionRejected();
         verifyByIdsNullOrEmptyRejected();
         verifyByIdsDefensiveCopy();
+        verifyDeleteCriteriaDoesNotLeakSetParameters();
         System.out.println("SqlAssemblerRobustnessVerifyMain passed.");
     }
 
@@ -85,6 +88,23 @@ public class SqlAssemblerRobustnessVerifyMain {
         deleteIds.clear();
         assertEquals(Arrays.asList(3L, 4L), deleteProvider.getParameters(),
                 "deleteByIds params should be a defensive copy");
+    }
+
+    /** delete(criteria) 不得把 SET 值绑进只有 WHERE 占位符的 DELETE。 */
+    private static void verifyDeleteCriteriaDoesNotLeakSetParameters() {
+        UpdateCriteria<VerifyDemoEntity> criteria = new UpdateCriteria<VerifyDemoEntity>()
+                .set("create_user_id", 200L)
+                .eq("id", 1L);
+        SqlProvider provider = SqlAssembler.buildDeleteCriteriaSql(criteria, VerifyDemoEntity.class);
+        assertEquals("DELETE FROM t_verify_demo WHERE id = ?", provider.getSql(), "delete criteria SQL mismatch");
+        assertEquals(Arrays.asList(1L), provider.getParameters(), "delete criteria should not bind SET value");
+
+        LambdaUpdateCriteria<VerifyDemoEntity> lambda = new LambdaUpdateCriteria<VerifyDemoEntity>()
+                .set(VerifyDemoEntity::getCreateUserId, 200L)
+                .eq(VerifyDemoEntity::getId, 1L);
+        SqlProvider lambdaProvider = SqlAssembler.buildDeleteLambdaCriteriaSql(lambda, VerifyDemoEntity.class);
+        assertEquals("DELETE FROM t_verify_demo WHERE id = ?", lambdaProvider.getSql(), "lambda delete criteria SQL mismatch");
+        assertEquals(Arrays.asList(1L), lambdaProvider.getParameters(), "lambda delete criteria should not bind SET value");
     }
 
     private static void assertThrows(Runnable runnable, String message) {

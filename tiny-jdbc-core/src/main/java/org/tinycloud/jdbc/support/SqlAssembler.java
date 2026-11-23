@@ -485,7 +485,7 @@ public class SqlAssembler {
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new TinyJdbcException("The parameter criteria can not null or empty!");
         }
-        List<Object> parameters = criteria.getParameters();
+        List<Object> parameters = criteria.getConditionParameters();
         String tableName = TableParserUtils.getTableName(clazz);
 
         SqlProvider so = new SqlProvider();
@@ -505,7 +505,7 @@ public class SqlAssembler {
         if (StrUtils.isEmpty(criteriaSql) || !criteriaSql.contains("WHERE")) {
             throw new TinyJdbcException("The parameter criteria can not null or empty!");
         }
-        List<Object> parameters = criteria.getParameters();
+        List<Object> parameters = criteria.getConditionParameters();
         String tableName = TableParserUtils.getTableName(clazz);
 
         SqlProvider so = new SqlProvider();
