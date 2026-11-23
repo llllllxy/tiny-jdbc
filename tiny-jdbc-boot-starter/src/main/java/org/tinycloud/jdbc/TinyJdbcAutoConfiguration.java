@@ -128,6 +128,7 @@ public class TinyJdbcAutoConfiguration {
      * @return SQL 统计拦截器
      */
     @ConditionalOnProperty(name = "tiny-jdbc.sql-stat-enabled", havingValue = "true", matchIfMissing = false)
+    @ConditionalOnMissingBean(SqlInterceptor.class)
     @Bean
     public SqlInterceptor statInterceptor(TinyJdbcProperties properties) {
         if (LOGGER.isInfoEnabled()) {

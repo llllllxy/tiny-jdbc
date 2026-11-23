@@ -49,12 +49,14 @@ public class StatInterceptor implements SqlInterceptor {
     @Override
     public <R> R intercept(SqlRequest<R> request, SqlInterceptorChain<R> chain) {
         long startTime = System.nanoTime();
-        log.debug("原始SQL：{}", request.getSql());
-        log.debug("原始SQL参数：{}", Arrays.toString(request.getArgs()));
-        log.debug("完整SQL：{}", SqlUtils.replaceSqlParams(request.getSql(), request.getArgs()));
+        if (log.isDebugEnabled()) {
+            log.debug("原始SQL：{}", request.getSql());
+            log.debug("原始SQL参数：{}", Arrays.toString(request.getArgs()));
+            log.debug("完整SQL：{}", SqlUtils.replaceSqlParams(request.getSql(), request.getArgs()));
+        }
         try {
             R result = chain.proceed(request);
-            if (this.printResult) {
+            if (this.printResult && log.isDebugEnabled()) {
                 log.debug("执行SQL结果：{}", result);
             }
             return result;
@@ -62,7 +64,9 @@ public class StatInterceptor implements SqlInterceptor {
             log.error("SQL执行异常：{}", request.getSql(), e);
             throw e;
         } finally {
-            log.info("执行SQL耗时：{}毫秒", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime));
+            if (log.isInfoEnabled()) {
+                log.info("执行SQL耗时：{}毫秒", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime));
+            }
         }
     }
 }
