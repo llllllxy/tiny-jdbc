@@ -3,6 +3,7 @@ package org.tinycloud.jdbc.support;
 import java.lang.reflect.Field;
 
 import org.springframework.core.GenericTypeResolver;
+import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
@@ -140,16 +141,18 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
                 PreparedStatement ps = con.prepareStatement(invocation.getSql(), PreparedStatement.RETURN_GENERATED_KEYS);
                 Object[] invocationArgs = invocation.getArgs();
                 if (ArrayUtils.isNotEmpty(invocationArgs)) {
-                    for (int i = 0; i < invocationArgs.length; i++) {
-                        ps.setObject(i + 1, invocationArgs[i]);
-                    }
+                    // 与普通 insert 使用同一套 Spring 参数绑定：null、日期、LOB、SqlParameterValue 等一致
+                    new ArgumentPreparedStatementSetter(invocationArgs).setValues(ps);
                 }
                 return ps;
             }, keyHolder);
-            if (keyHolder.getKey() == null) {
-                throw new TinyJdbcException("please check whether it is an autoincrement primary key");
+            // 框架只支持单主键，沿用 Spring 原生 getKey()：多列键由它直接报错，不做猜测性取值
+            Number generatedKey = keyHolder.getKey();
+            if (generatedKey == null) {
+                throw new TinyJdbcException("INSERT executed but no generated key was returned; "
+                        + "check the AUTO_INCREMENT mapping and driver support. The row may already be committed.");
             }
-            return new AutoIncrementResult(affectedRows, keyHolder.getKey());
+            return new AutoIncrementResult(affectedRows, generatedKey);
         });
     }
 
@@ -468,7 +471,8 @@ public abstract class AbstractSqlSupport<T, ID extends Serializable> implements 
                 }
                 autoIncrementPrimaryKeyField.set(entity, primaryKeyValue);
             } catch (IllegalAccessException | IllegalArgumentException e) {
-                throw new TinyJdbcException("inject auto increment primary key failed", e);
+                throw new TinyJdbcException("INSERT executed but failed to inject the generated key into the entity field; "
+                        + "the row may already be committed", e);
             }
             return result.getAffectedRows();
         }
