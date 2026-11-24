@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 验证自增主键插入：参数走 Spring 绑定（null → setNull）、多列生成键取首列并回写实体。
+ * 验证自增主键插入：参数走 Spring 绑定（null → setNull）、生成键回写实体。
  */
 public class AutoIncrementInsertVerifyMain {
 

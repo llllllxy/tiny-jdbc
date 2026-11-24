@@ -478,9 +478,9 @@ public abstract class AbstractLambdaCriteria<T, Children extends AbstractLambdaC
                 this.nextIsOr = false;
                 return;
             }
-            String condition = " OR " + nestedCondition;
+            this.nextIsOr = true;
+            String condition = this.getConditionPrefix() + nestedCondition;
             this.conditions.add(condition);
-            this.nextIsOr = false;
             this.whereParameters.addAll(instance.whereParameters);
             this.havingParameters.addAll(instance.havingParameters);
         });

@@ -29,8 +29,8 @@
 
 ### 支持数据库
 
-- 分页插件目前支持MySQL、MARIADB、ORACLE、DB2、PostgreSql、SQLite、H2、OceanBase、openGauss、informix、达梦数据库、人大金仓数据库、瀚高数据库等常见数据库
-- 其他操作支持任何使用标准 SQL 的数据库
+- 分页插件目前支持 MySQL、MARIADB、ORACLE、DB2、PostgreSql、SQLite、H2、OceanBase、openGauss、informix、达梦数据库、人大金仓数据库、瀚高数据库等；**不支持 SQL Server 分页**：真实 `jdbc:sqlserver://` URL 会被识别为 `SQLSERVER_2005` 并显式抛异常，需要分页时需自定义 `IPageHandle`
+- 其他操作（CRUD、条件构造、SQL 构建等）支持任何使用标准 SQL 的数据库，包括 SQL Server
 
 ## 2、快速开始
 
@@ -96,6 +96,7 @@ tiny-jdbc:
 - 框架不创建事务边界、不参与数据源切换；路由 key 需在进入事务前设置，事务内切换无效（Spring 通用约束，与框架无关）。
 - 多数据源 + 未配置 `db-type` + 默认模式：启动期在无路由上下文时取连接，未设 `defaultTargetDataSource` 可能启动失败；有默认库则固定其方言。
 - 动态模式每次分页额外借还一次连接（事务内连接已绑定，不会真正借还），识别结果无缓存；分页 count 与数据查询为两条 SQL，快照一致性由业务事务与隔离级别决定（分页框架共性）。
+- 分页查询请勿用 `last()` 再写 `LIMIT` / `FOR UPDATE`；原生 SQL 入口的 `ORDER BY` 与尾注释由调用方保证，框架不为此增加校验代码。
 
 ### 定义Entity实体类
 

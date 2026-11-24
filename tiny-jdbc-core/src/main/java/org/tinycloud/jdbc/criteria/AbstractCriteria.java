@@ -460,9 +460,10 @@ public abstract class AbstractCriteria<T, Children extends AbstractCriteria<T, C
                 this.nextIsOr = false;
                 return;
             }
-            String condition = " OR " + nestedCondition;
+            // or(consumer) 强制 OR 连接：先置位，让 getConditionPrefix() 统一生成连接符并复位状态
+            this.nextIsOr = true;
+            String condition = this.getConditionPrefix() + nestedCondition;
             this.conditions.add(condition);
-            this.nextIsOr = false;
             this.whereParameters.addAll(instance.whereParameters);
             this.havingParameters.addAll(instance.havingParameters);
         });

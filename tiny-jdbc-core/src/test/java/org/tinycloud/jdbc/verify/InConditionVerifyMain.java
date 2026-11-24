@@ -24,11 +24,21 @@ public class InConditionVerifyMain {
         assertThrows(() -> criteria.in("id", Collections.emptyList()), "criteria in empty should throw");
         assertThrows(() -> criteria.notIn("id", Collections.emptyList()), "criteria notIn empty should throw");
         criteria.in(false, "id", Collections.emptyList());
+        assertEquals(" WHERE id = ?", new QueryCriteria<VerifyDemoEntity>()
+                .eq("id", 1L).in(false, "id", Collections.emptyList()).whereSql(),
+                "skipped in should not emit condition");
+        assertEquals(" WHERE id = ?", new QueryCriteria<VerifyDemoEntity>()
+                .eq("id", 1L).notIn(false, "id", Collections.emptyList()).whereSql(),
+                "skipped notIn should not emit condition");
 
         LambdaUpdateCriteria<VerifyDemoEntity> lambdaCriteria = new LambdaUpdateCriteria<>();
         assertThrows(() -> lambdaCriteria.in(VerifyDemoEntity::getId, Collections.emptyList()), "lambda in empty should throw");
         assertThrows(() -> lambdaCriteria.notIn(VerifyDemoEntity::getId, Collections.emptyList()), "lambda notIn empty should throw");
         lambdaCriteria.in(false, VerifyDemoEntity::getId, Collections.emptyList());
+        assertEquals(Collections.singletonList(1L), new LambdaUpdateCriteria<VerifyDemoEntity>()
+                .eq(VerifyDemoEntity::getId, 1L)
+                .in(false, VerifyDemoEntity::getId, Collections.emptyList()).getConditionParameters(),
+                "skipped lambda in should not emit parameter");
 
         assertThrows(() -> SQL.table("t_verify_demo").select().where(w -> w.in("id", (java.util.Collection<?>) null)).toSql(), "sql builder in null should throw");
         assertThrows(() -> SQL.table("t_verify_demo").select().where(w -> w.notIn("id", Collections.emptyList())).toSql(), "sql builder notIn empty should throw");

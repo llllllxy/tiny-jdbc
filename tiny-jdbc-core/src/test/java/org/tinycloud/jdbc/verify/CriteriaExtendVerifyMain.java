@@ -67,8 +67,9 @@ public class CriteriaExtendVerifyMain {
                 .apply("date(create_time) = ?", "2026-01-01");
 
         SqlProvider provider = SqlAssembler.buildSelectCriteriaSql(criteria, VerifyDemoEntity.class);
-        assertTrue(provider.getSql().contains("EXISTS (select 1 from t_order o where o.user_id = create_user_id)"));
-        assertTrue(provider.getSql().contains("date(create_time) = ?"));
+        assertEquals("SELECT id,create_user_id,create_time,update_user_id,update_time FROM t_verify_demo "
+                + "WHERE EXISTS (select 1 from t_order o where o.user_id = create_user_id) "
+                + "AND date(create_time) = ?", provider.getSql());
         assertEquals(Arrays.asList("2026-01-01"), provider.getParameters());
     }
 
@@ -81,8 +82,9 @@ public class CriteriaExtendVerifyMain {
                 .apply("date(create_time) = ?", "2026-01-01");
 
         SqlProvider provider = SqlAssembler.buildSelectLambdaCriteriaSql(criteria, VerifyDemoEntity.class);
-        assertTrue(provider.getSql().contains("EXISTS (select 1 from t_order o where o.user_id = create_user_id)"));
-        assertTrue(provider.getSql().contains("date(create_time) = ?"));
+        assertEquals("SELECT id,create_user_id,create_time,update_user_id,update_time FROM t_verify_demo "
+                + "WHERE EXISTS (select 1 from t_order o where o.user_id = create_user_id) "
+                + "AND date(create_time) = ?", provider.getSql());
         assertEquals(Arrays.asList("2026-01-01"), provider.getParameters());
     }
 

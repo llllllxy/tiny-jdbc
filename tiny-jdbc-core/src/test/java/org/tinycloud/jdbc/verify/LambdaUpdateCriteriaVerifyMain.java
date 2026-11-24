@@ -25,16 +25,12 @@ public class LambdaUpdateCriteriaVerifyMain {
         String updateSql = criteria.updateSql();
         List<Object> params = criteria.getParameters();
 
-        System.out.println("updateSql =  " + updateSql);
-        System.out.println("whereSql =  " + criteria.whereSql());
-        System.out.println("params =  " + params);
-
         assertTrue(criteria.hasUpdateColumn("update_time"), "update_time should exist");
         assertTrue(criteria.hasUpdateColumn("update_user_id"), "update_user_id should exist");
         assertTrue(!criteria.hasUpdateColumn("create_time"), "create_time should not exist");
 
-        assertTrue(updateSql.contains("update_time = ?"), "update_time placeholder SQL missing");
-        assertTrue(updateSql.contains("update_user_id = update_user_id - 3"), "decrement SQL should keep latest");
+        assertEquals("update_time = ?,update_user_id = update_user_id - 3", updateSql, "lambda updateSql mismatch");
+        assertEquals(" WHERE id = ?", criteria.whereSql(), "lambda whereSql mismatch");
 
         assertEquals(2, params.size(), "parameter size mismatch");
         assertEquals(t2, params.get(0), "update_time should keep latest value");

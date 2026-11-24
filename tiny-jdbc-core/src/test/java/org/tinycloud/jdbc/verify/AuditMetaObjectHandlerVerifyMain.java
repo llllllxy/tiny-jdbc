@@ -57,9 +57,13 @@ public class AuditMetaObjectHandlerVerifyMain {
 
         List<Object> params = criteria.getParameters();
 
-        System.out.println("verifyCriteriaFill updateSql =  " + criteria.updateSql());
-        System.out.println("verifyCriteriaFill whereSql =  " + criteria.whereSql());
-        System.out.println("verifyCriteriaFill params =  " + params);
+        // 用户已显式设置的 update_user_id 不得被当前用户覆盖；update_time 由框架补当前时间；WHERE 参数保持末尾
+        assertEquals("update_user_id = ?,update_time = ?", criteria.updateSql(), "criteria updateSql mismatch");
+        assertEquals(" WHERE id = ?", criteria.whereSql(), "criteria whereSql mismatch");
+        assertEquals(3, params.size(), "criteria fill params size mismatch");
+        assertEquals(111L, params.get(0), "user-set update_user_id should not be overwritten");
+        assertTrue(params.get(1) instanceof LocalDateTime, "update_time should be auto-filled with LocalDateTime");
+        assertEquals(100L, params.get(2), "where id parameter should stay last");
     }
 
     private static void verifyLambdaCriteriaFill(AuditMetaObjectHandler handler) {
@@ -70,9 +74,12 @@ public class AuditMetaObjectHandlerVerifyMain {
         handler.updateLambdaCriteriaFill(criteria, VerifyDemoEntity.class);
 
         List<Object> params = criteria.getParameters();
-        System.out.println("verifyLambdaCriteriaFill updateSql =  " + criteria.updateSql());
-        System.out.println("verifyLambdaCriteriaFill whereSql =  " + criteria.whereSql());
-        System.out.println("verifyLambdaCriteriaFill params =  " + params);
+        assertEquals("update_user_id = ?,update_time = ?", criteria.updateSql(), "lambda criteria updateSql mismatch");
+        assertEquals(" WHERE id = ?", criteria.whereSql(), "lambda criteria whereSql mismatch");
+        assertEquals(3, params.size(), "lambda criteria fill params size mismatch");
+        assertEquals(111L, params.get(0), "user-set update_user_id should not be overwritten in lambda criteria");
+        assertTrue(params.get(1) instanceof LocalDateTime, "lambda update_time should be auto-filled");
+        assertEquals(200L, params.get(2), "lambda where id parameter should stay last");
     }
 
     private static void assertTrue(boolean condition, String message) {

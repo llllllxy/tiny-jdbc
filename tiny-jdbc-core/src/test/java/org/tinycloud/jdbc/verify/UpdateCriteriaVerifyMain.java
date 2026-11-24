@@ -27,9 +27,8 @@ public class UpdateCriteriaVerifyMain {
         assertTrue(criteria.hasUpdateColumn("version"), "version should exist");
         assertTrue(!criteria.hasUpdateColumn("missing"), "missing should not exist");
 
-        assertTrue(updateSql.contains("update_time = ?"), "update_time placeholder SQL missing");
-        assertTrue(updateSql.contains("remark = ?"), "remark placeholder SQL missing");
-        assertTrue(updateSql.contains("version = version + 2"), "version increment SQL should keep latest");
+        assertEquals("update_time = ?,remark = ?,version = version + 2", updateSql, "updateSql mismatch");
+        assertEquals(" WHERE id = ?", criteria.whereSql(), "whereSql mismatch");
 
         assertEquals(3, params.size(), "parameter size mismatch");
         assertEquals("T2", params.get(0), "update_time should keep latest value");
@@ -37,10 +36,6 @@ public class UpdateCriteriaVerifyMain {
         assertEquals(100L, params.get(2), "where id parameter mismatch");
 
         System.out.println("UpdateCriteriaVerifyMain passed.");
-
-        System.out.println("updateSql =  " + updateSql);
-        System.out.println("whereSql =  " + criteria.whereSql());
-        System.out.println("params =  " + params);
     }
 
     private static void assertTrue(boolean condition, String message) {
