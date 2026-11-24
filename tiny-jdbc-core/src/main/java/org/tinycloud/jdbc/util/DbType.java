@@ -48,10 +48,6 @@ public enum DbType {
      */
     SQLSERVER("sqlserver", "SQLServer 数据库"),
     /**
-     * SqlServer 2005 数据库
-     */
-    SQLSERVER_2005("sqlserver_2005", "SQLServer 数据库"),
-    /**
      * DM
      */
     DM("dm", "达梦数据库"),

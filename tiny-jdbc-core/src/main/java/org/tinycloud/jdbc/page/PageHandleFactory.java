@@ -11,7 +11,7 @@ import org.tinycloud.jdbc.util.DbTypeUtils;
 
 /**
  * <p>
- *     分页处理器获取工厂类
+ * 分页处理器获取工厂类
  * </p>
  *
  * @author liuxingyu01
@@ -43,6 +43,7 @@ public class PageHandleFactory {
 
     /**
      * 根据数据库类型创建对应的分页处理器
+     *
      * @param dbType 数据库类型
      * @return 分页处理器IPageHandle
      */
@@ -69,8 +70,6 @@ public class PageHandleFactory {
         } else if (dbType == DbType.GAUSS_DB) {
             pageHandle = new GaussDBPageHandleImpl();
         } else {
-            // 明确不支持分页的数据库类型，不再静默套用 PostgreSQL LIMIT/OFFSET，
-            // 避免生成非法 SQL（如 SQLServer 2005 / Sybase / Hive2 / 其它未知类型）。
             throw new TinyJdbcException(
                     "Database type [" + dbType.getName() + "] is not supported for pagination. "
                             + "Please configure a supported tiny-jdbc.db-type or provide a dedicated IPageHandle.");

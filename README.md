@@ -29,8 +29,9 @@
 
 ### 支持数据库
 
-- 分页插件目前支持 MySQL、MARIADB、ORACLE、DB2、PostgreSql、SQLite、H2、OceanBase、openGauss、informix、达梦数据库、人大金仓数据库、瀚高数据库等；**不支持 SQL Server 分页**：真实 `jdbc:sqlserver://` URL 会被识别为 `SQLSERVER_2005` 并显式抛异常，需要分页时需自定义 `IPageHandle`
-- 其他操作（CRUD、条件构造、SQL 构建等）支持任何使用标准 SQL 的数据库，包括 SQL Server
+- 分页插件目前支持 MySQL、MARIADB、ORACLE、DB2、PostgreSql、SQLite、H2、OceanBase、openGauss、informix、达梦数据库、人大金仓数据库、瀚高数据库、SQL Server 等常见数据库
+- SQL Server 分页使用 `OFFSET/FETCH`（需原 SQL 带 `ORDER BY`）；仅支持 2012 及以上版本，2005/2008 不支持
+- 其他操作（CRUD、条件构造、SQL 构建等）支持任何使用标准 SQL 的数据库
 
 ## 2、快速开始
 
@@ -89,7 +90,7 @@ tiny-jdbc:
 
 ##### 方言不匹配的几种配置场景
 
-① 默认模式 + 各库方言不同：方言不随路由变化（与事务无关）；② 动态识别失败静默回退 `tiny-jdbc.db-type`，兜底不符即错配，未配置则抛 `TinyJdbcException`；③ 相同 URL 前缀的异构库（如 `jdbc:postgresql://` 连 PG 与 openGauss）归为同一 `DbType`；④ `OTHER`、`SQLSERVER_2005`、`SYBASE`、`HIVE2` 等不支持分页，显式抛异常。建议显式配置 `db-type`、开启动态识别或注册自定义 `IPageHandle`。
+① 默认模式 + 各库方言不同：方言不随路由变化（与事务无关）；② 动态识别失败静默回退 `tiny-jdbc.db-type`，兜底不符即错配，未配置则抛 `TinyJdbcException`；③ 相同 URL 前缀的异构库（如 `jdbc:postgresql://` 连 PG 与 openGauss）归为同一 `DbType`；④ `OTHER`、`SYBASE`、`HIVE2` 等不支持分页，显式抛异常。建议显式配置 `db-type`、开启动态识别或注册自定义 `IPageHandle`。
 
 ##### 其它注意事项
 

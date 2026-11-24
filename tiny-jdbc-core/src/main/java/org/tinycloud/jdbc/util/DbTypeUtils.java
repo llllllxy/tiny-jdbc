@@ -90,10 +90,8 @@ public class DbTypeUtils {
             return DbType.MARIADB;
         } else if (jdbcUrl.contains(":oracle:")) {
             return DbType.ORACLE;
-        } else if (jdbcUrl.contains(":sqlserver2012:")) {
-            return DbType.SQLSERVER;
         } else if (jdbcUrl.contains(":sqlserver:") || jdbcUrl.contains(":microsoft:")) {
-            return DbType.SQLSERVER_2005;
+            return DbType.SQLSERVER;
         } else if (jdbcUrl.contains(":postgresql:")) {
             return DbType.POSTGRE_SQL;
         } else if (jdbcUrl.contains(":hsqldb:")) {

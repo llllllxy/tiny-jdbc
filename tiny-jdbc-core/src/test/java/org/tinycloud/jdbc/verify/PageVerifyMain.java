@@ -65,10 +65,9 @@ public class PageVerifyMain {
         assertEquals("SELECT COUNT(*) FROM ( SELECT * FROM t ) TEMP", handler.handlerCountSQL("SELECT * FROM t"));
     }
 
-    // 验证：不支持的数据库类型（SQLServer2005/Sybase/Hive2/OTHER）显式抛异常，不再静默套用 PG
+    // 验证：不支持的数据库类型（Sybase/Hive2/OTHER）显式抛异常，不再静默套用 PG
     @Test
     public void testUnsupportedDbTypeThrows() {
-        assertThrowsNotSupported(DbType.SQLSERVER_2005);
         assertThrowsNotSupported(DbType.SYBASE);
         assertThrowsNotSupported(DbType.HIVE2);
         assertThrowsNotSupported(DbType.OTHER);
