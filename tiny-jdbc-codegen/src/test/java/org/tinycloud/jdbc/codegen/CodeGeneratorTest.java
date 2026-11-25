@@ -248,6 +248,116 @@ public class CodeGeneratorTest {
         assertFalse("空表注释时不应出现表注释文本", entity.contains("测试表"));
     }
 
+    // ===== 表过滤：excludeTables 优先于 includeTables =====
+    @Test
+    public void testExcludeTablesTakesPrecedence() throws Exception {
+        StrategyConfig strategy = StrategyConfig.builder()
+                .includeTables("test_table", "excluded_table")
+                .excludeTables("excluded_table")
+                .build();
+        CodegenConfig config = CodegenConfig.builder()
+                .dataSourceConfig(DataSourceConfig.builder().url("jdbc:mysql://x").username("u").password("p").build())
+                .packageConfig(PackageConfig.builder().parent("com.example").entity("entity").dao("dao").build())
+                .strategyConfig(strategy).outputDir(tempDir.toString()).build();
+        CodeGenerator generator = new CodeGenerator(config);
+
+        java.lang.reflect.Method filter = CodeGenerator.class.getDeclaredMethod("filterTables", List.class);
+        filter.setAccessible(true);
+        TableMeta keep = new TableMeta();
+        keep.setTableName("test_table");
+        TableMeta drop = new TableMeta();
+        drop.setTableName("excluded_table");
+        TableMeta other = new TableMeta();
+        other.setTableName("other_table");
+
+        @SuppressWarnings("unchecked")
+        List<TableMeta> result = (List<TableMeta>) filter.invoke(generator,
+                java.util.Arrays.asList(keep, drop, other));
+        assertEqualsInt("只应保留 test_table", 1, result.size());
+        assertTrue("保留 test_table", "test_table".equals(result.get(0).getTableName()));
+    }
+
+    // ===== 表名前缀/后缀剥离 =====
+    @Test
+    public void testTablePrefixAndSuffixStripped() throws Exception {
+        StrategyConfig strategy = StrategyConfig.builder()
+                .includeTables("t_xxl_job_info_log")
+                .tablePrefix("t_").tableSuffix("_log")
+                .build();
+        CodegenConfig config = CodegenConfig.builder()
+                .dataSourceConfig(DataSourceConfig.builder().url("jdbc:mysql://x").username("u").password("p").build())
+                .packageConfig(PackageConfig.builder().parent("com.example").entity("entity").dao("dao").build())
+                .strategyConfig(strategy).outputDir(tempDir.toString()).build();
+        CodeGenerator generator = new CodeGenerator(config);
+
+        java.lang.reflect.Method resolve = CodeGenerator.class.getDeclaredMethod("resolveClassName", String.class);
+        resolve.setAccessible(true);
+        Object className = resolve.invoke(generator, "t_xxl_job_info_log");
+        assertTrue("前后缀剥离后类名应为 XxlJobInfo", "XxlJobInfo".equals(className));
+    }
+
+    // ===== 列忽略：精确列名 + 前缀 =====
+    @Test
+    public void testIgnoreColumnsAndPrefixes() throws Exception {
+        StrategyConfig strategy = StrategyConfig.builder()
+                .includeTables("test_table")
+                .ignoreColumn("name").ignoreColumnPrefix("create_")
+                .build();
+        CodegenConfig config = CodegenConfig.builder()
+                .dataSourceConfig(DataSourceConfig.builder().url("jdbc:mysql://x").username("u").password("p").build())
+                .packageConfig(PackageConfig.builder().parent("com.example").entity("entity").dao("dao").build())
+                .strategyConfig(strategy).outputDir(tempDir.toString()).build();
+        CodeGenerator generator = new CodeGenerator(config);
+        invokeGenerate(generator, buildTable(true), true, false);
+
+        String entity = readFile("com/example/entity/TestTable.java");
+        assertFalse("name 列应被忽略", entity.contains("private String name;"));
+        assertFalse("create_time 列应被前缀忽略", entity.contains("private LocalDate createTime;"));
+        assertTrue("主键应保留", entity.contains("private Long id;"));
+    }
+
+    // ===== fileOverride=false：已存在文件跳过且不覆盖 =====
+    @Test
+    public void testFileOverrideFalseSkipsExistingFile() throws Exception {
+        CodeGenerator generator = createGenerator(null);
+        invokeGenerate(generator, buildTable(true), true, false);
+        File entityFile = tempDir.resolve("com/example/entity/TestTable.java").toFile();
+        Files.write(entityFile.toPath(), "// user edited\n".getBytes(StandardCharsets.UTF_8));
+
+        invokeGenerate(generator, buildTable(true), true, false);
+        String content = new String(Files.readAllBytes(entityFile.toPath()), "UTF-8");
+        assertTrue("默认不覆盖用户手改文件", content.startsWith("// user edited"));
+        assertFalse("不应产生 .bak 文件", new File(entityFile.getAbsolutePath() + ".bak").exists());
+    }
+
+    // ===== fileOverride=true：备份原文件为 .java.bak 后覆盖 =====
+    @Test
+    public void testFileOverrideTrueBacksUpThenOverwrites() throws Exception {
+        StrategyConfig strategy = StrategyConfig.builder().includeTables("test_table").build();
+        CodegenConfig config = CodegenConfig.builder()
+                .dataSourceConfig(DataSourceConfig.builder().url("jdbc:mysql://x").username("u").password("p").build())
+                .packageConfig(PackageConfig.builder().parent("com.example").entity("entity").dao("dao").build())
+                .strategyConfig(strategy).outputDir(tempDir.toString()).author("tester")
+                .fileOverride(true).build();
+        CodeGenerator generator = new CodeGenerator(config);
+
+        invokeGenerate(generator, buildTable(true), true, false);
+        File entityFile = tempDir.resolve("com/example/entity/TestTable.java").toFile();
+        Files.write(entityFile.toPath(), "// user edited\n".getBytes(StandardCharsets.UTF_8));
+
+        invokeGenerate(generator, buildTable(true), true, false);
+        String content = new String(Files.readAllBytes(entityFile.toPath()), "UTF-8");
+        assertTrue("应覆盖为生成内容", content.contains("@Table(\"test_table\")"));
+        assertTrue("应保留 .bak 备份", new File(entityFile.getAbsolutePath() + ".bak").exists());
+        String backup = new String(Files.readAllBytes(
+                new File(entityFile.getAbsolutePath() + ".bak").toPath()), "UTF-8");
+        assertTrue("备份应是用户手改内容", backup.startsWith("// user edited"));
+    }
+
+    private static void assertEqualsInt(String message, int expected, int actual) {
+        assertTrue(message + " expected=" + expected + " actual=" + actual, expected == actual);
+    }
+
     // ===== 类注释：有表注释时 @author/@date 仍必须输出，且包含表注释 =====
     @Test
     public void testEntityCommentPresent_authorDateAlways() throws Exception {

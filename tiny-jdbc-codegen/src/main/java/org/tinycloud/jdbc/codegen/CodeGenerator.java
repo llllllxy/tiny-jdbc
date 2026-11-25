@@ -70,12 +70,76 @@ public class CodeGenerator {
         }
 
         List<TableMeta> filtered = new ArrayList<>();
+        Set<String> excludeSet = toLowerCaseSet(config.getStrategyConfig().getExcludeTables());
         for (TableMeta table : tables) {
-            if (includeSet.contains(table.getTableName().toLowerCase())) {
+            String lowerName = table.getTableName().toLowerCase();
+            // excludeTables 优先级最高
+            if (excludeSet.contains(lowerName)) {
+                continue;
+            }
+            if (includeSet.isEmpty() || includeSet.contains(lowerName)) {
                 filtered.add(table);
             }
         }
         return filtered;
+    }
+
+    private static Set<String> toLowerCaseSet(String[] values) {
+        Set<String> set = new java.util.HashSet<String>();
+        if (values != null) {
+            for (String value : values) {
+                if (value != null) {
+                    set.add(value.toLowerCase());
+                }
+            }
+        }
+        return set;
+    }
+
+    /** 剥离配置的表前缀/后缀后再转驼峰类名。 */
+    private String resolveClassName(String tableName) {
+        String name = tableName;
+        String[] prefixes = config.getStrategyConfig().getTablePrefixes();
+        if (prefixes != null) {
+            for (String prefix : prefixes) {
+                if (prefix != null && !prefix.isEmpty() && name.toLowerCase().startsWith(prefix.toLowerCase())) {
+                    name = name.substring(prefix.length());
+                    break;
+                }
+            }
+        }
+        String[] suffixes = config.getStrategyConfig().getTableSuffixes();
+        if (suffixes != null) {
+            for (String suffix : suffixes) {
+                if (suffix != null && !suffix.isEmpty() && name.toLowerCase().endsWith(suffix.toLowerCase())) {
+                    name = name.substring(0, name.length() - suffix.length());
+                    break;
+                }
+            }
+        }
+        return TypeUtils.getCamelCase(name);
+    }
+
+    /** 列是否应被忽略（大小写不敏感，支持前缀匹配）。 */
+    private boolean isColumnIgnored(String columnName) {
+        String lower = columnName.toLowerCase();
+        String[] columns = config.getStrategyConfig().getIgnoreColumns();
+        if (columns != null) {
+            for (String ignored : columns) {
+                if (ignored != null && lower.equals(ignored.toLowerCase())) {
+                    return true;
+                }
+            }
+        }
+        String[] prefixes = config.getStrategyConfig().getIgnoreColumnPrefixes();
+        if (prefixes != null) {
+            for (String prefix : prefixes) {
+                if (prefix != null && !prefix.isEmpty() && lower.startsWith(prefix.toLowerCase())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -95,7 +159,7 @@ public class CodeGenerator {
      * 生成实体类
      */
     private void generateEntity(TableMeta table) throws Exception {
-        String className = TypeUtils.getCamelCase(table.getTableName());
+        String className = this.resolveClassName(table.getTableName());
         String packageName = config.getPackageConfig().getEntityPackage();
         String outputDir = buildOutputDir(packageName);
 
@@ -117,6 +181,9 @@ public class CodeGenerator {
         Set<String> importTypes = new LinkedHashSet<>();
 
         for (ColumnMeta column : table.getColumns()) {
+            if (this.isColumnIgnored(column.getColumnName())) {
+                continue;
+            }
             ColumnInfo columnInfo = new ColumnInfo();
             columnInfo.setColumnName(column.getColumnName());
 
@@ -156,10 +223,10 @@ public class CodeGenerator {
 
         Template template = cfg.getTemplate("entity.ftl");
         File file = new File(outputDir, className + ".java");
-        try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-            template.process(model, writer);
+        if (!this.writeTemplate(template, model, file)) {
+            System.out.println("跳过已存在文件（如需覆盖请设置 fileOverride=true）: " + file.getAbsolutePath());
+            return;
         }
-
         System.out.println("生成实体类: " + file.getAbsolutePath());
     }
 
@@ -167,7 +234,7 @@ public class CodeGenerator {
      * 生成 DAO 类
      */
     private void generateDao(TableMeta table) throws Exception {
-        String entityClassName = TypeUtils.getCamelCase(table.getTableName());
+        String entityClassName = this.resolveClassName(table.getTableName());
         String daoClassName = entityClassName + "Dao";
         String packageName = config.getPackageConfig().getDaoPackage();
         String entityPackageName = config.getPackageConfig().getEntityPackage();
@@ -203,11 +270,35 @@ public class CodeGenerator {
 
         Template template = cfg.getTemplate("dao.ftl");
         File file = new File(outputDir, daoClassName + ".java");
+        if (!this.writeTemplate(template, model, file)) {
+            System.out.println("跳过已存在文件（如需覆盖请设置 fileOverride=true）: " + file.getAbsolutePath());
+            return;
+        }
+        System.out.println("生成DAO类: " + file.getAbsolutePath());
+    }
+
+    /**
+     * 将模板渲染写入目标文件。
+     *
+     * @return true 表示已写入；false 表示文件已存在且未开启 fileOverride（已跳过）
+     */
+    private boolean writeTemplate(Template template, Map<String, Object> model, File file) throws Exception {
+        if (file.exists()) {
+            if (!config.isFileOverride()) {
+                return false;
+            }
+            File backup = new File(file.getAbsolutePath() + ".bak");
+            Files.deleteIfExists(backup.toPath());
+            Files.move(file.toPath(), backup.toPath());
+        }
+        File dir = file.getParentFile();
+        if (dir != null && !dir.exists() && !dir.mkdirs()) {
+            throw new RuntimeException("创建目录失败: " + dir.getAbsolutePath());
+        }
         try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
             template.process(model, writer);
         }
-
-        System.out.println("生成DAO类: " + file.getAbsolutePath());
+        return true;
     }
 
     /**

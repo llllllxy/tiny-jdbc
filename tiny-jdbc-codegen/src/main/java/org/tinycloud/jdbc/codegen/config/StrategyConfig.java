@@ -17,6 +17,16 @@ public class StrategyConfig {
 
     /**包含的数据库表名数组*/
     private final String[] includeTables;
+    /**排除的数据库表名数组（优先级高于 includeTables）*/
+    private final String[] excludeTables;
+    /**生成类名时从表名剥离的前缀*/
+    private final String[] tablePrefixes;
+    /**生成类名时从表名剥离的后缀*/
+    private final String[] tableSuffixes;
+    /**生成实体时跳过的列名（大小写不敏感）*/
+    private final String[] ignoreColumns;
+    /**生成实体时跳过的列前缀*/
+    private final String[] ignoreColumnPrefixes;
     /**是否使用实际列名*/
     private final boolean useActualColumnNames;
     /**是否启用Lombok注解*/
@@ -31,6 +41,11 @@ public class StrategyConfig {
 
     private StrategyConfig(Builder builder) {
         this.includeTables = builder.includeTables;
+        this.excludeTables = builder.excludeTables;
+        this.tablePrefixes = builder.tablePrefixes;
+        this.tableSuffixes = builder.tableSuffixes;
+        this.ignoreColumns = builder.ignoreColumns;
+        this.ignoreColumnPrefixes = builder.ignoreColumnPrefixes;
         this.useActualColumnNames = builder.useActualColumnNames;
         this.enableLombok = builder.enableLombok;
         this.idType = builder.idType;
@@ -43,6 +58,26 @@ public class StrategyConfig {
     // ===== Getter =====
     public String[] getIncludeTables() {
         return includeTables;
+    }
+
+    public String[] getExcludeTables() {
+        return excludeTables;
+    }
+
+    public String[] getTablePrefixes() {
+        return tablePrefixes;
+    }
+
+    public String[] getTableSuffixes() {
+        return tableSuffixes;
+    }
+
+    public String[] getIgnoreColumns() {
+        return ignoreColumns;
+    }
+
+    public String[] getIgnoreColumnPrefixes() {
+        return ignoreColumnPrefixes;
     }
 
     public boolean isUseActualColumnNames() {
@@ -60,6 +95,11 @@ public class StrategyConfig {
     // ===== Builder =====
     public static class Builder {
         private String[] includeTables;
+        private String[] excludeTables;
+        private String[] tablePrefixes;
+        private String[] tableSuffixes;
+        private String[] ignoreColumns;
+        private String[] ignoreColumnPrefixes;
         private boolean useActualColumnNames = false;
         private boolean enableLombok = true;
         /**
@@ -72,6 +112,35 @@ public class StrategyConfig {
         // 支持可变参数（更优雅）
         public Builder includeTables(String... tables) {
             this.includeTables = tables;
+            return this;
+        }
+
+        public Builder excludeTables(String... tables) {
+            this.excludeTables = tables;
+            return this;
+        }
+
+        /** 生成类名时剥离的表前缀，可配多个（按配置顺序匹配第一个）。 */
+        public Builder tablePrefix(String... prefixes) {
+            this.tablePrefixes = prefixes;
+            return this;
+        }
+
+        /** 生成类名时剥离的表后缀，可配多个（按配置顺序匹配第一个）。 */
+        public Builder tableSuffix(String... suffixes) {
+            this.tableSuffixes = suffixes;
+            return this;
+        }
+
+        /** 生成实体时忽略的列名（大小写不敏感）。 */
+        public Builder ignoreColumn(String... columns) {
+            this.ignoreColumns = columns;
+            return this;
+        }
+
+        /** 生成实体时忽略的列前缀。 */
+        public Builder ignoreColumnPrefix(String... prefixes) {
+            this.ignoreColumnPrefixes = prefixes;
             return this;
         }
 
@@ -103,8 +172,17 @@ public class StrategyConfig {
             }
             // 防御性拷贝（避免外部修改数组）
             this.includeTables = Arrays.copyOf(includeTables, includeTables.length);
+            this.excludeTables = copyOf(excludeTables);
+            this.tablePrefixes = copyOf(tablePrefixes);
+            this.tableSuffixes = copyOf(tableSuffixes);
+            this.ignoreColumns = copyOf(ignoreColumns);
+            this.ignoreColumnPrefixes = copyOf(ignoreColumnPrefixes);
 
             return new StrategyConfig(this);
+        }
+
+        private static String[] copyOf(String[] source) {
+            return source == null ? null : Arrays.copyOf(source, source.length);
         }
     }
 }

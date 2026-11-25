@@ -33,8 +33,8 @@ public class CodegenApplication {
         StrategyConfig strategyConfig = StrategyConfig.builder()
                 .includeTables(new String[]{"xxl_job_user", "xxl_job_info"})
                 .useActualColumnNames(false)
-                .enableLombok(true)
-                .idType(IdType.ASSIGN_ID)   // 指定主键策略
+                .enableLombok(false)
+                .idType(IdType.AUTO_INCREMENT)   // 指定主键策略
                 .build();
 
         CodegenConfig config = CodegenConfig.builder()

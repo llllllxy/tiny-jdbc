@@ -21,6 +21,8 @@ public class CodegenConfig {
     private final String outputDir;
     /** 输出作者信息 */
     private final String author;
+    /** 是否覆盖已存在文件；false 时跳过并把原文件备份为 .java.bak */
+    private final boolean fileOverride;
 
 
     private CodegenConfig(Builder builder) {
@@ -29,6 +31,7 @@ public class CodegenConfig {
         this.strategyConfig = builder.strategyConfig;
         this.outputDir = builder.outputDir;
         this.author = builder.author;
+        this.fileOverride = builder.fileOverride;
     }
 
     public static Builder builder() {
@@ -56,6 +59,10 @@ public class CodegenConfig {
         return author;
     }
 
+    public boolean isFileOverride() {
+        return fileOverride;
+    }
+
     /**
      * 获取绝对输出路径
      */
@@ -81,6 +88,7 @@ public class CodegenConfig {
         private StrategyConfig strategyConfig;
         private String outputDir;
         private String author;
+        private boolean fileOverride;
 
 
         public Builder dataSourceConfig(DataSourceConfig dataSourceConfig) {
@@ -105,6 +113,12 @@ public class CodegenConfig {
 
         public Builder author(String author) {
             this.author = author;
+            return this;
+        }
+
+        /** 是否覆盖已存在文件，默认 false（保留用户手改并备份 .java.bak）。 */
+        public Builder fileOverride(boolean fileOverride) {
+            this.fileOverride = fileOverride;
             return this;
         }
 
