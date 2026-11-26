@@ -30,9 +30,14 @@ public class ${className} {
 
 <#-- 遍历列 -->
 <#list columns as column>
-    <#if column.comment?has_content>
+    <#if column.comment?has_content || column.fillStage?has_content>
     /**
+    <#if column.comment?has_content>
     * ${column.comment}
+    </#if>
+    <#if column.fillStage?has_content>
+    * 自动填充（${column.fillStage}）：由 AuditMetaObjectHandler 赋值，无需手动设置
+    </#if>
     */
     </#if>
     <#if column.primaryKey>

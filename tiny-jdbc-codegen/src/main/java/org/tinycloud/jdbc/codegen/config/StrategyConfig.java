@@ -27,6 +27,10 @@ public class StrategyConfig {
     private final String[] ignoreColumns;
     /**生成实体时跳过的列前缀*/
     private final String[] ignoreColumnPrefixes;
+    /**实体类名格式（%s 占位符），默认 %s */
+    private final String formatEntityName;
+    /**DAO 类名格式（%s 占位符），默认 %sDao */
+    private final String formatDaoName;
     /**是否使用实际列名*/
     private final boolean useActualColumnNames;
     /**是否启用Lombok注解*/
@@ -46,6 +50,8 @@ public class StrategyConfig {
         this.tableSuffixes = builder.tableSuffixes;
         this.ignoreColumns = builder.ignoreColumns;
         this.ignoreColumnPrefixes = builder.ignoreColumnPrefixes;
+        this.formatEntityName = builder.formatEntityName;
+        this.formatDaoName = builder.formatDaoName;
         this.useActualColumnNames = builder.useActualColumnNames;
         this.enableLombok = builder.enableLombok;
         this.idType = builder.idType;
@@ -80,6 +86,14 @@ public class StrategyConfig {
         return ignoreColumnPrefixes;
     }
 
+    public String getFormatEntityName() {
+        return formatEntityName;
+    }
+
+    public String getFormatDaoName() {
+        return formatDaoName;
+    }
+
     public boolean isUseActualColumnNames() {
         return useActualColumnNames;
     }
@@ -100,6 +114,8 @@ public class StrategyConfig {
         private String[] tableSuffixes;
         private String[] ignoreColumns;
         private String[] ignoreColumnPrefixes;
+        private String formatEntityName = "%s";
+        private String formatDaoName = "%sDao";
         private boolean useActualColumnNames = false;
         private boolean enableLombok = true;
         /**
@@ -142,6 +158,26 @@ public class StrategyConfig {
         public Builder ignoreColumnPrefix(String... prefixes) {
             this.ignoreColumnPrefixes = prefixes;
             return this;
+        }
+
+        /** 实体类名格式，必须包含且仅一个 %s，默认 %s。 */
+        public Builder formatEntityName(String format) {
+            validateFormat(format, "formatEntityName");
+            this.formatEntityName = format;
+            return this;
+        }
+
+        /** DAO 类名格式，必须包含且仅一个 %s，默认 %sDao。 */
+        public Builder formatDaoName(String format) {
+            validateFormat(format, "formatDaoName");
+            this.formatDaoName = format;
+            return this;
+        }
+
+        private static void validateFormat(String format, String name) {
+            if (format == null || format.indexOf("%s") < 0) {
+                throw new IllegalArgumentException(name + " 必须包含 %s 占位符");
+            }
         }
 
         public Builder useActualColumnNames(boolean useActualColumnNames) {

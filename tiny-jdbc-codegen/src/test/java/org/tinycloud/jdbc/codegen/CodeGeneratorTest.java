@@ -273,8 +273,8 @@ public class CodeGeneratorTest {
         @SuppressWarnings("unchecked")
         List<TableMeta> result = (List<TableMeta>) filter.invoke(generator,
                 java.util.Arrays.asList(keep, drop, other));
-        assertEqualsInt("只应保留 test_table", 1, result.size());
-        assertTrue("保留 test_table", "test_table".equals(result.get(0).getTableName()));
+        org.junit.Assert.assertEquals("只应保留 test_table", 1, result.size());
+        org.junit.Assert.assertEquals("保留 test_table", "test_table", result.get(0).getTableName());
     }
 
     // ===== 表名前缀/后缀剥离 =====
@@ -293,7 +293,7 @@ public class CodeGeneratorTest {
         java.lang.reflect.Method resolve = CodeGenerator.class.getDeclaredMethod("resolveClassName", String.class);
         resolve.setAccessible(true);
         Object className = resolve.invoke(generator, "t_xxl_job_info_log");
-        assertTrue("前后缀剥离后类名应为 XxlJobInfo", "XxlJobInfo".equals(className));
+        org.junit.Assert.assertEquals("前后缀剥离后类名应为 XxlJobInfo", "XxlJobInfo", className);
     }
 
     // ===== 列忽略：精确列名 + 前缀 =====
@@ -354,8 +354,85 @@ public class CodeGeneratorTest {
         assertTrue("备份应是用户手改内容", backup.startsWith("// user edited"));
     }
 
-    private static void assertEqualsInt(String message, int expected, int actual) {
-        assertTrue(message + " expected=" + expected + " actual=" + actual, expected == actual);
+    // ===== 自动填充字段识别：按 AuditMetaObjectHandler 的属性名标注注释 =====
+    @Test
+    public void testAutoFillFieldsAnnotatedInEntity() throws Exception {
+        TableMeta table = buildTable(true);
+        ColumnMeta createBy = new ColumnMeta();
+        createBy.setColumnName("create_user_id");
+        createBy.setDataType(Types.BIGINT);
+        createBy.setColumnSize(20);
+        createBy.setNullable(true);
+        table.getColumns().add(createBy);
+        ColumnMeta updateTime = new ColumnMeta();
+        updateTime.setColumnName("update_time");
+        updateTime.setDataType(Types.TIMESTAMP);
+        updateTime.setColumnSize(19);
+        updateTime.setNullable(true);
+        table.getColumns().add(updateTime);
+
+        CodeGenerator generator = createGenerator(null);
+        invokeGenerate(generator, table, true, false);
+        String entity = readFile("com/example/entity/TestTable.java");
+        assertTrue("create_user_id 应标注 INSERT 填充",
+                entity.contains("自动填充（INSERT）：由 AuditMetaObjectHandler 赋值"));
+        assertTrue("update_time 应标注 INSERT / UPDATE 填充",
+                entity.contains("自动填充（INSERT / UPDATE）：由 AuditMetaObjectHandler 赋值"));
+    }
+
+    // ===== 自动填充识别不受 useActualColumnNames 影响 =====
+    @Test
+    public void testAutoFillRecognizedWithActualColumnNames() throws Exception {
+        StrategyConfig strategy = StrategyConfig.builder()
+                .includeTables("test_table").useActualColumnNames(true).build();
+        CodegenConfig config = CodegenConfig.builder()
+                .dataSourceConfig(DataSourceConfig.builder().url("jdbc:mysql://x").username("u").password("p").build())
+                .packageConfig(PackageConfig.builder().parent("com.example").entity("entity").dao("dao").build())
+                .strategyConfig(strategy).outputDir(tempDir.toString()).build();
+        TableMeta table = buildTable(true);
+        ColumnMeta updateBy = new ColumnMeta();
+        updateBy.setColumnName("update_user_id");
+        updateBy.setDataType(Types.BIGINT);
+        updateBy.setColumnSize(20);
+        updateBy.setNullable(true);
+        table.getColumns().add(updateBy);
+        invokeGenerate(new CodeGenerator(config), table, true, false);
+
+        String entity = readFile("com/example/entity/TestTable.java");
+        assertTrue("实际列名模式下仍应识别填充字段",
+                entity.contains("自动填充（INSERT / UPDATE）"));
+    }
+
+    // ===== 文件名格式化：实体/DAO 按 %s 格式生成且互相引用一致 =====
+    @Test
+    public void testFormatEntityAndDaoNames() throws Exception {
+        StrategyConfig strategy = StrategyConfig.builder()
+                .includeTables("test_table")
+                .formatEntityName("%sEntity")
+                .formatDaoName("%sMapper")
+                .build();
+        CodegenConfig config = CodegenConfig.builder()
+                .dataSourceConfig(DataSourceConfig.builder().url("jdbc:mysql://x").username("u").password("p").build())
+                .packageConfig(PackageConfig.builder().parent("com.example").entity("entity").dao("dao").build())
+                .strategyConfig(strategy).outputDir(tempDir.toString()).build();
+        invokeGenerate(new CodeGenerator(config), buildTable(true), true, true);
+
+        String entity = readFile("com/example/entity/TestTableEntity.java");
+        assertTrue("实体类名应为 TestTableEntity", entity.contains("public class TestTableEntity"));
+        String dao = readFile("com/example/dao/TestTableEntityMapper.java");
+        assertTrue("DAO 应引用格式化后的实体类名", dao.contains("extends BaseDao<TestTableEntity,"));
+        assertTrue("DAO 类名应为 TestTableEntityMapper", dao.contains("public class TestTableEntityMapper"));
+    }
+
+    // ===== 类名格式必须包含 %s =====
+    @Test
+    public void testInvalidFormatRejected() {
+        try {
+            StrategyConfig.builder().includeTables("t").formatEntityName("NoPlaceHolder");
+            org.junit.Assert.fail("format without %s should be rejected");
+        } catch (IllegalArgumentException e) {
+            assertTrue("错误信息应提示 %s", e.getMessage().contains("%s"));
+        }
     }
 
     // ===== 类注释：有表注释时 @author/@date 仍必须输出，且包含表注释 =====

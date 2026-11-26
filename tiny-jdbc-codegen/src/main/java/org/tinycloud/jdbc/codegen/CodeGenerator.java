@@ -120,6 +120,24 @@ public class CodeGenerator {
         return TypeUtils.getCamelCase(name);
     }
 
+    /**
+     * 识别 AuditMetaObjectHandler 自动填充字段：
+     * create_user_id / create_time 仅 INSERT 填充，update_user_id / update_time 在 INSERT 与 UPDATE 都填充。
+     * 按列名转驼峰后匹配，不受 useActualColumnNames 影响。
+     *
+     * @return 空串表示非填充字段；否则为 "INSERT" 或 "INSERT / UPDATE"
+     */
+    private static String resolveFillStage(String columnName) {
+        String property = TypeUtils.getLowerCamelCase(columnName);
+        if ("createUserId".equals(property) || "createTime".equals(property)) {
+            return "INSERT";
+        }
+        if ("updateUserId".equals(property) || "updateTime".equals(property)) {
+            return "INSERT / UPDATE";
+        }
+        return "";
+    }
+
     /** 列是否应被忽略（大小写不敏感，支持前缀匹配）。 */
     private boolean isColumnIgnored(String columnName) {
         String lower = columnName.toLowerCase();
@@ -159,7 +177,8 @@ public class CodeGenerator {
      * 生成实体类
      */
     private void generateEntity(TableMeta table) throws Exception {
-        String className = this.resolveClassName(table.getTableName());
+        String className = String.format(config.getStrategyConfig().getFormatEntityName(),
+                this.resolveClassName(table.getTableName()));
         String packageName = config.getPackageConfig().getEntityPackage();
         String outputDir = buildOutputDir(packageName);
 
@@ -198,6 +217,7 @@ public class CodeGenerator {
             }
             columnInfo.setFieldName(fieldName);
 
+            columnInfo.setFillStage(this.resolveFillStage(column.getColumnName()));
             columnInfo.setPrimaryKey(column.isPrimaryKey());
             columnInfo.setAutoIncrement(column.isAutoIncrement());
             columnInfo.setNullable(column.isNullable());
@@ -234,8 +254,9 @@ public class CodeGenerator {
      * 生成 DAO 类
      */
     private void generateDao(TableMeta table) throws Exception {
-        String entityClassName = this.resolveClassName(table.getTableName());
-        String daoClassName = entityClassName + "Dao";
+        String entityClassName = String.format(config.getStrategyConfig().getFormatEntityName(),
+                this.resolveClassName(table.getTableName()));
+        String daoClassName = String.format(config.getStrategyConfig().getFormatDaoName(), entityClassName);
         String packageName = config.getPackageConfig().getDaoPackage();
         String entityPackageName = config.getPackageConfig().getEntityPackage();
         String outputDir = buildOutputDir(packageName);
@@ -321,6 +342,7 @@ public class CodeGenerator {
         private boolean nullable;
         private String idType;
         private String comment;
+        private String fillStage;
 
         public String getColumnName() {
             return columnName;
@@ -384,6 +406,14 @@ public class CodeGenerator {
 
         public void setComment(String comment) {
             this.comment = comment;
+        }
+
+        public String getFillStage() {
+            return fillStage;
+        }
+
+        public void setFillStage(String fillStage) {
+            this.fillStage = fillStage;
         }
     }
 }
