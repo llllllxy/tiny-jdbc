@@ -2,6 +2,87 @@
 
 本文件依据 Git 标签、版本发布提交及对应代码差异整理。每个版本均给出可回溯的发布锚点；标记为“升级必读”的版本包含已确认的 API 或包路径迁移。
 
+## 2.0.4
+
+> 升级路径：2.0.3 → 2.0.4 ｜ 主题：SQL Server 分页支持 + 代码生成器能力增强
+
+### 类型概览
+
+| 维度 | 内容 |
+|------|------|
+| 新增特性 | SQL Server 分页（普通 URL 统一识别为 `SQLSERVER`，`OFFSET/FETCH`）；代码生成器 6 项配置（排除表、前后缀剥离、列忽略、覆盖备份、类名格式、自动填充注释） |
+| 破坏性变更 | 移除 `DbType.SQLSERVER_2005` |
+| Bug 修复 | `or(consumer)` 连接符与 OR 状态残留、HAVING 参数顺序、`delete(criteria)` 误绑 SET、分页 COUNT 误带 `ORDER BY`、自增主键参数绑定与异常提示、代码生成器 3 项 |
+| 优化 | 统计拦截器日志按需拼接、`statInterceptor` 允许覆盖、动态 dbType 日志降级 |
+| 测试 | 新增 4 个验证类并补充 10 个既有验证类；core 全量 221 项通过 |
+
+### ⚠️ 破坏性变更（升级必读）
+
+- **移除 `DbType.SQLSERVER_2005`（`39c960a`）**：枚举值整体删除，`tiny-jdbc-core` 中不再存在。直接引用该常量的代码会编译失败，改用 `DbType.SQLSERVER`。
+  - **移除原因**：SQL Server 分页现在统一走 `SQLSERVER` 的 `OFFSET/FETCH` 实现；`SQLSERVER_2005` 名字所指的 2005/2008 本身不支持 `OFFSET/FETCH`，保留它只会产生「能识别但不能分页」的误导性枚举。
+  - **影响面**：仅在代码中显式写了 `DbType.SQLSERVER_2005` 的项目受影响。若通过配置项写了 `tiny-jdbc.db-type=sqlserver_2005`，该字符串会被 `DbType.getDbType()` 归入 `OTHER`，并在分页时因「不支持分页」抛 `TinyJdbcException`，需改为 `sqlserver`。
+
+### 新增特性
+
+#### SQL Server 分页（`39c960a`）
+
+- **普通 SQL Server URL 不再被判定为不支持分页**：`DbTypeUtils` 此前把 `jdbc:sqlserver://`、`jdbc:microsoft:` 识别为 `SQLSERVER_2005`，而该枚举不属于任何分页方言 family，识别结果直接导致分页抛异常；只有 `jdbc:sqlserver2012:` 前缀才会识别为 `SQLSERVER`。现两条路径统一返回 `SQLSERVER`，由 `Oracle12cPageHandleImpl` 生成 `OFFSET ? ROWS FETCH NEXT ? ROWS ONLY` 分页。
+- **数据库版本要求**：`OFFSET/FETCH` 需 **SQL Server 2012 及以上**。2005/2008 不支持该语法，此类环境需自行注册 `IPageHandle`。
+- **原 SQL 必须带 `ORDER BY`**：`OFFSET/FETCH` 是 SQL Server 的硬性语法要求，条件构造器需显式调用 `orderBy`，否则数据库直接报错。
+- **COUNT 语句**沿用 `SELECT COUNT(*) FROM ( ... ) TEMP` 包装，`ORDER BY` 与 `last()` 不会被带入。
+- README「支持数据库」章节已同步改写，并新增「多数据源与分页方言边界」说明（`7afe29b`）。
+
+#### 代码生成器能力增强（`f5abb56` / `44a3548`）
+
+- **表过滤**：新增 `excludeTables`，优先级高于 `includeTables`（此前只能通过 `includeTables` 白名单逐个挑选）。
+- **类名前后缀剥离**：新增 `tablePrefixes` / `tableSuffixes`，生成类名前按配置剥离表前缀/后缀再转驼峰，大小写不敏感、命中首个即止。
+- **列忽略**：新增 `ignoreColumns`（精确匹配）与 `ignoreColumnPrefixes`（前缀匹配），均大小写不敏感，生成实体时跳过这些列。
+- **文件覆盖策略**：新增 `fileOverride`，默认 `false`（跳过已存在文件，保留用户手改内容）；设为 `true` 时先把原文件备份为 `.java.bak` 再覆盖，避免手改丢失。
+- **类名格式自定义**：新增 `formatEntityName`（默认 `%s`）/ `formatDaoName`（默认 `%sDao`），格式串必须包含 `%s` 占位符，否则抛 `IllegalArgumentException`。
+- **自动填充字段注释**：生成实体时识别审计字段（`resolveFillStage`），在字段注释中追加「自动填充：由 `AuditMetaObjectHandler` 赋值，无需手动设置」，避免使用方对审计字段重复赋值。
+
+### Bug 修复
+
+- **`or(consumer)` 嵌套条件误用 AND 连接及 OR 状态残留（`1cc0577`）**：`or(Consumer)` 此前硬编码 `" OR "` 并手动把 `nextIsOr` 复位，该嵌套块与前一条件之间的连接符因此不受状态机控制，复位时机也与 `getConditionPrefix()` 不一致，OR 状态可能泄漏到后续不相关条件。现改为置位 `nextIsOr = true` 后统一由 `getConditionPrefix()` 生成连接符并复位，字符串版与 Lambda 版同步修改。
+- **HAVING 参数绑定顺序错误（`57a66d4`）**：此前 HAVING 参数与 WHERE 参数混在同一个列表，实际顺序取决于 `having()` 与 `eq()` 的调用先后，与 SQL 渲染顺序不一致时就会错位绑定。现新增独立 `havingParameters`，`getConditionParameters()` 按「WHERE → HAVING」的渲染顺序合并，不再受调用顺序影响。
+- **`delete(criteria)` 误绑定 SET 参数（`5f544cb`）**：删除场景此前取 `criteria.getParameters()`（含更新 SET 值），导致 WHERE 占位符与实际参数错位。现改用 `getConditionParameters()`，只绑定条件参数。
+- **条件构造器分页 COUNT 误带 `ORDER BY` / `last()`（`3c248e2`）**：`paginate(criteria)` / `paginate(lambda)` 此前把数据查询 SQL 直接包进 COUNT 子查询，`ORDER BY`、`last()` 一并被带入（部分数据库不允许子查询内出现 `ORDER BY`，且属无谓开销）。现新增 `paginateByCriteria`，COUNT 与数据 SQL 分别由 `buildSelectCount*CriteriaSql` 与 `buildSelect*CriteriaSql` 生成。
+- **自增主键 insert 参数绑定不统一（`3247325`）**：需要回写自增主键的 insert 此前以 `ps.setObject(i + 1, arg)` 手写绑定，与普通 insert 走的 Spring 绑定逻辑不一致，`null`、日期、LOB、`SqlParameterValue` 等类型的处理存在差异。现统一改用 `ArgumentPreparedStatementSetter`。
+- **自增主键异常提示完善（`3247325`）**：无生成键或注入实体字段失败时，异常信息明确写出「INSERT 已执行、数据可能已提交」，避免调用方误以为失败即回滚；同时不再对多列键做猜测性取值，交由 Spring 原生 `getKey()` 报错。
+- **代码生成器主键类型 import 缺失（`52d9277`）**：DAO 模板缺少主键类型的 import，生成后需手工补全。现按 `TypeUtils.needImport` 收集并输出 import 块。
+- **代码生成器表名通配符未转义（`52d9277`）**：`DatabaseMetaData.getColumns` 的 `tableNamePattern` 未转义 `_` 与 `%`，表名含下划线时会被当作通配符匹配到其它表。现按 `getSearchStringEscape()` 转义后再查询。
+- **非 Lombok 实体缺少访问器（`52d9277`）**：`enableLombok=false` 时生成的实体没有任何 getter/setter，ORM 无法读写字段。现按列生成访问器。
+
+### 优化
+
+- **统计拦截器日志按需拼接（`76c25af`）**：`StatInterceptor` 的 `debug` 日志与耗时 `info` 日志此前无条件执行参数拼接（`SqlUtils.replaceSqlParams` 会做字符串替换），日志级别未开启时属于纯开销。现统一补 `isDebugEnabled()` / `isInfoEnabled()` 判断。
+- **`statInterceptor` 允许用户覆盖（`76c25af`）**：自动配置的该 Bean 补充 `@ConditionalOnMissingBean(SqlInterceptor.class)`，用户自定义 `SqlInterceptor` 不再导致启动失败，与「Starter 默认 Bean 必须可覆盖」的约定对齐。
+- **动态 dbType 日志降级（`65663e9`）**：`PageHandleFactory` 中「本次分页识别到的 dbType」日志由 `info` 调整为 `debug`，避免 `open-runtime-db-type=true` 时刷屏。
+- **README 补充多数据源与分页方言边界（`7afe29b`）**：说明 `open-runtime-db-type` 两个取值的行为差异、识别依据（JDBC URL 前缀，而非 `getDatabaseProductName()`）、方言不匹配的四种场景，以及「路由 key 需在进入事务前设置、事务内切库无效」等约束。
+
+### 升级检查清单
+
+- [ ] 全局搜索 `SQLSERVER_2005`，改为 `DbType.SQLSERVER`；检查 `tiny-jdbc.db-type` 配置是否写了 `sqlserver_2005`。
+- [ ] SQL Server 分页场景确认数据库版本 ≥ 2012，且查询显式带 `orderBy`（`OFFSET/FETCH` 的硬性要求）。
+- [ ] 复核使用 `or(consumer)` 的查询，确认嵌套块与前一条件的连接符符合预期。
+- [ ] 复核同时使用 WHERE 与 HAVING 的查询（尤其分页），确认占位符个数与参数列表一致。
+- [ ] 复核 `delete(criteria)` 调用，确认 WHERE 参数不再误绑 SET 值。
+- [ ] 如自定义了 `SqlInterceptor`，确认与自动配置的 `statInterceptor`（`sql-stat-enabled=true` 时注册）不冲突。
+- [ ] 重新执行代码生成，核对类名前后缀剥离、忽略列、import 块与访问器输出。
+
+### 兼容性说明
+
+| 用户侧能力 | 兼容性 |
+|------------|--------|
+| 基于 `BaseDao` 的常规 CRUD 调用 | ✅ 完全兼容 |
+| `DbType.SQLSERVER_2005` | ❌ 已移除，改用 `DbType.SQLSERVER` |
+| `jdbc:sqlserver://` 分页 | ✅ 新增支持（需 2012+ 且原 SQL 带 `ORDER BY`） |
+| `jdbc:sqlserver2012:` 前缀 | ✅ 识别结果仍为 `SQLSERVER`，行为不变 |
+| 代码生成器既有调用 | ✅ 兼容，新增配置项默认值保持原行为（`fileOverride=false`、格式串为 `%s` / `%sDao`） |
+| 自定义 `SqlInterceptor` | ✅ 现可覆盖自动配置 Bean |
+
+---
+
 ## 2.0.3
 
 > 升级路径：2.0.2 → 2.0.3 ｜ 主题：SQL 构造 DSL 安全加固（AUDIT_REPORT.md 第三章 15 条）
